@@ -1,0 +1,62 @@
+command arg1* {-hij} {--opt arg}*
+	==>> command arg1,* {h: true} {i: ture} {j:true} {opt: arg}*
+
+obj.command arg1* {-hij} {--opt arg}*
+	==>> obj.command arg1,* {h: true} {i: ture} {j:true} {opt: arg}*
+
+var = command arg1* {-hij} {--opt arg}*
+	==>> var = command arg1,* {h: true} {i: ture} {j:true} {opt: arg}*
+
+command
+  ==> system("command")
+
+command > file
+  ==> system("command" > "file")
+
+method > file
+  ==> self.search_file("file").write(method.to_s)
+
+command1 | command2
+  ==> system("command1" | "command2")
+
+command1 | filter
+  ==> Filter.new("command1").filter
+  # ls | grep ==? Filter.new("ls").grep
+
+method | filter
+  ==> method.filter
+  # grep | grep ==? grep.grep
+
+command1 | (method)
+
+if command1 ; command_seq1 else command_seq2 end
+  ==>> if system("command1"); then ^command_seq1 else ^command_seq2 end
+
+if method ; ^command_seq1 else ^command_seq2 end
+  ==>> if method; then command_seq1 else command_seq2 end
+
+$var
+  ==>> var
+
+$(command_seq)
+  ==> (ruby_eval(^command_seq))
+
+* ワイルドカード
+* 正規表現 $/.../
+
+
+obj.command arg1*
+  ==> obj.command(arg1,*)
+
+var=.. command はなし
+
+obj > file or obj
+   出力変更演算子
+obj < file or obj
+   入力変更演算子
+obj1 | method
+   メッセージセンド&入出力変更演算子
+obj1 | obj2
+   入出力変更演算子
+   
+
