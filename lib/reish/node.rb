@@ -32,9 +32,6 @@ module Reish
 	c.gsub!(/^.*::/, "")
 	n = c.scan(/([A-Z][a-z]*)/).collect{|m| m[0].downcase}.join("_")
       end
-
-      p "def accept(v); v.visit_#{n}(self)"
-
       class_eval "def accept(v); v.visit_#{n}(self); end"
     end
 

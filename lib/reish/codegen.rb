@@ -94,7 +94,7 @@ module Reish
 	s2 = ""
       end
 	
-      "bar(#{s1}, #{s2})"
+      "PP(#{s1}, #{s2})"
     end
 
     def visit_async_command(command)

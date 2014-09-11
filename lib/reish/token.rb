@@ -13,6 +13,14 @@
 
 module Reish
 
+  EXPR_BEG = :EXPR_BEG
+  EXPR_MID = :EXPR_MID
+  EXPR_END = :EXPR_END
+  EXPR_ARG = :EXPR_ARG
+  EXPR_FNAME = :EXPR_FNAME
+  EXPR_DOT = :EXPR_DOT
+  EXPR_CLASS = :EXPR_CLASS
+
   Token2TokenID = {}
   
   class Token
@@ -82,7 +90,6 @@ module Reish
     def token_id
       @tid
     end
-
   end
 
   class SimpleToken<Token

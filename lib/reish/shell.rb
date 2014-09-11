@@ -33,6 +33,8 @@ module Reish
     end
 
     def eval_input
+      @lex.initialize_input
+
       loop do
 	@current_input_unit = @parser.do_parse
 	p @current_input_unit

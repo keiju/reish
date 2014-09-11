@@ -62,6 +62,33 @@ module Reish
       "!"       => :BANG,
     }
 
+    PreservedWordH = {
+      "rescue"	=> :RESCUE, 
+      "ensure"	=> :ENSURE, 
+      "end"	=> :END, 
+      "then"	=> :THEN, 
+      "elsif"	=> :ELSIF, 
+      "else"	=> :ELSE, 
+      "when"	=> :WHEN, 
+      "break"	=> :BREAK, 
+      "next"	=> :NEXT, 
+      "redo"	=> :REDO, 
+      "retry"	=> :RETRY, 
+      "in"	=> :IN, 
+      "do"	=> :DO, 
+      "return"	=> :RETURN, 
+      "yield"	=> :YIELD, 
+      "super"	=> :SUPER, 
+      "self"	=> :SELF, 
+      "nil"	=> :NIL, 
+      "true"	=> :TRUE, 
+      "false"	=> :FALSE, 
+      "and"	=> :AND, 
+      "or"	=> :OR, 
+      "not"	=> :NOT, 
+      "defined?"=> :DEFINED, 
+    }
+
     TransState = {
       :CLASS => :EXPR_CLASS,
       :MODULE => :EXPR_BEG,
@@ -87,6 +114,7 @@ module Reish
       :RETRY => :EXPR_END,
       :IN => :EXPR_BEG,
       :DO => :EXPR_BEG,
+      :DO_COND => :EXPR_BEG,
       :RETURN => :EXPR_MID,
       :YIELD => :EXPR_END,
       :SUPER => :EXPR_END,
@@ -111,9 +139,15 @@ module Reish
       @ruby_scanner.exception_on_syntax_error = false
       @io = STDIN
 
-      @lex_state = :EXPR_BEG
+      @lex_state = EXPR_BEG
 
       @cond_stack = []
+    end
+
+#    attr_accessor :lex_state
+    def lex_state=(v)
+      puts "LEX STATE CHANGE: #{v}"
+      @lex_state = v
     end
 
     def cond_push(v=true)
@@ -142,6 +176,26 @@ module Reish
       @ruby_scanner.set_prompt &block
     end
 
+    def prompt
+      @ruby_scanner.prompt
+    end
+
+    def initialize_input
+      @ltype = nil
+      @quoted = nil
+      @indent = 0
+      @indent_stack = []
+      @lex_state = EXPR_BEG
+      @space_seen = false
+      @here_header = false
+
+      @continue = false
+      prompt
+
+      @line = ""
+      @exp_line_no = @line_no
+    end
+
     def token
       @prev_seek = @ruby_scanner.seek
       @prev_line_no = @ruby_scanner.line_no
@@ -149,6 +203,7 @@ module Reish
       begin
 	begin
 	  tk = @OP.match(@ruby_scanner)
+	  @space_seen = tk.kind_of?(SpaceToken)
 	rescue SyntaxError
 	  raise if @exception_on_syntax_error
 	  tk = ErrorToken.new(@io, @prev_seek, @prev_line_no, @prev_char_no)
@@ -174,6 +229,7 @@ module Reish
       end
 
       @OP.def_rules(" ", "\t", "\f", "\r", "\13") do |op, io|
+      @space_seen = true
 	while io.getc =~ /[ \t\f\r\13]/; end
 	io.ungetc
 	SpaceToken.new(io, @prev_seek, @prev_line_no, @prev_char_no)
@@ -181,6 +237,7 @@ module Reish
 
       @OP.def_rule("\n") do
 	|op, io|
+	self.lex_state = EXPR_BEG
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
       end
 
@@ -193,18 +250,21 @@ module Reish
       @OP.def_rule("(") do
 	|op, io|
 	cond_push(false)
+	self.lex_state = EXPR_BEG
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
       end
 
       @OP.def_rule("[") do
 	|op, io|
 	cond_push(false)
+	self.lex_state = EXPR_BEG
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
       end
 
       @OP.def_rule("{") do
 	|op, io|
 	cond_push(false)
+	self.lex_state = EXPR_BEG
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
       end
 
@@ -216,37 +276,38 @@ module Reish
 
       @OP.def_rule("!") do
 	|op, io|
+	self.lex_state = EXPR_BEG
 	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :BANG)
       end
 
       @OP.def_rule("|") do
 	|op, io|
+	self.lex_state = EXPR_BEG
 	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '|')
-      end
-
-      @OP.def_rule(">") do
-	|op, io|
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '>')
       end
 
       @OP.def_rule(";") do
 	|op, io|
+	self.lex_state = EXPR_BEG
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, ';')
       end
 
 
       @OP.def_rule("&") do
 	|op, io|
+	self.lex_state = EXPR_BEG
 	tk = SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '&')
       end
 
       @OP.def_rule("&&") do
 	|op, io|
+	self.lex_state = EXPR_BEG
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :AND_AND)
       end
 
       @OP.def_rule("||") do
 	|op, io|
+	self.lex_state = EXPR_BEG
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :OR_OR)
       end
 
@@ -260,6 +321,11 @@ module Reish
 	|op, io|
 	io.ungetc
 	identify_compstmt(io, RubyToken::TkRBRACK)
+      end
+
+      @OP.def_rule(">") do
+	|op, io|
+	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '>')
       end
 
       @OP.def_rule("") do
@@ -284,13 +350,24 @@ module Reish
       end
       io.ungetc
 
-      if tid = PreservedWord[token]
-	if tid == :DO && cond?
-	  tid = :COND_DO
+      if @lex_state == EXPR_BEG || PreservedWordH[token]
+
+	if tid = PreservedWord[token]
+	  if tid == :DO && cond?
+	    tid = :COND_DO
+	  end
+	  
+	  if st = TransState[tid]
+	    self.lex_state = st
+	  end
+
+	  ReservedWordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, tid)
+	else
+	  self.lex_state = EXPR_ARG
+	  IDToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
 	end
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, tid)
       else
-	IDToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+	WordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
       end
     end
   end
@@ -364,7 +441,7 @@ class RubyLex
     ensure
       @ltype = nil
       @quoted = nil
-      @lex_state = EXPR_END
+      self.lex_state = EXPR_END
     end
   end
 

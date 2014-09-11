@@ -22,7 +22,7 @@ class Reish::Parser
   inputunit: simple_list simple_list_terminator
 	    {
 		_values.push Node::InputUnit(val[0], val[1])
-		yyaccept
+	        yyaccept
 	    }
 	| '\n'
 	    {
@@ -46,6 +46,7 @@ class Reish::Parser
   simple_list1:	logical_command
 	    {
 		result = Node::SeqCommand(val[0])
+#	        result = val[0]
             }
 	| simple_list1 "&" logical_command
 	    { 
@@ -106,7 +107,7 @@ class Reish::Parser
 	| shell_command redirection_list
 #	| function_def
 
-  simple_command: simple_command_header simple_command_element_list
+  simple_command: simple_command_header simple_command_element_list 
 	    {         
 	      result = Node::SimpleCommand(val[0], val[1])
 	    }
@@ -114,35 +115,39 @@ class Reish::Parser
             { 
 	      result = Node::SimpleCommand(val[0], val[1], val[3])
 	    }
+	| simple_command_header simple_command_element_list '{'	compound_list '}'
+            { 
+	      result = Node::SimpleCommand(val[0], val[1], val[3])
+	    }
     
   simple_command_element_list: 
 	    {
-	      result = []
+	       result = []
 	    }
 	| simple_command_element_list simple_command_element
 	    {
-	      result.push val[1]
+	       result.push val[1]
 	    }
   simple_command_header: ID
 
   simple_command_element: WORD
 #	| ASSIGNMENT_WORD
-	| ID
+#	| ID
 	| redirection
 	| group_command
 	| ruby_exp_command
 
   shell_command: FOR_COMMAND
-#	| case_command
+	| if_command
  	| while_command
+#	| case_command
 #	| UNTIL compound_list DO compound_list DONE
 #	| select_command
-	| if_command
 #	| subshell
-	| group_command
 #	| arith_command
 #	| cond_command
 #	| arith_for_command
+	| group_command
 	| ruby_exp_command
 
   while_command: WHILE {@lex.cond_push(true)} newline_list logical_command do {@lex.cond_pop} compound_list END
