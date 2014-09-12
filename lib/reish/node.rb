@@ -144,40 +144,40 @@ module Reish
       def_accept
     end
 
-    class ConnectCommand<Node
+    class LogicalCommand<Node
       def_constructor
 
-      def initialize(com1, com2, connector)
+      def initialize(com1, com2, op)
 	@first = com1
 	@second = com2
-	@connector = connector
+	@connector = op
       end
 
       attr_reader :first
       attr_reader :second
-      attr_reader :connector
+      attr_reader :op
 
       def_accept
     end
 
-    class ConnectCommandAA<ConnectCommand
+    class LogicalCommandAA<LogicalCommand
       def_constructor
 
       def initialize(com1, com2)
 	super com1, com2, "&&"
       end
 
-      def_accept "connect_command_aa"
+      def_accept "logical_command_aa"
     end
 
-    class ConnectCommandOO<ConnectCommand
+    class LogicalCommandOO<LogicalCommand
       def_constructor
 
       def initialize(com1, com2=nil)
 	super com1, com2, "||"
       end
 
-      def_accept "connect_command_oo"
+      def_accept "logical_command_oo"
     end
 
     class PipelineCommand<Node

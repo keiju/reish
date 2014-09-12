@@ -48,12 +48,15 @@ module Reish
 			    @command_path, 
 			    @args.collect{|e| e.to_s}], open_mode)
       begin
-	Process.waitpid(pid)
+	pid2, stat = Process.waitpid2(pid)
+	stat.exitstatus
       rescue Errno::ECHILD
 	puts "#{command_path} not stated"
       end
-      
     end
+
+    alias execute stat
+    alias stat reish_stat
 
     def open_mode
       if receiver.kind_of?(Reish::Main)
@@ -107,3 +110,9 @@ module Reish
 end
 
 
+class Object
+  def reish_stat; self; end
+end
+
+    
+  

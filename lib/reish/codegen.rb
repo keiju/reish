@@ -45,7 +45,7 @@ module Reish
 
     def visit_group(group)
       script = group.node.accept(self)
-      "group("+script+")"
+      "("+script+")"
     end
 
     def visit_seq_command(command)
@@ -56,34 +56,24 @@ module Reish
     def visit_async_command(command)
 
       s = command.subcommand.accept(self)
-      "ASYNC(#{s})"
+      "Reish::JobStart{#{s}}"
     end
 
-    def visit_connect_command_aa(command)
+    def visit_logical_command_aa(command)
       s1 = command.first.accept(self)
-      if command.second
-	s2 = command.second.accept(self)
-      else
-	s2 = ""
-      end
-	
-      "AA(#{s1}, #{s2})"
+      s2 = command.second.accept(self)
+      "(#{s1} && #{s2})"
     end
 
-    def visit_connect_command_oo(command)
+    def visit_logical_command_oo(command)
       s1 = command.first.accept(self)
-      if command.second
-	s2 = command.second.accept(self)
-      else
-	s2 = ""
-      end
-	
-      "OO(#{s1}, #{s2})"
+      s2 = command.second.accept(self)
+      "(#{s1} || #{s2})"
     end
 
     def visit_pipeline_command(command)
       s = command.commands.collect{|com| com.accept(self)}.join(".")
-      "#{s}.execute"
+      "#{s}.reish_stat"
     end
 
     def visit_simple_command(command)
@@ -92,11 +82,15 @@ module Reish
       if command.have_redirection?
 	return visit_simple_command_with_redirection(command)
       end
-      args = command.args.collect{|e| e.accept(self)}.join(", ")
-      if command.block
-	"#{name}(#{args}){#{command.block.accept(self)}}"
+      if command.args.empty?
+	args = ""
       else
-	"#{name}(#{args})"
+	args = "("+command.args.collect{|e| e.accept(self)}.join(", ")+")"
+      end
+      if command.block
+	"#{name}#{args}{#{command.block.accept(self)}}"
+      else
+	"#{name}#{args}"
       end
     end
 

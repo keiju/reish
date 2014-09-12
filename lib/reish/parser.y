@@ -62,32 +62,13 @@ class Reish::Parser
 
   logical_command: logical_command AND_AND newline_list logical_command
 	    { 
-		result = Node::ConnectCommandAA(val[0], val[3])
+		result = Node::LogicalCommandAA(val[0], val[3])
 	    }
 	| logical_command OR_OR newline_list logical_command
 	    { 
-		result = Node::ConnectCommandOO(val[0], val[3])
+		result = Node::LogicalCommandOO(val[0], val[3])
 	    }
       	| pipeline_command
-
-#   simple_list1:	simple_list1 AND_AND newline_list simple_list1
-# 	    { 
-# 		result = Node::ConnectCommandAA(val[0], val[3])
-# 	    }
-# 	| simple_list1 OR_OR newline_list simple_list1
-# 	    { 
-# 		result = Node::ConnectCommandOO(val[0], val[3])
-# 	    }
-# 	| simple_list1 '&'  simple_list1
-# 	    { 
-# 		#
-# 		result = Node::ConnectCommandANP(val[0], val[2])
-# 	    }
-# 	| simple_list1 ';'  simple_list1
-# 	    { 
-# 		result = Node::ConnectCommandSEQ(val[0], val[2])
-# 	    }
-#       	| pipeline_command
 
   pipeline_command: pipeline
 	| BANG pipeline
