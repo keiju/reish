@@ -180,14 +180,21 @@ module Reish
       def_accept "connect_command_oo"
     end
 
-    class ConnectCommandPP<ConnectCommand
+    class PipelineCommand<Node
       def_constructor
 
-      def initialize(com1, com2=nil)
-	super com1, com2, "|"
+      def initialize(com)
+	super()
+	@commands = [com]
+      end
+      attr_reader :commands
+      
+      def pipe_command(attr, com)
+	@commands.last.pipeout = attr
+	@commands.push com
       end
 
-      def_accept  "connect_command_pp"
+      def_accept
     end
 
     class SimpleCommand<Node
@@ -197,12 +204,15 @@ module Reish
 	@name = name
 	@args = elements
 	@block = b
-	@have_redirection
+	@pipeout = nil
+
+	@have_redirection = nil
       end
 
       attr_reader :name
       attr_reader :args
       attr_reader :block
+      attr_accessor :pipeout
 
       def have_redirection?
 	if @have_redirection.nil?

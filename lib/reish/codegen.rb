@@ -50,18 +50,13 @@ module Reish
 
     def visit_seq_command(command)
       script = command.nodes.collect{|n| n.accept(self)}.join("; ")
-      "seq("+script+")"
+      "("+script+")"
     end
 
-    def visit_connect_command_anp(command)
-      s1 = command.first.accept(self)
-      if command.second
-	s2 = command.second.accept(self)
-      else
-	s2 = ""
-      end
-	
-      "and(#{s1}, #{s2})"
+    def visit_async_command(command)
+
+      s = command.subcommand.accept(self)
+      "ASYNC(#{s})"
     end
 
     def visit_connect_command_aa(command)
@@ -86,21 +81,9 @@ module Reish
       "OO(#{s1}, #{s2})"
     end
 
-    def visit_connect_command_pp(command)
-      s1 = command.first.accept(self)
-      if command.second
-	s2 = command.second.accept(self)
-      else
-	s2 = "exec"
-      end
-	
-      "#{s1}.#{s2}"
-    end
-
-    def visit_async_command(command)
-
-      s = command.subcommand.accept(self)
-      "ASYNC(#{s})"
+    def visit_pipeline_command(command)
+      s = command.commands.collect{|com| com.accept(self)}.join(".")
+      "#{s}.execute"
     end
 
     def visit_simple_command(command)

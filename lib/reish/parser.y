@@ -92,16 +92,21 @@ class Reish::Parser
   pipeline_command: pipeline
 	| BANG pipeline
 
-  pipeline: pipeline '|' newline_list pipeline
+  pipeline: pipeline '|' newline_list command
 	    {
-  		result = Node::ConnectCommandPP(val[0], val[3])
+	       result = val[0]
+  	       result.pipe_command(:BAR, val[3])
 	    }
-	| pipeline BAR_AND newline_list pipeline
+	| pipeline BAR_AND newline_list command
 	    {
-		result = Node::ConnectCommandPP(val[0], val[3])
+	       result = val[0]
+  	       result.pipe_command(:BAR_AND, val[3])
 	    }
-	| command
-
+        | command
+	    {
+		result = Node::PipelineCommand(val[0])
+            }
+	
   command: simple_command
 	| shell_command
 	| shell_command redirection_list
