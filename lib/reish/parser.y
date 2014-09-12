@@ -1,5 +1,5 @@
 #
-#   parser.y - 
+#   reish/parser.y - 
 #   	$Release Version: $
 #   	$Revision: 1.1 $
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
@@ -94,11 +94,11 @@ class Reish::Parser
 
   pipeline: pipeline '|' newline_list pipeline
 	    {
-		result = Node::ConnectCommandBAR(val[0], val[3])
+  		result = Node::ConnectCommandPP(val[0], val[3])
 	    }
 	| pipeline BAR_AND newline_list pipeline
 	    {
-		result = Node::ConnectCommandBAR(val[0], val[3])
+		result = Node::ConnectCommandPP(val[0], val[3])
 	    }
 	| command
 
@@ -156,6 +156,7 @@ class Reish::Parser
 	    }
 
   do: '\n' newline_list
+	| ';' newline_list
 	| COND_DO
 
   if_command: IF newline_list logical_command then compound_list END
@@ -185,6 +186,7 @@ class Reish::Parser
 	    }
 
   then: '\n' newline_list
+	| ';'
 	| THEN
 
   group_command: '(' compound_list ')'

@@ -86,15 +86,15 @@ module Reish
       "OO(#{s1}, #{s2})"
     end
 
-    def visit_connect_command_bar(command)
+    def visit_connect_command_pp(command)
       s1 = command.first.accept(self)
       if command.second
 	s2 = command.second.accept(self)
       else
-	s2 = ""
+	s2 = "exec"
       end
 	
-      "PP(#{s1}, #{s2})"
+      "#{s1}.#{s2}"
     end
 
     def visit_async_command(command)
@@ -105,11 +105,24 @@ module Reish
 
     def visit_simple_command(command)
       name = command.name.accept(self)
+
+      if command.have_redirection?
+	return visit_simple_command_with_redirection(command)
+      end
+      args = command.args.collect{|e| e.accept(self)}.join(", ")
+      if command.block
+	"#{name}(#{args}){#{command.block.accept(self)}}"
+      else
+	"#{name}(#{args})"
+      end
+    end
+
+    def visit_simple_command_with_redirection(command)
+      name = command.name.accept(self)
+
       args = command.args.collect{
 	|e|
 	case e
-	when IDToken
-	  '"'+e.accept(self)+'"'
 	when Node::Redirection
 	  '('+e.accept(self)+")"
 	else

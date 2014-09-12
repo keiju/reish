@@ -1,5 +1,5 @@
 #
-#   lex.rb - 
+#   reish/lex.rb - 
 #   	$Release Version: $
 #   	$Revision: 1.1 $
 #   	by Keiju ISHITSUKA(Penta Advanced Labrabries, Co.,Ltd)

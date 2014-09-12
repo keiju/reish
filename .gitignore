@@ -3,3 +3,5 @@
 .\#*
 *.bak
 lib/reish/parser.output
+lib/reish/parser.rb
+

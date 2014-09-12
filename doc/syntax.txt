@@ -59,4 +59,18 @@ obj1 | method
 obj1 | obj2
    入出力変更演算子
    
+main.m1 | m2
+when m1 is method
+  (main.m1).m2
+  when m2 is method
+    (main.m1).m2
+  when m2 is command
+    (main.m1).com(m1)
+when m1 is command
+  com(m1).m2
+  when m2 is method
+    com(m1).m2
+  when m2 is command
+    com(m1).com(m2)
+end
 

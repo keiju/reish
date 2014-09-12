@@ -1,5 +1,5 @@
 #
-#   node.rb - 
+#   reish/node.rb - 
 #   	$Release Version: $
 #   	$Revision: 1.1 $
 #   	$Date: 1997/08/08 00:57:08 $
@@ -130,6 +130,20 @@ module Reish
       def_accept
     end
 
+    class AsyncCommand<Node
+      def_constructor
+
+      def initialize(com)
+	super()
+	
+	@subcommand = com
+      end
+
+      attr_reader :subcommand
+
+      def_accept
+    end
+
     class ConnectCommand<Node
       def_constructor
 
@@ -166,28 +180,14 @@ module Reish
       def_accept "connect_command_oo"
     end
 
-    class ConnectCommandBAR<ConnectCommand
+    class ConnectCommandPP<ConnectCommand
       def_constructor
 
       def initialize(com1, com2=nil)
 	super com1, com2, "|"
       end
 
-      def_accept  "connect_command_bar"
-    end
-
-    class AsyncCommand<Node
-      def_constructor
-
-      def initialize(com)
-	super()
-	
-	@subcommand = com
-      end
-
-      attr_reader :subcommand
-
-      def_accept
+      def_accept  "connect_command_pp"
     end
 
     class SimpleCommand<Node
@@ -197,11 +197,19 @@ module Reish
 	@name = name
 	@args = elements
 	@block = b
+	@have_redirection
       end
 
       attr_reader :name
       attr_reader :args
       attr_reader :block
+
+      def have_redirection?
+	if @have_redirection.nil?
+	  @have_redirection = @args.any?{|e| e.kind_of?(Redirection)}
+	end
+	@have_redirection
+      end
 
       def_accept
     end
