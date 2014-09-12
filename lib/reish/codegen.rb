@@ -114,7 +114,7 @@ module Reish
     end
 
     def visit_ruby_exp(exp)
-      "eval("+exp.exp+")"
+      "("+exp.exp+")"
     end
 
     def visit_id(id)

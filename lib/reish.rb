@@ -16,16 +16,8 @@ require "reish/shell"
 module Reish
 
   @CONF={}
-  def Reish.conf(key)
-    @CONF[key]
-  end
-
-  def Reish.set_conf(key, val)
-    @CONF[key]=val
-  end
-
-  def Reish.conf_delete(key)
-    @CONF.delete(key)
+  def Reish.conf
+    @CONF
   end
 
   def Reish.conf_tempkey(prefix = "__Reish__", postfix = "__", &block)

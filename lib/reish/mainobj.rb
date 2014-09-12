@@ -12,6 +12,8 @@
 #
 require "forwardable"
 
+require "reish/osspace"
+
 module Reish
   class Main
     extend Forwardable
@@ -22,7 +24,7 @@ module Reish
       @__shell__ = shell
     end
 
-    def_delegator @__shell__, :rehash
+    def_delegator :@__shell__, :rehash
 
   end
 end

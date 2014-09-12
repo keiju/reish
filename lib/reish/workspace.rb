@@ -11,6 +11,8 @@
 #   
 #
 
+require "reish/mainobj"
+
 module Reish
   class WorkSpace
 
@@ -21,10 +23,10 @@ module Reish
     def initialize(*main)
       if main[0].kind_of?(Binding)
 	@binding = main.shift
-      elsif Reish.conf(:SINGLE_IRB)
+      elsif Reish.conf[:SINGLE_REISH]
 	@binding = TOPLEVEL_BINDING
       else
-	case Reish.conf(:CONTEXT_MODE)
+	case Reish.conf[:CONTEXT_MODE]
 	when 0	# binding in proc on TOPLEVEL_BINDING
 	  @binding = eval("proc{binding}.call",
 		      TOPLEVEL_BINDING,
@@ -37,10 +39,10 @@ module Reish
 
 	    require "tempfile"
 	    f = Tempfile.open("reish-binding")
-	    f.puts("Reish.set_conf(:#{key}, binding)")
+	    f.puts("Reish.conf[:#{key}]=binding)")
 	    f.close
 	    load f.path
-	    @binding = Reish.conf(key)
+	    @binding = Reish.conf[key]
 	  end
 	  
 	when 2	# binding in loaded file(thread use)
@@ -71,20 +73,21 @@ module Reish
       end
 
       if main.empty?
-	@main = eval("self", @binding)
+	@main = Main.new(@shell)
       else
-	Reish::conf_tempkey do |main_key|
-	  @main = main[0]
-	  Reish.set_conf(main_key,  @main)
-	  case @main
-	  when Module
-	    @binding = eval("Resih.conf(:#{main_key})).module_eval('binding', __FILE__, __LINE__)", @binding, __FILE__, __LINE__)
-	  else
-	    begin
-	      @binding = eval("Reish.conf(#{main_key}).instance_eval('binding', __FILE__, __LINE__)", @binding, __FILE__, __LINE__)
-	    rescue TypeError
-	      Reish.fail CantSetBinding, @main.inspect
-	    end
+	@main = main[0]
+      end
+      
+      Reish::conf_tempkey do |main_key|
+	Reish.conf[main_key]=@main
+	case @main
+	when Module
+	  @binding = eval("Resih.conf[:#{main_key}].module_eval('binding', __FILE__, __LINE__)", @binding, __FILE__, __LINE__)
+	else
+	  begin
+	    @binding = eval("Reish.conf[:#{main_key}].instance_eval('binding', __FILE__, __LINE__)", @binding, __FILE__, __LINE__)
+	  rescue TypeError
+	    Reish.fail CantSetBinding, @main.inspect
 	  end
 	end
       end

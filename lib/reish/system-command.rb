@@ -13,7 +13,7 @@
 #
 
 module Reish
-  def SystemCommand(shell, receiver, path, *args)
+  def Reish.SystemCommand(shell, receiver, path, *args)
     case receiver
     when Reish::Main
       SystemCommand.new(shell, receiver, path, *args)
@@ -35,6 +35,8 @@ module Reish
       @args = args
     end
 
+    attr_reader :receiver
+
     def each(&block)
       IO.popen([@__shell__.system_env, 
 		 @command_path, 
@@ -44,9 +46,9 @@ module Reish
     end
 
     def execute
-      pid = Process.spawn([@__shell__.system_env, 
-			    @command_path, 
-			    @args.collect{|e| e.to_s}], open_mode)
+      pid = Process.spawn(@__shell__.system_env, 
+			  @command_path, 
+			  *@args.collect{|e| e.to_s})
       begin
 	pid2, stat = Process.waitpid2(pid)
 	stat.exitstatus
@@ -55,8 +57,8 @@ module Reish
       end
     end
 
-    alias execute stat
-    alias stat reish_stat
+    alias stat execute 
+    alias reish_stat stat
 
     def open_mode
       if receiver.kind_of?(Reish::Main)

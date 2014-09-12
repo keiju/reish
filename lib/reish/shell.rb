@@ -11,11 +11,13 @@
 #   
 #
 
-require "reish/workspace.rb"
+require "reish/workspace"
+require "reish/system-command"
 
-require "reish/lex.rb"
-require "reish/parser.rb"
-require "reish/codegen.rb"
+require "reish/lex"
+require "reish/parser"
+require "reish/codegen"
+
 
 module Reish 
   class Shell
@@ -23,7 +25,7 @@ module Reish
       @lex = Lex.new
       @parser = Parser.new(@lex)
       @codegen = CodeGenerator.new
-      @workspace = WorkSpace.new
+      @workspace = WorkSpace.new(Main.new(self))
 
       @pwd = pwd
       @system_path = ENV["PATH"].split(":")
@@ -55,6 +57,7 @@ module Reish
 	end
 	exp = @current_input_unit.accept(@codegen)
 	puts "OUTPUT: #{exp}"
+	@workspace.evaluate(exp)
       end
     end
 
@@ -64,15 +67,17 @@ module Reish
       path = @command_cache[name]
       unless path
 	for dir_name in @system_path
-	  p = File.expand_path(dir_name+"/"+name, @pwd)
+	  p = File.expand_path(dir_name+"/"+name.to_s, @pwd)
 	  if File.exist?(p)
 	    @command_cache[name] = p
+	    path = p
+	    break 
 	  end
 	end
-	return nil
+	return nil unless path
       end
 
-      SystemCommand(self, receiver, name, *args)
+      Reish::SystemCommand(self, receiver, p, *args)
     end
 
     def rehash
