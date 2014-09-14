@@ -15,10 +15,24 @@ module Reish
   module OSSpace
 
     def method_missing(name, *args)
-      command = @__shell__.search_command(self, name, *args)
+      sh = Thread.current[:__REISH_CURRENT_SHELL__]
+      super unless sh
+      back = Thread.current[:__REISH_CURRENT_SHELL__]
+      Thread.current[:__REISH_CURRENT_SHELL__] = nil
+      begin
+	command = sh.search_command(self, name, *args)
+      ensure
+	Thread.current[:__REISH_CURRENT_SHELL__] = back
+      end
       super unless command
       command
     end
   end
 end
+
+class Object
+  include Reish::OSSpace
+end
+
+
 

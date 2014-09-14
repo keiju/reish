@@ -24,6 +24,8 @@ module Reish
       @__shell__ = shell
     end
 
+    attr_reader :__shell__
+
     def_delegator :@__shell__, :rehash
 
   end

@@ -60,11 +60,11 @@ class Reish::Parser
 		result = val[0]
 	    }
 
-  logical_command: logical_command AND_AND newline_list logical_command
+  logical_command: logical_command AND_AND nll logical_command
 	    { 
 		result = Node::LogicalCommandAA(val[0], val[3])
 	    }
-	| logical_command OR_OR newline_list logical_command
+	| logical_command OR_OR nll logical_command
 	    { 
 		result = Node::LogicalCommandOO(val[0], val[3])
 	    }
@@ -73,12 +73,12 @@ class Reish::Parser
   pipeline_command: pipeline
 	| BANG pipeline
 
-  pipeline: pipeline '|' newline_list command
+  pipeline: pipeline '|' nll command
 	    {
 	       result = val[0]
   	       result.pipe_command(:BAR, val[3])
 	    }
-	| pipeline BAR_AND newline_list command
+	| pipeline BAR_AND nll command
 	    {
 	       result = val[0]
   	       result.pipe_command(:BAR_AND, val[3])
@@ -95,17 +95,12 @@ class Reish::Parser
 
   simple_command: simple_command_header simple_command_element_list 
 	    {         
-	      result = Node::SimpleCommand(val[0], val[1])
+	       result = Node::SimpleCommand(val[0], val[1])
 	    }
-	| simple_command_header simple_command_element_list DO compound_list END
-            { 
-	      result = Node::SimpleCommand(val[0], val[1], val[3])
+	| simple_command_header simple_command_element_list do_block
+	    {
+	       result = Node::SimpleCommand(val[0], val[1], val[2])
 	    }
-	| simple_command_header simple_command_element_list '{'	compound_list '}'
-            { 
-	      result = Node::SimpleCommand(val[0], val[1], val[3])
-	    }
-    
   simple_command_element_list: 
 	    {
 	       result = []
@@ -123,6 +118,32 @@ class Reish::Parser
 	| group_command
 	| ruby_exp_command
 
+  do_block: DO compound_list END
+            { 
+	      result = Node::DoBlock(val[1])
+	    }
+        | DO '|' block_arg nll '|' compound_list END
+            { 
+	      result = Node::DoBlock(val[5], val[2])
+	    }
+	| '{' compound_list '}'
+            { 
+	      result = Node::DoBlock(val[1])
+	    }
+	| '{' nll '|' block_arg nll '|' compound_list '}'
+            { 
+	      result = Node::DoBlock(val[6], val[3])
+	    }
+  block_arg: 
+    	    {
+	       @lex.lex_state = :EXPR_BEG
+	       result = []
+	    }
+	| block_arg nll ID
+	    {
+	       result.push val[2]
+	    }
+
   shell_command: FOR_COMMAND
 	| if_command
  	| while_command
@@ -136,42 +157,42 @@ class Reish::Parser
 	| group_command
 	| ruby_exp_command
 
-  while_command: WHILE {@lex.cond_push(true)} newline_list logical_command do {@lex.cond_pop} compound_list END
+  while_command: WHILE {@lex.cond_push(true)} nll logical_command do {@lex.cond_pop} compound_list END
 	    {
 	       result = Node::WhileCommand(val[3], val[6])
 	    }
 
-  do: '\n' newline_list
-	| ';' newline_list
+  do: '\n' nll
+	| ';' nll
 	| COND_DO
 
-  if_command: IF newline_list logical_command then compound_list END
+  if_command: IF nll logical_command then compound_list END
 	    {
 		result = Node::IfCommand(val[2], val[4])
 	    }
-	|	IF newline_list logical_command then compound_list ELSE compound_list END
+	|	IF nll logical_command then compound_list ELSE compound_list END
 	    {
 		result = Node::IfCommand(val[2], val[4], val[6])
 	    }
-	|	IF newline_list logical_command then compound_list elsif_clause END
+	|	IF nll logical_command then compound_list elsif_clause END
 	    {
 		result = Node::IfCommand(val[2], val[4], val[5])
 	    }
 
-  elsif_clause:	ELSIF newline_list logical_command then compound_list
+  elsif_clause:	ELSIF nll logical_command then compound_list
 	    {
 		result = Node::IfCommand(val[2], val[4])
 	    }
-	|	ELSIF newline_list logical_coomand then compound_list ELSE compound_list
+	|	ELSIF nll logical_coomand then compound_list ELSE compound_list
 	    {
 		result = Node::IfCommand(val[2], val[4], val[6])
 	    }
-	|	ELSIF newline_list logical_command then compound_list elif_clause
+	|	ELSIF nll logical_command then compound_list elif_clause
 	    {
 		result = Node::IfCommand(val[2], val[4], val[6])
 	    }
 
-  then: '\n' newline_list
+  then: '\n' nll
 	| ';'
 	| THEN
 
@@ -184,24 +205,24 @@ class Reish::Parser
 		result = Node::RubyExp(val[0])
 	    }
 
-  compound_list: newline_list
+  compound_list: nll
 	    {
 		result = Node::SeqCommand()
 	    }
-        | newline_list compound_list1 
+        | nll compound_list1 
 	    {
 		result = val[1]
 	    }
-	| newline_list compound_list1 '\n' newline_list
+	| nll compound_list1 '\n' nll
 	    {
 		result = val[1]
 	    } 
-	| newline_list compound_list1 '&' newline_list
+	| nll compound_list1 '&' nll
 	    {
 		val[1].last_command_to_async
 		result = val[1]
 	    } 
-	| newline_list compound_list1 ';' newline_list
+	| nll compound_list1 ';' nll
 	    {
 		result = val[1]
 	    } 
@@ -210,18 +231,18 @@ class Reish::Parser
 	    {
 	        result = Node::SeqCommand(val[0]) 
 	    }
-	| compound_list1 "\n" newline_list logical_command
+	| compound_list1 "\n" nll logical_command
 	    { 
 		val[0].add_command(val[3])
 		result = val[0]
 	    }
-	| compound_list1 "&" newline_list logical_command
+	| compound_list1 "&" nll logical_command
 	    { 
 		val[0].last_command_to_async
 		val[0].add_command(val[3])
 		result = val[0]
 	    }
-  	| compound_list1 ";" newline_list logical_command 
+  	| compound_list1 ";" nll logical_command 
 	    { 
 		val[0].add_command(val[3])
 		result = val[0]
@@ -290,8 +311,10 @@ class Reish::Parser
 simple_list_terminator:	'\n'
 	| EOF
 
-newline_list:
-	| newline_list '\n'
+nll:
+	| nll nl
+
+nl:     '\n'
 
 end
 

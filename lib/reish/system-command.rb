@@ -33,34 +33,84 @@ module Reish
       @receiver = receiver
       @command_path = path
       @args = args
+
+      @exit_status = nil
     end
 
     attr_reader :receiver
 
-    def each(&block)
+    def io_popen(mode, &block)
       IO.popen([@__shell__.system_env, 
 		 @command_path, 
-		 @args.collect{|e| e.to_s}], open_mode) do |io|
+		 *@args.collect{|e| e.to_s}], mode, &block)
+    end
+
+    def io_spawn
+      pid = Process.spawn(@__shell__.system_env, 
+			  @command_path, 
+			  *@args.collect{|e| e.to_s})
+    end
+
+    def each(&block)
+      if receive?
+	mode = "r+"
+      else
+	mode = "r"
+      end
+
+      io_popen(mode) do |io|
+	if receive?
+	  case receiver
+	  when Enumerable
+	    Thread.start do
+	      begin
+		@receiver.each {|e| io.puts s.to_s}
+	      ensure
+		io.close_write
+	      end
+	    end
+	  else
+	    io.write @receiver.to_s
+	    io.close_write
+	  end
+	end
+
 	io.each &block
       end
     end
 
-    def execute
-      pid = Process.spawn(@__shell__.system_env, 
-			  @command_path, 
-			  *@args.collect{|e| e.to_s})
-      begin
-	pid2, stat = Process.waitpid2(pid)
-	stat.exitstatus
-      rescue Errno::ECHILD
-	puts "#{command_path} not stated"
+    def term
+      if receive?
+	io_popen("w") do |io|
+	  case receiver 
+	  when Enumerable
+	    @receiver.each{|e| io.print e.to_s}
+	  else
+	    io.write @receiver.to_s
+	  end
+	  io.close
+	  @exit_status = $?
+	end
+      else
+	pid = io_spawn
+	begin
+	  pid2, stat = Process.waitpid2(pid)
+	  @exit_status = stat
+	rescue Errno::ECHILD
+	  puts "#{command_path} not stated"
+	end
       end
+
+      @exit_status
     end
 
-    alias stat execute 
-    alias reish_stat stat
+    alias reish_term term
 
-    def open_mode
+    def receive?
+      !@receiver.kind_of?(Reish::Main)      
+    end
+
+    def each_open_mode
       if receiver.kind_of?(Reish::Main)
 	"r"
       else
@@ -86,33 +136,43 @@ module Reish
     end
 
     def to_script
-      @command_path + @args.collect{|e| e.to_s}.join(" ")
+      @command_path +" "+ @args.collect{|e| e.to_s}.join(" ")
+    end
+
+    def exit_status
+      unless @exit_status
+	term
+      end
+      @exit_status
     end
   end
 
   class CompSystemCommand<SystemCommand
-    def intialize(shell, receiver, path, *args)
+    def initialize(shell, receiver, path, *args)
       super
       
       @receiver = receiver.receiver
       @receiver_script = receiver.to_script
     end
 
-    def each(&block)
-      IO.popen(@__shell__.system_env, to_script, open_mode) do |io|
-	io.each &block
-      end
+    def io_popen(&block)
+      IO.popen(@__shell__.system_env, to_script, open_mode, &block)
     end
-    
+
+    def io_spawn
+      Process.spawn(@__shell__.system_env, to_script)
+    end
+
     def to_script
       @receiver_script + "|" +
-	@command_path + @args.collect{|e| e.to_s}.join(" ")
+	@command_path + " " + @args.collect{|e| e.to_s}.join(" ")
     end
   end
 end
 
 
 class Object
+  def reish_term; self; end
   def reish_stat; self; end
 end
 

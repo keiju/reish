@@ -72,10 +72,26 @@ module Reish
     def accept(visitor)
       visitor.visit_id(self)
     end
+
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	"#<ID:#{@value}, l=#{@line_no}, c=#{@char_no}>"
+      else
+	super
+      end
+    end
   end
   class WordToken<ValueToken
     def accept(visitor)
       visitor.visit_word(self)
+    end
+
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	"#<WORD:#{@value}, l=#{@line_no}, c=#{@char_no}>"
+      else
+	super
+      end
     end
   end
   class StringToken<ValueToken; end
@@ -89,6 +105,14 @@ module Reish
 
     def token_id
       @tid
+    end
+
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	"#<Token#{@tid}, l=#{@line_no}, c=#{@char_no}>"
+      else
+	super
+      end
     end
   end
 

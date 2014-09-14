@@ -237,13 +237,13 @@ module Reish
 
       @OP.def_rule("\n") do
 	|op, io|
-	self.lex_state = EXPR_BEG
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
       end
 
       @OP.def_rules("'", '"') do
 	|op, io|
 	str = @ruby_scanner.identify_reish_string(op)
+	self.lex_state = EXPR_END
 	WordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
       end
 
@@ -344,7 +344,7 @@ module Reish
     def identify_word(io)
       token = ""
 
-      while (ch = io.getc) =~ /[\w\/\.]/
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\{\}]/ !~ ch
 	print ":", ch, ":" if Debug
 	token.concat ch
       end
@@ -441,7 +441,6 @@ class RubyLex
     ensure
       @ltype = nil
       @quoted = nil
-      self.lex_state = EXPR_END
     end
   end
 

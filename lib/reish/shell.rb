@@ -52,12 +52,13 @@ module Reish
 	p @current_input_unit
 	break if Node::EOF == @current_input_unit 
 	if Node::NOP == @current_input_unit 
-	  puts "OUTPUT: (NL)"
+	  puts "<= (NL)"
 	  next
 	end
 	exp = @current_input_unit.accept(@codegen)
-	puts "OUTPUT: #{exp}"
-	@workspace.evaluate(exp)
+	puts "<= #{exp}"
+	val = @workspace.evaluate(exp)
+	puts "=> #{val.inspect}"
       end
     end
 
@@ -77,7 +78,7 @@ module Reish
 	return nil unless path
       end
 
-      Reish::SystemCommand(self, receiver, p, *args)
+      Reish::SystemCommand(self, receiver, path, *args)
     end
 
     def rehash

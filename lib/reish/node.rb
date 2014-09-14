@@ -14,7 +14,6 @@
 module Reish
 
   class Node
-
     def Node.def_constructor(n=nil)
       n = name unless n
       
@@ -127,6 +126,8 @@ module Reish
 	@nodes[-1] = Node::AsyncCommand(@nodes[-1])
       end
 
+
+
       def_accept
     end
 
@@ -221,6 +222,41 @@ module Reish
 	@have_redirection
       end
 
+      def inspect
+	if Reish::INSPECT_LEBEL < 2
+	  if @block
+	    "#<SimpleCommand:#{@name.inspect}(#{@args.inspect})#{@block.inspect}>"
+	  else
+	    "#<SimpleCommand:#{@name.inspect}(#{@args.inspect})>"
+	  end
+	else
+	  super
+	end
+      end
+      def_accept
+    end
+
+    class DoBlock<Node
+      def_constructor
+
+      def initialize(body, args = nil)
+	@body = body
+	@args = args
+      end
+      attr_reader :body
+      attr_reader :args
+
+      def inspect
+	if Reish::INSPECT_LEBEL < 2
+	  if @args
+	    "#<DoBlock:|#{@args.inspect}| #{@body.inspect}>"
+	  else
+	    "#<DoBlock: #{@args.inspect}>"
+	  end
+	else
+	  super
+	end
+      end
       def_accept
     end
 

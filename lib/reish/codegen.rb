@@ -73,7 +73,7 @@ module Reish
 
     def visit_pipeline_command(command)
       s = command.commands.collect{|com| com.accept(self)}.join(".")
-      "#{s}.reish_stat"
+      "#{s}.reish_term"
     end
 
     def visit_simple_command(command)
@@ -88,10 +88,20 @@ module Reish
 	args = "("+command.args.collect{|e| e.accept(self)}.join(", ")+")"
       end
       if command.block
-	"#{name}#{args}{#{command.block.accept(self)}}"
+	"#{name}#{args}#{command.block.accept(self)}"
       else
 	"#{name}#{args}"
       end
+    end
+
+    def visit_do_block(command)
+      b = command.body.accept(self)
+      
+      args = ""
+      if command.args
+	args = "|"+command.args.collect{|e| e.accept(self)}.join(", ")+"|"
+      end
+      "{#{args} #{b}}"
     end
 
     def visit_simple_command_with_redirection(command)
