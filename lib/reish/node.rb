@@ -64,6 +64,50 @@ module Reish
       def_accept
     end
 
+    class AssginCommand<Node
+      def_constructor
+
+      def initialize(var, val)
+	@variable = var
+	@value = val
+      end
+
+      attr_reader :variable
+      attr_reader :value
+
+      def_accept
+    end
+
+    class IndexAssginCommand<Node
+      def_constructor
+
+      def initialize(var,index,  val)
+	@variable = var
+	@index = index
+	@value = val
+      end
+
+      attr_reader :variable
+      attr_reader :index
+      attr_reader :value
+
+      def_accept
+    end
+
+    class IndexRefCommand<Node
+      def_constructor
+
+      def initialize(var,index)
+	@variable = var
+	@index = index
+      end
+
+      attr_reader :variable
+      attr_reader :index
+
+      def_accept
+    end
+
     class WhileCommand<Node
       def_constructor
 
@@ -107,6 +151,32 @@ module Reish
       def_accept
     end
 
+    class ArrayCommand<Node
+      def_constructor
+
+      def initialize(elements)
+	super()
+	@elements = elements
+      end
+      
+      attr_reader :elements
+
+      def_accept
+    end
+
+    class HashCommand<Node
+      def_constructor
+
+      def initialize(elements)
+	super()
+	@elements = elements
+      end
+      
+      attr_reader :elements
+
+      def_accept
+    end
+
     class SeqCommand<Node
       def_constructor
 
@@ -125,8 +195,6 @@ module Reish
       def last_command_to_async
 	@nodes[-1] = Node::AsyncCommand(@nodes[-1])
       end
-
-
 
       def_accept
     end

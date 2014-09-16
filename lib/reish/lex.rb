@@ -240,6 +240,18 @@ module Reish
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
       end
 
+      @OP.def_rules("=") do
+      |op, io|
+
+	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "=")
+      end
+
+      @OP.def_rule("=>") do
+	|op, io|
+	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :ASSOC)
+      end
+		   
+
       @OP.def_rules("'", '"') do
 	|op, io|
 	str = @ruby_scanner.identify_reish_string(op)
@@ -254,20 +266,26 @@ module Reish
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
       end
 
-      @OP.def_rule("[") do
-	|op, io|
-	cond_push(false)
-	self.lex_state = EXPR_BEG
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+       @OP.def_rule("[") do
+ 	|op, io|
+	
+	if @space_seen
+	  io.ungetc
+	  return identify_wildcard(io)
+	end
+	
+ 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_I)
       end
 
-      @OP.def_rule("{") do
-	|op, io|
-	cond_push(false)
-	self.lex_state = EXPR_BEG
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
-      end
+#       @OP.def_rule("{") do
+# 	|op, io|
+# 	cond_push(false)
+# 	self.lex_state = EXPR_BEG
+# 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+#       end
 
+
+#      @OP.def_rules("]", ")", "}") do
       @OP.def_rules("]", ")", "}") do
 	|op, io|
 	cond_lexpop
@@ -311,16 +329,24 @@ module Reish
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :OR_OR)
       end
 
+      @OP.def_rule("$[") do
+ 	|op, io|
+ 	cond_push(false)
+ 	self.lex_state = EXPR_ARG
+ 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_A)
+      end
+
+      @OP.def_rule("${") do
+ 	|op, io|
+ 	cond_push(false)
+ 	self.lex_state = EXPR_ARG
+ 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_H)
+      end
+
       @OP.def_rule("$(") do
 	|op, io|
 	io.ungetc
 	identify_compstmt(io, RubyToken::TkRPAREN)
-      end
-
-      @OP.def_rule("$[") do
-	|op, io|
-	io.ungetc
-	identify_compstmt(io, RubyToken::TkRBRACK)
       end
 
       @OP.def_rule(">") do
@@ -331,7 +357,11 @@ module Reish
       @OP.def_rule("") do
 	|op, io|
 
-	identify_word(io)
+	if @lex_state == EXPR_BEG
+	  identify_id(io)
+	else
+	  identify_word(io)
+	end
       end
     end
 
@@ -341,16 +371,65 @@ module Reish
       RubyExpToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, exp)
     end
 
-    def identify_word(io)
+    def identify_id(io)
       token = ""
 
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\{\}]/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[=\|&;\(\)<>\[\{\}\]]/ !~ ch
 	print ":", ch, ":" if Debug
+
+	if /[\*\.\/]/ =~ ch
+	  io.ungetc
+	  return identify_path(io, token)
+	end
 	token.concat ch
       end
       io.ungetc
 
-      if @lex_state == EXPR_BEG || PreservedWordH[token]
+      if tid = PreservedWord[token]
+	if tid == :DO && cond?
+	  tid = :COND_DO
+	end
+	  
+	if st = TransState[tid]
+	  self.lex_state = st
+	end
+
+	ReservedWordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, tid)
+      else
+	self.lex_state = EXPR_ARG
+	IDToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+      end
+    end
+
+    def identify_path(io, token = "")
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>]/ !~ ch
+	print ":", ch, ":" if Debug
+
+	token.concat ch
+      end
+      io.ungetc
+
+      self.lex_state = EXPR_ARG
+      PathToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+    end
+
+    def identify_word(io)
+      token = ""
+
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\}\]]/ !~ ch
+	print ":", ch, ":" if Debug
+
+	break if ch == "=" && io.peek(0) == ">"
+
+	if /[\[\{\*]/ =~ ch
+	  io.ungetc
+	  return identify_wildcard(io, token)
+	end
+	token.concat ch
+      end
+      io.ungetc
+
+      if PreservedWordH[token]
 
 	if tid = PreservedWord[token]
 	  if tid == :DO && cond?
@@ -369,6 +448,17 @@ module Reish
       else
 	WordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
       end
+    end
+
+    def identify_wildcard(io, token = "")
+      
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>]/ !~ ch
+	print ":", ch, ":" if Debug
+	token.concat ch
+      end
+      io.ungetc
+
+      WildCardToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
     end
   end
 end

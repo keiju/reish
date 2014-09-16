@@ -35,6 +35,8 @@ module Reish
       @command_cache = {}
     end
 
+    attr_reader :pwd
+
     def start
       @lex.set_prompt do |ltype, indent, continue, line_no|
 	"reish>"
@@ -48,6 +50,7 @@ module Reish
       @lex.initialize_input
 
       loop do
+	@lex.lex_state = :EXPR_BEG
 	@current_input_unit = @parser.do_parse
 	p @current_input_unit
 	break if Node::EOF == @current_input_unit 
@@ -65,19 +68,31 @@ module Reish
     #
     # command methods
     def search_command(receiver, name, *args)
+
       path = @command_cache[name]
-      unless path
-	for dir_name in @system_path
-	  p = File.expand_path(dir_name+"/"+name.to_s, @pwd)
-	  if File.exist?(p)
-	    @command_cache[name] = p
-	    path = p
-	    break 
-	  end
-	end
-	return nil unless path
+      if path
+	return Reish::SystemCommand(self, receiver, path, *args)
       end
 
+      n = name.to_s
+
+      if n.include?("/")
+	path = File.absolute_path(n, @pwd)
+	return nil unless File.executable?(path)
+
+	@command_cache[name] = path
+	return Reish::SystemCommand(self, receiver, path, *args)
+      end
+
+      for dir_name in @system_path
+	p = File.expand_path(dir_name+"/"+n, @pwd)
+	if File.exist?(p)
+	  @command_cache[name] = p
+	  path = p
+	  break 
+	end
+      end
+      return nil unless path
       Reish::SystemCommand(self, receiver, path, *args)
     end
 

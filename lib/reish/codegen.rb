@@ -21,6 +21,28 @@ module Reish
       input_unit.node.accept(self)
     end
 
+    def visit_assgin_command(command)
+      var = command.variable.accept(self)
+      val = command.value.accept(self)
+
+      "#{var}=#{val}"
+    end
+
+    def visit_index_assgin_command(command)
+      var = command.variable.accept(self)
+      idx = command.index.accept(self)
+      val = command.value.accept(self)
+
+      "#{var}[#{idx}]=#{val}"
+    end
+
+    def visit_index_ref_command(command)
+      var = command.variable.accept(self)
+      idx = command.index.accept(self)
+
+      "#{var}[#{idx}]"
+    end
+
     def visit_while_command(command)
       c = command.cond.accept(self)
       n = command.node.accept(self)
@@ -46,6 +68,16 @@ module Reish
     def visit_group(group)
       script = group.node.accept(self)
       "("+script+")"
+    end
+
+    def visit_array_command(array)
+      script = array.elements.collect{|e| e.accept(self)}.join(", ")
+      "["+script+"]"
+    end
+
+    def visit_hash_command(array)
+      script = array.elements.collect{|e1, e2| e1.accept(self)+"=>"+e2.accept(self)}.join(", ")
+      "{"+script+"}"
     end
 
     def visit_seq_command(command)
@@ -77,20 +109,34 @@ module Reish
     end
 
     def visit_simple_command(command)
-      name = command.name.accept(self)
-
       if command.have_redirection?
 	return visit_simple_command_with_redirection(command)
       end
-      if command.args.empty?
-	args = ""
+
+      name = command.name.accept(self)
+
+      if !command.name.kind_of?(PathToken)
+	if command.args.empty?
+	  args = ""
+	else
+	  args = "("+command.args.collect{|e| e.accept(self)}.join(", ")+")"
+	end
+	if command.block
+	  "#{name}#{args}#{command.block.accept(self)}"
+	else
+	  "#{name}#{args}"
+	end
       else
-	args = "("+command.args.collect{|e| e.accept(self)}.join(", ")+")"
-      end
-      if command.block
-	"#{name}#{args}#{command.block.accept(self)}"
-      else
-	"#{name}#{args}"
+	if command.args.empty?
+	  args = ""
+	else
+	  args = ","+command.args.collect{|e| e.accept(self)}.join(", ")
+	end
+	if command.block
+	  "send('#{name}'#{args})#{command.block.accept(self)}"
+	else
+	  "send('#{name}'#{args})"
+	end
       end
     end
 
@@ -131,8 +177,16 @@ module Reish
       id.value
     end
 
-    def visit_word(id)
-      '"'+id.value+'"'
+    def visit_path(path)
+      path.value
+    end
+
+    def visit_word(word)
+      '"'+word.value+'"'
+    end
+
+    def visit_wildcard(wc)
+      'Reish::WildCard("'+wc.value+'")'
     end
 
     def visit_redirection(red)

@@ -65,6 +65,18 @@ module Reish
       @value = val
     end
     attr_reader :value
+
+    def inspect_tag
+      self.class.name
+    end
+
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	"#<#{inspect_tag}:#{@value.inspect}, l=#{@line_no}, c=#{@char_no}>"
+      else
+	super
+      end
+    end
   end
 
   class IDToken<ValueToken
@@ -73,29 +85,51 @@ module Reish
       visitor.visit_id(self)
     end
 
-    def inspect
-      if Reish::INSPECT_LEBEL < 3
-	"#<ID:#{@value}, l=#{@line_no}, c=#{@char_no}>"
-      else
-	super
-      end
+    def inspect_tag
+      "ID"
     end
   end
+
+  class PathToken<ValueToken
+    def accept(visitor)
+      visitor.visit_path(self)
+    end
+
+    def inspect_tag
+      "Path"
+    end
+  end
+
   class WordToken<ValueToken
     def accept(visitor)
       visitor.visit_word(self)
     end
 
-    def inspect
-      if Reish::INSPECT_LEBEL < 3
-	"#<WORD:#{@value}, l=#{@line_no}, c=#{@char_no}>"
-      else
-	super
-      end
+    def inspect_tag
+      "WORD"
     end
   end
-  class StringToken<ValueToken; end
-  class NumberToken<ValueToken; end
+
+  class WildCardToken<ValueToken
+    def accept(visitor)
+      visitor.visit_wildcard(self)
+    end
+
+    def inspect_tag
+      "WCARD"
+    end
+  end
+
+  class StringToken<ValueToken
+    def inspect_tag
+      "STR"
+    end
+  end
+  class NumberToken<ValueToken
+    def inspect_tag
+      "NUM"
+    end
+  end
 
   class ReservedWordToken<Token
     def initialize(io, seek, line_no, char_no, tid)
@@ -136,7 +170,9 @@ module Reish
     RubyExpToken,
     CommandToken,
     IDToken,
+    PathToken,
     WordToken,
+    WildCardToken,
     StringToken,
     NumberToken,
     EOFToken,

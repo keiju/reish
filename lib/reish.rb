@@ -15,7 +15,7 @@ require "reish/shell"
 
 module Reish
 
-  INSPECT_LEBEL = 2
+  INSPECT_LEBEL = 1
 
   @CONF={}
   def Reish.conf

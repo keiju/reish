@@ -42,13 +42,30 @@ module Reish
     def io_popen(mode, &block)
       IO.popen([@__shell__.system_env, 
 		 @command_path, 
-		 *@args.collect{|e| e.to_s}], mode, &block)
+		 *command_opts], mode, &block)
+    end
+
+    def command_opts(ary = @args)
+      opts = []
+      ary.each do |e|
+	case e
+	when String
+	  opts.push e
+	when Array
+	  opts.concat command_opts(e)
+	when Hash
+	  opts.concat e.collect{|key, value| "--#{key}=#{value}"}
+	else
+	  e.reish_append_command_opts(opts)
+	end
+      end
+      opts
     end
 
     def io_spawn
       pid = Process.spawn(@__shell__.system_env, 
 			  @command_path, 
-			  *@args.collect{|e| e.to_s})
+			  *command_opts)
     end
 
     def each(&block)
@@ -165,8 +182,39 @@ module Reish
 
     def to_script
       @receiver_script + "|" +
-	@command_path + " " + @args.collect{|e| e.to_s}.join(" ")
+	@command_path + " " + command_opts.join(" ")
     end
+  end
+
+  def Reish::WildCard(wc)
+    sh = Thread.current[:__REISH_CURRENT_SHELL__]
+    WildCard::new(sh, wc)
+  end
+
+  class WildCard
+    def initialize(sh, pat)
+      @shell = sh
+      @pattern = pat
+    end
+
+    def append_command_opts(opts)
+
+      if @pattern[0] == "/"
+        files = Dir[@pattern]
+      else
+        prefix = @shell.pwd+"/"
+        files = Dir[prefix+@pattern].collect{|p| p.sub(prefix, "")}
+      end
+
+      if files.empty?
+	opts.push @pattern
+      else
+	opts.concat files
+      end
+    end
+
+    alias reish_append_command_opts append_command_opts
+
   end
 end
 
