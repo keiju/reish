@@ -79,6 +79,16 @@ module Reish
     end
   end
 
+  class PseudoVariableToken<ValueToken
+    def accept(visitor)
+      visitor.visit_pseudo_variable(self)
+    end
+
+    def inspect_tag
+      "PVAR"
+    end
+  end
+
   class IDToken<ValueToken
 
     def accept(visitor)
@@ -140,7 +150,6 @@ module Reish
     end
   end
 
-
   class IntegerToken<ValueToken
     def accept(visitor)
       visitor.visit_integer(self)
@@ -173,7 +182,7 @@ module Reish
 
     def inspect
       if Reish::INSPECT_LEBEL < 3
-	"#<Token#{@tid}, l=#{@line_no}, c=#{@char_no}>"
+	"#<Token:#{@tid}, l=#{@line_no}, c=#{@char_no}>"
       else
 	super
       end
@@ -199,6 +208,7 @@ module Reish
   DirectlyTokenIDClasses = [
     RubyExpToken,
     CommandToken,
+    PseudoVariableToken,
     IDToken,
     PathToken,
     WordToken,

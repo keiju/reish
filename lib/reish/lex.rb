@@ -79,7 +79,7 @@ module Reish
 #      "return"	=> :RETURN, 
 #      "yield"	=> :YIELD, 
 #      "super"	=> :SUPER, 
-#      "self"	=> :SELF, 
+      "self"	=> :SELF, 
       "nil"	=> :NIL, 
       "true"	=> :TRUE, 
       "false"	=> :FALSE, 
@@ -88,6 +88,13 @@ module Reish
 #      "not"	=> :NOT, 
 #      "defined?"=> :DEFINED, 
     }
+
+    PseudoVars = [
+      :NIL,
+      :TRUE,
+      :FALSE,
+      :SELF,
+    ]
 
     TransState = {
       :CLASS => :EXPR_CLASS,
@@ -411,15 +418,7 @@ module Reish
       io.ungetc
 
       if tid = PreservedWord[token]
-	if tid == :DO && cond?
-	  tid = :COND_DO
-	end
-	  
-	if st = TransState[tid]
-	  self.lex_state = st
-	end
-
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, tid)
+	identify_reserved_word(io, token, tid)
       else
 	self.lex_state = EXPR_ARG
 	IDToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
@@ -455,21 +454,32 @@ module Reish
       if PreservedWordH[token]
 
 	if tid = PreservedWord[token]
-	  if tid == :DO && cond?
-	    tid = :COND_DO
-	  end
-	  
-	  if st = TransState[tid]
-	    self.lex_state = st
-	  end
-
-	  ReservedWordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, tid)
+	  identify_reserved_word(io, token, tid)
 	else
 	  self.lex_state = EXPR_ARG
 	  IDToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
 	end
       else
 	WordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+      end
+    end
+
+    def identify_reserved_word(io, token = "", tid = nil)
+      tid = PreservedWordH[token] unless tid
+
+      if tid == :DO && cond?
+	tid = :COND_DO
+      end
+	  
+      if st = TransState[tid]
+	self.lex_state = st
+      end
+
+      if PseudoVars.include?(tid)
+	self.lex_state = EXPR_END
+	PseudoVariableToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+      else
+	ReservedWordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, tid)
       end
     end
 
@@ -485,9 +495,6 @@ module Reish
     end
 
     def identify_number(io, token = "")
-
-#      self.lex_state = EXPR_END
-
       if io.peek(0) == "0" && io.peek(1) !~ /[.eE]/
 	token.concat io.getc
 	case ch = io.peek(0)
@@ -553,7 +560,6 @@ module Reish
 	return IntegerToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
       end
 
-p "N"
       token_type = IntegerToken
       allow_point = true
       allow_e = true
@@ -567,15 +573,12 @@ p "N"
 	  token.concat ch
 	  non_digit = ch
 	when allow_point && "."
-p "N1"
 	  token.concat ch
 	  if non_digit
-p "N11"
 	    return identify_word(io, token)
 	  end
 	  token_type = NumberToken
 	  if io.peek(0) !~ /[0-9]/
-p "N12"
 	    return identify_word(io, token)
 	  end
 	  allow_point = false
@@ -593,19 +596,15 @@ p "N12"
 	  allow_point = false
 	  non_digit = ch
 	else
-p "N2"
 	  if /\s/ =~ ch || /[\|&;\(\)<>\}\]]/ =~ ch
 	    io.ungetc
 	    break
 	  end
-p "N21"
 	  token.concat ch
 	  return identify_word(io, token)
 	end
       end
-p "N3"
       if @lex_state != EXPR_BEG && token_type==IntegerToken && /[<>]/ =~ io.peek(0)
-p "N31"
 	return FidToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
       end
       self.lex_state = EXPR_END

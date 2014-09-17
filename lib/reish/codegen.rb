@@ -70,28 +70,6 @@ module Reish
       "("+script+")"
     end
 
-    def visit_string_command(str)
-      str.value.accept(self)
-    end
-
-    def visit_number_command(str)
-      str.value.accept(self)
-    end
-
-    def visit_integer_command(str)
-      str.value.accept(self)
-    end
-
-    def visit_array_command(array)
-      script = array.elements.collect{|e| e.accept(self)}.join(", ")
-      "["+script+"]"
-    end
-
-    def visit_hash_command(array)
-      script = array.elements.collect{|e1, e2| e1.accept(self)+"=>"+e2.accept(self)}.join(", ")
-      "{"+script+"}"
-    end
-
     def visit_sequence(seq)
       script = seq.nodes.collect{|n| n.accept(self)}.join("; ")
       "("+script+")"
@@ -131,6 +109,10 @@ module Reish
 	end
       end
       script.concat ".reish_term"
+    end
+
+    def visit_literal_command(com)
+      com.value.accept(self)
     end
 
     def visit_simple_command(command)
@@ -194,16 +176,18 @@ module Reish
       end
     end
 
+    def visit_value(val)
+      val.value
+    end
+    alias visit_id visit_value
+    alias visit_path visit_value
+    alias visit_number visit_value
+    alias visit_integer visit_value
+    alias visit_fid visit_value
+    alias visit_pseudo_variable visit_value
+
     def visit_ruby_exp(exp)
       "("+exp.exp+")"
-    end
-
-    def visit_id(id)
-      id.value
-    end
-
-    def visit_path(path)
-      path.value
     end
 
     def visit_word(word)
@@ -214,20 +198,18 @@ module Reish
       'Reish::WildCard("'+wc.value+'")'
     end
 
+    def visit_array(array)
+      script = array.elements.collect{|e| e.accept(self)}.join(", ")
+      "["+script+"]"
+    end
+
+    def visit_hash(array)
+      script = array.elements.collect{|e1, e2| e1.accept(self)+"=>"+e2.accept(self)}.join(", ")
+      "{"+script+"}"
+    end
+
     def visit_string(str)
       '"'+str.value+'"'
-    end
-
-    def visit_number(num)
-      num.value
-    end
-
-    def visit_integer(num)
-      num.value
-    end
-
-    def visit_fid(fid)
-      fid.value
     end
 
     def visit_redirection(red)

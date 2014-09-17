@@ -98,7 +98,17 @@ class Reish::Parser
 	| shell_command redirection_list
 #	| function_def
 
-  simple_command: command_header simple_command_element_list 
+  command_element: WORD
+	| STRING
+	| NUMBER
+	| INTEGER
+	| PSEUDOVARIABLE
+	| group_command
+	| ruby_exp
+	| array
+	| hash
+
+  simple_command: simple_command_header simple_command_element_list 
 	    {         
 	       result = Node::SimpleCommand(val[0], val[1])
 	    }
@@ -133,6 +143,9 @@ class Reish::Parser
 	       result.push val[2]
 	    }
 
+  simple_command_header: ID
+	| PATH
+
   simple_command_element_list: 
 	    {
 	       result = []
@@ -160,32 +173,28 @@ class Reish::Parser
 #       | for_command
 	| group_command
 
-  literal_command: STRING
+  literal_command: literal
 	    {
-	      result = Node::StringCommand(val[0])  
+	      result = Node::LiteralCommand(val[0])  
     	    }
+  literal: STRING
 	| NUMBER
-	    {
-	      result = Node::NumberCommand(val[0])  
-    	    }
 	| INTEGER
-	    {
-	      result = Node::IntegerCommand(val[0])  
-    	    }
-	| array_command
-	| hash_command
-	| ruby_exp_command
+	| PSEUDOVARIABLE
+	| array
+	| hash
+	| ruby_exp
 
   assgin_command: ID '=' command_element
 	    {
 	       result = Node::AssginCommand(val[0], val[2])
 	    }
-	| ID LBLACK_I  nls command_element nls ']' '=' nls command_element
+	| command LBLACK_I  nls command_element nls ']' '=' nls command_element
             {
 	       result = Node::IndexAssginCommand(val[0], val[2], val[7])
 	    }
 
-  index_ref_command: literal_command LBLACK_I  nls command_element nls ']'
+  index_ref_command: command LBLACK_I  nls command_element nls ']'
 	    {
 		result = Node::IndexRefCommand(val[0], val[3])
 	    }
@@ -234,14 +243,14 @@ class Reish::Parser
 	        result = Node::Group(val[1])
 	    }
 
-  ruby_exp_command: RUBYEXP
+  ruby_exp: RUBYEXP
 	    {
 		result = Node::RubyExp(val[0])
 	    }
 
-  array_command: LBLACK_A array_element_list nls ']'
+  array: LBLACK_A array_element_list nls ']'
 	    {
-		result = Node::ArrayCommand(val[1])
+		result = Node::Array(val[1])
 	    }	  
 
   array_element_list:
@@ -253,9 +262,9 @@ class Reish::Parser
 	       result.push val[2]
 	    }
 
-  hash_command: LBRACE_H hash_element_list nls '}'
+  hash: LBRACE_H hash_element_list nls '}'
 	    {
-		result = Node::HashCommand(val[1])
+		result = Node::Hash(val[1])
 	    }	  
 
   hash_element_list:
@@ -270,18 +279,6 @@ class Reish::Parser
 	    {
 		result = [val[0], val[4]]
 	    }
-
-  command_header: ID
-	| PATH
-
-  command_element: WORD
-	| STRING
-	| NUMBER
-	| INTEGER
-	| group_command
-	| ruby_exp_command
-	| array_command
-	| hash_command
 
   compound_list: nls
 	    {

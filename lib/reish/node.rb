@@ -213,32 +213,6 @@ module Reish
       def_accept
     end
 
-    class ArrayCommand<Command
-      def_constructor
-
-      def initialize(elements)
-	super()
-	@elements = elements
-      end
-      
-      attr_reader :elements
-
-      def_accept
-    end
-
-    class HashCommand<Command
-      def_constructor
-
-      def initialize(elements)
-	super()
-	@elements = elements
-      end
-      
-      attr_reader :elements
-
-      def_accept
-    end
-
     class Sequence<Node
       def_constructor
 
@@ -275,7 +249,7 @@ module Reish
       def_accept
     end
 
-    class StringCommand<Command
+    class LiteralCommand<Command
       def_constructor
       
       def initialize(value)
@@ -286,31 +260,7 @@ module Reish
 
       def_accept
     end
-
-    class NumberCommand<Command
-      def_constructor
       
-      def initialize(value)
-	@value = value
-      end
-
-      attr_reader :value
-
-      def_accept
-    end
-
-    class IntegerCommand<Command
-      def_constructor
-      
-      def initialize(value)
-	@value = value
-      end
-
-      attr_reader :value
-
-      def_accept
-    end
-
     class SimpleCommand<Command
       def_constructor
 
@@ -390,6 +340,32 @@ module Reish
       def_accept
     end
       
+    class Array<Node
+      def_constructor
+
+      def initialize(elements)
+	super()
+	@elements = elements
+      end
+      
+      attr_reader :elements
+
+      def_accept
+    end
+
+    class Hash<Node
+      def_constructor
+
+      def initialize(elements)
+	super()
+	@elements = elements
+      end
+      
+      attr_reader :elements
+
+      def_accept
+    end
+
     class RubyExp<SingleNode
       def_constructor
       
