@@ -216,6 +216,25 @@ module Reish
     alias reish_append_command_opts append_command_opts
 
   end
+
+  def Reish::Redirect(*opts)
+    Redirect::new(*opts)
+  end
+
+  class Redirect
+    def initialize(src, id, red, over = nil)
+      @source = source
+      @id = id
+      @red = red
+      @over = over
+    end
+
+    attr_reader :source
+    attr_reader :id
+    attr_reader :red
+    attr_reader :over
+  end
+
 end
 
 

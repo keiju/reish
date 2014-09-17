@@ -64,155 +64,6 @@ module Reish
       def_accept
     end
 
-    class AssginCommand<Node
-      def_constructor
-
-      def initialize(var, val)
-	@variable = var
-	@value = val
-      end
-
-      attr_reader :variable
-      attr_reader :value
-
-      def_accept
-    end
-
-    class IndexAssginCommand<Node
-      def_constructor
-
-      def initialize(var,index,  val)
-	@variable = var
-	@index = index
-	@value = val
-      end
-
-      attr_reader :variable
-      attr_reader :index
-      attr_reader :value
-
-      def_accept
-    end
-
-    class IndexRefCommand<Node
-      def_constructor
-
-      def initialize(var,index)
-	@variable = var
-	@index = index
-      end
-
-      attr_reader :variable
-      attr_reader :index
-
-      def_accept
-    end
-
-    class WhileCommand<Node
-      def_constructor
-
-      def initialize(cond, node)
-	@cond = cond
-	@node = node
-      end
-
-      attr_reader :cond
-      attr_reader :node
-
-      def_accept
-    end
-
-    class IfCommand<Node
-      def_constructor
-
-      def initialize(cond, then_list=nil, else_list=nil)
-	@cond = cond
-	@then_list = then_list
-	@else_list = else_list
-      end
-
-      attr_reader :cond
-      attr_reader :then_list
-      attr_reader :else_list
-
-      def_accept
-    end
-
-    class Group<Node
-      def_constructor
-
-      def initialize(node)
-	super()
-	@node = node
-      end
-      
-      attr_reader :node
-
-      def_accept
-    end
-
-    class ArrayCommand<Node
-      def_constructor
-
-      def initialize(elements)
-	super()
-	@elements = elements
-      end
-      
-      attr_reader :elements
-
-      def_accept
-    end
-
-    class HashCommand<Node
-      def_constructor
-
-      def initialize(elements)
-	super()
-	@elements = elements
-      end
-      
-      attr_reader :elements
-
-      def_accept
-    end
-
-    class SeqCommand<Node
-      def_constructor
-
-      def initialize(com=nil)
-	super()
-	@nodes = []
-	@nodes.push com if com
-      end
-
-      def add_command(com)
-	@nodes.push com
-      end
-
-      attr_reader :nodes
-
-      def last_command_to_async
-	@nodes[-1] = Node::AsyncCommand(@nodes[-1])
-      end
-
-      def_accept
-    end
-
-    class AsyncCommand<Node
-      def_constructor
-
-      def initialize(com)
-	super()
-	
-	@subcommand = com
-      end
-
-      attr_reader :subcommand
-
-      def_accept
-    end
-
     class LogicalCommand<Node
       def_constructor
 
@@ -266,7 +117,201 @@ module Reish
       def_accept
     end
 
-    class SimpleCommand<Node
+    class Command<Node
+      def intialize
+	@pipeout = nil
+	@have_redirection = nil
+      end
+
+      attr_accessor :pipeout
+    end
+
+    class AssginCommand<Command
+      def_constructor
+
+      def initialize(var, val)
+	@variable = var
+	@value = val
+      end
+
+      attr_reader :variable
+      attr_reader :value
+
+      def_accept
+    end
+
+    class IndexAssginCommand<Command
+      def_constructor
+
+      def initialize(var,index,  val)
+	@variable = var
+	@index = index
+	@value = val
+      end
+
+      attr_reader :variable
+      attr_reader :index
+      attr_reader :value
+
+      def_accept
+    end
+
+    class IndexRefCommand<Command
+      def_constructor
+
+      def initialize(var,index)
+	@variable = var
+	@index = index
+      end
+
+      attr_reader :variable
+      attr_reader :index
+
+      def_accept
+    end
+
+    class WhileCommand<Command
+      def_constructor
+
+      def initialize(cond, node)
+	@cond = cond
+	@node = node
+      end
+
+      attr_reader :cond
+      attr_reader :node
+
+      def_accept
+    end
+
+    class IfCommand<Command
+      def_constructor
+
+      def initialize(cond, then_list=nil, else_list=nil)
+	@cond = cond
+	@then_list = then_list
+	@else_list = else_list
+      end
+
+      attr_reader :cond
+      attr_reader :then_list
+      attr_reader :else_list
+
+      def_accept
+    end
+
+    class Group<Command
+      def_constructor
+
+      def initialize(node)
+	super()
+	@node = node
+      end
+      
+      attr_reader :node
+
+      def_accept
+    end
+
+    class ArrayCommand<Command
+      def_constructor
+
+      def initialize(elements)
+	super()
+	@elements = elements
+      end
+      
+      attr_reader :elements
+
+      def_accept
+    end
+
+    class HashCommand<Command
+      def_constructor
+
+      def initialize(elements)
+	super()
+	@elements = elements
+      end
+      
+      attr_reader :elements
+
+      def_accept
+    end
+
+    class Sequence<Node
+      def_constructor
+
+      def initialize(com=nil)
+	super()
+	@nodes = []
+	@nodes.push com if com
+      end
+
+      def add_command(com)
+	@nodes.push com
+      end
+
+      attr_reader :nodes
+
+      def last_command_to_async
+	@nodes[-1] = Node::AsyncCommand(@nodes[-1])
+      end
+
+      def_accept
+    end
+
+    class AsyncCommand<Node
+      def_constructor
+
+      def initialize(com)
+	super()
+	
+	@subcommand = com
+      end
+
+      attr_reader :subcommand
+
+      def_accept
+    end
+
+    class StringCommand<Command
+      def_constructor
+      
+      def initialize(value)
+	@value = value
+      end
+
+      attr_reader :value
+
+      def_accept
+    end
+
+    class NumberCommand<Command
+      def_constructor
+      
+      def initialize(value)
+	@value = value
+      end
+
+      attr_reader :value
+
+      def_accept
+    end
+
+    class IntegerCommand<Command
+      def_constructor
+      
+      def initialize(value)
+	@value = value
+      end
+
+      attr_reader :value
+
+      def_accept
+    end
+
+    class SimpleCommand<Command
       def_constructor
 
       def initialize(name, elements, b = nil)
@@ -281,7 +326,6 @@ module Reish
       attr_reader :name
       attr_reader :args
       attr_reader :block
-      attr_accessor :pipeout
 
       def have_redirection?
 	if @have_redirection.nil?

@@ -70,6 +70,18 @@ module Reish
       "("+script+")"
     end
 
+    def visit_string_command(str)
+      str.value.accept(self)
+    end
+
+    def visit_number_command(str)
+      str.value.accept(self)
+    end
+
+    def visit_integer_command(str)
+      str.value.accept(self)
+    end
+
     def visit_array_command(array)
       script = array.elements.collect{|e| e.accept(self)}.join(", ")
       "["+script+"]"
@@ -80,8 +92,8 @@ module Reish
       "{"+script+"}"
     end
 
-    def visit_seq_command(command)
-      script = command.nodes.collect{|n| n.accept(self)}.join("; ")
+    def visit_sequence(seq)
+      script = seq.nodes.collect{|n| n.accept(self)}.join("; ")
       "("+script+")"
     end
 
@@ -104,8 +116,21 @@ module Reish
     end
 
     def visit_pipeline_command(command)
-      s = command.commands.collect{|com| com.accept(self)}.join(".")
-      "#{s}.reish_term"
+      script = ""
+      command.commands.each do |com|
+	script.concat com.accept(self)
+	case com.pipeout
+	when :BAR
+	  script.concat "."
+	when :COLON2
+	  script.concat "::"
+	when nil
+	  # do nothing
+	else
+	  raise NoImplementError
+	end
+      end
+      script.concat ".reish_term"
     end
 
     def visit_simple_command(command)
@@ -189,8 +214,26 @@ module Reish
       'Reish::WildCard("'+wc.value+'")'
     end
 
+    def visit_string(str)
+      '"'+str.value+'"'
+    end
+
+    def visit_number(num)
+      num.value
+    end
+
+    def visit_integer(num)
+      num.value
+    end
+
+    def visit_fid(fid)
+      fid.value
+    end
+
     def visit_redirection(red)
-      "#{red.source}#{red.id}#{red.red.accept(self)}#{red.over}"
+      s = red.source.accept(self)
+      r = red.red.accept(self)
+      "Reish::Redirect(#{s}, '#{red.id}', #{r}, #{red.over})"
     end
 
     def visit_nop(nop)

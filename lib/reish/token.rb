@@ -121,13 +121,43 @@ module Reish
   end
 
   class StringToken<ValueToken
+    def accept(visitor)
+      visitor.visit_string(self)
+    end
+
     def inspect_tag
       "STR"
     end
   end
+
   class NumberToken<ValueToken
+    def accept(visitor)
+      visitor.visit_number(self)
+    end
+
     def inspect_tag
       "NUM"
+    end
+  end
+
+
+  class IntegerToken<ValueToken
+    def accept(visitor)
+      visitor.visit_integer(self)
+    end
+
+    def inspect_tag
+      "INT"
+    end
+  end
+
+  class FidToken<ValueToken
+    def accept(visitor)
+      visitor.visit_fid(self)
+    end
+
+    def inspect_tag
+      "FID"
     end
   end
 
@@ -175,6 +205,8 @@ module Reish
     WildCardToken,
     StringToken,
     NumberToken,
+    IntegerToken,
+    FidToken,
     EOFToken,
   ]
   for c in DirectlyTokenIDClasses

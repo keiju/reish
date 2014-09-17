@@ -63,30 +63,30 @@ module Reish
     }
 
     PreservedWordH = {
-      "rescue"	=> :RESCUE, 
-      "ensure"	=> :ENSURE, 
+#      "rescue"	=> :RESCUE, 
+#      "ensure"	=> :ENSURE, 
       "end"	=> :END, 
       "then"	=> :THEN, 
       "elsif"	=> :ELSIF, 
       "else"	=> :ELSE, 
       "when"	=> :WHEN, 
-      "break"	=> :BREAK, 
-      "next"	=> :NEXT, 
-      "redo"	=> :REDO, 
-      "retry"	=> :RETRY, 
+#      "break"	=> :BREAK, 
+#      "next"	=> :NEXT, 
+#      "redo"	=> :REDO, 
+#      "retry"	=> :RETRY, 
       "in"	=> :IN, 
       "do"	=> :DO, 
-      "return"	=> :RETURN, 
-      "yield"	=> :YIELD, 
-      "super"	=> :SUPER, 
-      "self"	=> :SELF, 
+#      "return"	=> :RETURN, 
+#      "yield"	=> :YIELD, 
+#      "super"	=> :SUPER, 
+#      "self"	=> :SELF, 
       "nil"	=> :NIL, 
       "true"	=> :TRUE, 
       "false"	=> :FALSE, 
-      "and"	=> :AND, 
-      "or"	=> :OR, 
-      "not"	=> :NOT, 
-      "defined?"=> :DEFINED, 
+#      "and"	=> :AND, 
+#      "or"	=> :OR, 
+#      "not"	=> :NOT, 
+#      "defined?"=> :DEFINED, 
     }
 
     TransState = {
@@ -256,7 +256,7 @@ module Reish
 	|op, io|
 	str = @ruby_scanner.identify_reish_string(op)
 	self.lex_state = EXPR_END
-	WordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+	StringToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
       end
 
       @OP.def_rule("(") do
@@ -268,13 +268,30 @@ module Reish
 
        @OP.def_rule("[") do
  	|op, io|
-	
-	if @space_seen
+
+	if @lex_state == EXPR_BEG
+	  self.lex_state = EXPR_ARG
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_A)
+	elsif @space_seen
 	  io.ungetc
-	  return identify_wildcard(io)
+	  identify_wildcard(io)
+	else
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_I)
 	end
-	
- 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_I)
+      end
+
+      @OP.def_rule("{") do
+ 	|op, io|
+
+	if @lex_state == EXPR_BEG
+	  self.lex_state = EXPR_ARG
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_H)
+	elsif @space_seen
+	  io.ungetc
+	  identify_wildcard(io)
+	else
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_I)
+	end
       end
 
 #       @OP.def_rule("{") do
@@ -302,6 +319,12 @@ module Reish
 	|op, io|
 	self.lex_state = EXPR_BEG
 	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '|')
+      end
+
+      @OP.def_rule("::") do
+	|op, io|
+	self.lex_state = EXPR_BEG
+	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :COLON2)
       end
 
       @OP.def_rule(";") do
@@ -357,7 +380,9 @@ module Reish
       @OP.def_rule("") do
 	|op, io|
 
-	if @lex_state == EXPR_BEG
+	if /[0-9]/ =~ io.peek(0) 
+	  identify_number(io)
+	elsif @lex_state == EXPR_BEG
 	  identify_id(io)
 	else
 	  identify_word(io)
@@ -413,9 +438,7 @@ module Reish
       PathToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
     end
 
-    def identify_word(io)
-      token = ""
-
+    def identify_word(io, token = "")
       while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\}\]]/ !~ ch
 	print ":", ch, ":" if Debug
 
@@ -459,6 +482,134 @@ module Reish
       io.ungetc
 
       WildCardToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+    end
+
+    def identify_number(io, token = "")
+
+#      self.lex_state = EXPR_END
+
+      if io.peek(0) == "0" && io.peek(1) !~ /[.eE]/
+	token.concat io.getc
+	case ch = io.peek(0)
+	when /[xX]/
+	  ch = io.getc
+	  token.concat ch
+	  match = /[0-9a-fA-F_]/
+	when /[bB]/
+	  ch = io.getc
+	  token.concat ch
+	  match = /[01_]/
+	when /[oO]/
+	  ch = io.getc
+	  token.concat ch
+	  match = /[0-7_]/
+	when /[dD]/
+	  ch = io.getc
+	  token.concat ch
+	  match = /[0-9_]/
+	when /[0-7]/
+	  match = /[0-7_]/
+	when /[89]/
+	  return identify_word(io, token)
+	else
+	  if @lex_state == EXPR_BEG && (/\s/ =~ ch || /[\|&;\(\)<>\{\[\}\]\.\:]/ =~ ch)
+	    self.lex_state = EXPR_END
+	    return IntegerToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+	  elsif  /\s/ !~ ch && /[\|&;\(\)<>\}\]]/ !~ ch
+	    return identify_word(io, token)
+	  else
+	    self.lex_state = EXPR_END
+	    return IntegerToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+	  end
+	end
+
+	len0 = true
+	non_digit = false
+	while ch = io.getc
+	  if match !~ ch
+	    unless len0
+	      io.ungetc
+	      break
+	    end
+
+	    token.concat ch
+	    return identify_word(io, token)
+	  end
+	    
+	  if ch == "_"
+	    if non_digit
+	      token.concat ch
+	      return identify_word(io, token)
+	    else
+	      non_digit = ch
+	    end
+	  else
+	    non_digit = false
+	    len0 = false
+	  end
+	  token.concat ch
+	end
+	self.lex_state = EXPR_END
+	return IntegerToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+      end
+
+p "N"
+      token_type = IntegerToken
+      allow_point = true
+      allow_e = true
+      non_digit = false
+      while ch = io.getc
+	case ch
+	when /[0-9]/
+	  token.concat ch
+	  non_digit = false
+	when "_"
+	  token.concat ch
+	  non_digit = ch
+	when allow_point && "."
+p "N1"
+	  token.concat ch
+	  if non_digit
+p "N11"
+	    return identify_word(io, token)
+	  end
+	  token_type = NumberToken
+	  if io.peek(0) !~ /[0-9]/
+p "N12"
+	    return identify_word(io, token)
+	  end
+	  allow_point = false
+	when allow_e && "e", allow_e && "E"
+	  if non_digit
+	    token.concat ch
+	    return identify_word(io, token)
+	  end
+	  token.concat ch
+	  token_type = NumberToken
+	  if io.peek(0) =~ /[+-]/
+	    token.concat io.getc
+	  end
+	  allow_e = false
+	  allow_point = false
+	  non_digit = ch
+	else
+p "N2"
+	  if /\s/ =~ ch || /[\|&;\(\)<>\}\]]/ =~ ch
+	    io.ungetc
+	    break
+	  end
+p "N21"
+	  token.concat ch
+	  return identify_word(io, token)
+	end
+      end
+p "N3"
+      if @lex_state != EXPR_BEG && token_type==IntegerToken && /[<>]/ =~ io.peek(0)
+p "N31"
+	return FidToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+      end
+      self.lex_state = EXPR_END
+      token_type.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
     end
   end
 end

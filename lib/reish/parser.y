@@ -15,7 +15,7 @@ class Reish::Parser
   preclow
     left '&' ';' '\n' EOF
     left AND_AND OR_OR
-    right '|' BAR_AND
+    right '|' BAR_AND COLON2
   prechigh
 
   rule
@@ -45,7 +45,7 @@ class Reish::Parser
 
   simple_list1:	logical_command
 	    {
-		result = Node::SeqCommand(val[0])
+		result = Node::Sequence(val[0])
 #	        result = val[0]
             }
 	| simple_list1 "&" logical_command
@@ -77,6 +77,11 @@ class Reish::Parser
 	    {
 	       result = val[0]
   	       result.pipe_command(:BAR, val[3])
+	    }
+	| pipeline COLON2 nls command
+	    {
+	       result = val[0]
+  	       result.pipe_command(:COLON2, val[3])
 	    }
 	| pipeline BAR_AND nls command
 	    {
@@ -110,11 +115,11 @@ class Reish::Parser
             { 
 	      result = Node::DoBlock(val[5], val[2])
 	    }
-	| '{' compound_list '}'
+	| LBRACE_I compound_list '}'
             { 
 	      result = Node::DoBlock(val[1])
 	    }
-	| '{' nls '|' block_arg nls '|' compound_list '}'
+	| LBRACE_I nls '|' block_arg nls '|' compound_list '}'
             { 
 	      result = Node::DoBlock(val[6], val[3])
 	    }
@@ -140,7 +145,7 @@ class Reish::Parser
 	| WILDCARD
 	| redirection
 
-  shell_command: FOR_COMMAND
+  shell_command: literal_command
 	| assgin_command
 	| index_ref_command
 	| if_command
@@ -152,9 +157,24 @@ class Reish::Parser
 #	| arith_command
 #	| cond_command
 #	| arith_for_command
+#       | for_command
 	| group_command
-	| ruby_exp_command
+
+  literal_command: STRING
+	    {
+	      result = Node::StringCommand(val[0])  
+    	    }
+	| NUMBER
+	    {
+	      result = Node::NumberCommand(val[0])  
+    	    }
+	| INTEGER
+	    {
+	      result = Node::IntegerCommand(val[0])  
+    	    }
 	| array_command
+	| hash_command
+	| ruby_exp_command
 
   assgin_command: ID '=' command_element
 	    {
@@ -165,7 +185,7 @@ class Reish::Parser
 	       result = Node::IndexAssginCommand(val[0], val[2], val[7])
 	    }
 
-  index_ref_command: ID LBLACK_I  nls command_element nls ']'
+  index_ref_command: literal_command LBLACK_I  nls command_element nls ']'
 	    {
 		result = Node::IndexRefCommand(val[0], val[3])
 	    }
@@ -213,6 +233,7 @@ class Reish::Parser
 	    {
 	        result = Node::Group(val[1])
 	    }
+
   ruby_exp_command: RUBYEXP
 	    {
 		result = Node::RubyExp(val[0])
@@ -254,6 +275,9 @@ class Reish::Parser
 	| PATH
 
   command_element: WORD
+	| STRING
+	| NUMBER
+	| INTEGER
 	| group_command
 	| ruby_exp_command
 	| array_command
@@ -261,7 +285,7 @@ class Reish::Parser
 
   compound_list: nls
 	    {
-		result = Node::SeqCommand()
+		result = Node::Sequence()
 	    }
         | nls compound_list1 
 	    {
@@ -283,7 +307,7 @@ class Reish::Parser
 
   compound_list1: logical_command
 	    {
-	        result = Node::SeqCommand(val[0]) 
+	        result = Node::Sequence(val[0]) 
 	    }
 	| compound_list1 "\n" nls logical_command
 	    { 
@@ -313,51 +337,51 @@ class Reish::Parser
 	  {
 	    result = Node::Redirection(0, "<", val[1])
 	  }
-	| NUMBER '>' WORD
+	| FID '>' WORD
 	  {
-	    result = Node::Redirection(val[0], ">", val[3])
+	    result = Node::Redirection(val[0], ">", val[2])
 	  }
-	| NUMBER '<' WORD
+	| FID '<' WORD
 	  {
-	    result = Node::Redirection(val[0], "<", val[3])
+	    result = Node::Redirection(val[0], "<", val[2])
 	  }
 	| REDIR_WORD '>' WORD
 	| REDIR_WORD '<' WORD
 	| GREATER_GREATER WORD
-	| NUMBER GREATER_GREATER WORD
+	| FID GREATER_GREATER WORD
 	| REDIR_WORD GREATER_GREATER WORD
 	| GREATER_BAR WORD
-	| NUMBER GREATER_BAR WORD
+	| FID GREATER_BAR WORD
 	| REDIR_WORD GREATER_BAR WORD
 	| LESS_GREATER WORD
-	| NUMBER LESS_GREATER WORD
+	| FID LESS_GREATER WORD
 	| REDIR_WORD LESS_GREATER WORD
 	| LESS_LESS WORD
-	| NUMBER LESS_LESS WORD
+	| FID LESS_LESS WORD
 	| REDIR_WORD LESS_LESS WORD
 	| LESS_LESS_MINUS WORD
-	| NUMBER LESS_LESS_MINUS WORD
+	| FID LESS_LESS_MINUS WORD
 	| REDIR_WORD  LESS_LESS_MINUS WORD
 	| LESS_LESS_LESS WORD
-	| NUMBER LESS_LESS_LESS WORD
+	| FID LESS_LESS_LESS WORD
 	| REDIR_WORD LESS_LESS_LESS WORD
-	| LESS_AND NUMBER
-	| NUMBER LESS_AND NUMBER
-	| REDIR_WORD LESS_AND NUMBER
-	| GREATER_AND NUMBER
-	| NUMBER GREATER_AND NUMBER
-	| REDIR_WORD GREATER_AND NUMBER
+	| LESS_AND INTEGER
+	| FID LESS_AND INTEGER
+	| REDIR_WORD LESS_AND INTEGER
+	| GREATER_AND INTEGER
+	| FID GREATER_AND INTEGER
+	| REDIR_WORD GREATER_AND INTEGER
 	| LESS_AND WORD
-	| NUMBER LESS_AND WORD
+	| FID LESS_AND WORD
 	| REDIR_WORD LESS_AND WORD
 	| GREATER_AND WORD
-	| NUMBER GREATER_AND WORD
+	| FID GREATER_AND WORD
 	| REDIR_WORD GREATER_AND WORD
 	| GREATER_AND '-'
-	| NUMBER GREATER_AND '-'
+	| FID GREATER_AND '-'
 	| REDIR_WORD GREATER_AND '-'
 	| LESS_AND '-'
-	| NUMBER LESS_AND '-'
+	| FID  LESS_AND '-'
 	| REDIR_WORD LESS_AND '-'
 	| AND_GREATER WORD
 	| AND_GREATER_GREATER WORD
