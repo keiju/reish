@@ -186,6 +186,19 @@ module Reish
     end
   end
 
+  class ConcatCommand
+    include Enumerable
+
+    def initialize(*commands)
+      @commands = commands
+    end
+
+    def each(&block)
+      @commands.each{|com| com.each &block}
+    end
+
+  end
+
   def Reish::WildCard(wc)
     sh = Thread.current[:__REISH_CURRENT_SHELL__]
     WildCard::new(sh, wc)

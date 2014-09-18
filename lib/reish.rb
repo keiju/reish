@@ -11,6 +11,7 @@
 #   
 #
 
+require "reish/locale"
 require "reish/shell"
 
 module Reish
@@ -21,6 +22,9 @@ module Reish
   def Reish.conf
     @CONF
   end
+
+  @CONF[:LC_MESSAGES] = Locale.new
+  @CONF[:DISPLY_COMP] = true
 
   def Reish.conf_tempkey(prefix = "__Reish__", postfix = "__", &block)
     begin
@@ -39,5 +43,21 @@ module Reish
     sh.start
   end
 
+  DefaultEncodings = Struct.new(:external, :internal)
+  class << Reish
+    private
+    def set_encoding(extern, intern = nil)
+      verbose, $VERBOSE = $VERBOSE, nil
+      Encoding.default_external = extern unless extern.nil? || extern.empty?
+      Encoding.default_internal = intern unless intern.nil? || intern.empty?
+      @CONF[:ENCODINGS] = IRB::DefaultEncodings.new(extern, intern)
+      [$stdin, $stdout, $stderr].each do |io|
+	io.set_encoding(extern, intern)
+      end
+      @CONF[:LC_MESSAGES].instance_variable_set(:@encoding, extern)
+    ensure
+      $VERBOSE = verbose
+    end
+  end
 end
 

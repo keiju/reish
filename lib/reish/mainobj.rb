@@ -27,6 +27,10 @@ module Reish
     attr_reader :__shell__
 
     def_delegator :@__shell__, :rehash
+    def_delegator :@__shell__, :display_mode
+    def_delegator :@__shell__, :display_mode=
+    def_delegator :@__shell__, :display_comp
+    def_delegator :@__shell__, :display_comp=
 
   end
 end

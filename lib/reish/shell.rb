@@ -18,21 +18,30 @@ require "reish/lex"
 require "reish/parser"
 require "reish/codegen"
 
+require "reish/input-method"
+require "irb/inspector"
 
 module Reish 
   class Shell
-    def initialize(pwd = Dir.pwd)
-      self.output_mode = Reish.conf[:OUTPUT_MODE]
+    def initialize(input_method = nil)
+      
+      @verbose = Reish.conf[:VERBOSE]
 
-      @ignore_sigint = IRB.conf[:IGNORE_SIGINT]
-      @ignore_eof = IRB.conf[:IGNORE_EOF]
+      self.display_mode = Reish.conf[:DISPLY_MODE]
+      @display_comp = Reish.conf[:DISPLY_COMP]
+
+      @ignore_sigint = Reish.conf[:IGNORE_SIGINT]
+      @ignore_eof = Reish.conf[:IGNORE_EOF]
+
+      @use_readline = Reish.conf[:USE_READLINE]
+      initialize_input_method(input_method)
 
       @lex = Lex.new
       @parser = Parser.new(@lex)
       @codegen = CodeGenerator.new
       @workspace = WorkSpace.new(Main.new(self))
 
-      @pwd = pwd
+      @pwd = Dir.pwd
       @system_path = ENV["PATH"].split(":")
       @system_env = ENV
 
@@ -40,16 +49,66 @@ module Reish
       @command_cache = {}
     end
 
-    attr_accesor :output_mode
+    attr_accessor :verbose
+    attr_reader :display_mode
+    attr_accessor :display_comp
+
+    attr_reader :use_readline
+    alias use_readline? use_readline
 
     attr_reader :pwd
 
+    def initialize_input_method(input_method)
+      case input_method
+      when nil
+	case use_readline?
+	when nil
+	  if defined?(ReadlineInputMethod) && STDIN.tty?
+	    @io = ReadlineInputMethod.new
+	  else
+	    @io = StdioInputMethod.new
+	  end
+	when false
+	  @io = StdioInputMethod.new
+	when true
+	  if defined?(ReadlineInputMethod)
+	    @io = ReadlineInputMethod.new
+	  else
+	    @io = StdioInputMethod.new
+	  end
+	end
+      when String
+	@io = FileInputMethod.new(input_method)
+	@irb_name = File.basename(input_method)
+	@irb_path = input_method
+      else
+	@io = input_method
+      end
+    end
+
     def start
       @lex.set_prompt do |ltype, indent, continue, line_no|
-	"reish>"
+	@io.prompt = "reish> "
       end
 
-      @lex.set_input(STDIN)
+      @lex.set_input(@io) do
+#	signal_status(:IN_INPUT) do
+	  if l = @io.gets
+	    print l if verbose?
+	  else
+	    if ignore_eof? and @io.readable_atfer_eof?
+	      l = "\n"
+	      if verbose?
+		printf "Use \"exit\" to leave %s\n", @context.ap_name
+	      end
+	    else
+	      print "\n"
+	    end
+	  end
+	  l
+#	end
+      end
+
       eval_input
     end
 
@@ -59,17 +118,74 @@ module Reish
       loop do
 	@lex.lex_state = :EXPR_BEG
 	@current_input_unit = @parser.do_parse
-#	p @current_input_unit
+	p @current_input_unit
 	break if Node::EOF == @current_input_unit 
 	if Node::NOP == @current_input_unit 
 	  puts "<= (NL)"
 	  next
 	end
 	exp = @current_input_unit.accept(@codegen)
-	puts "<= #{exp}"
+	puts "<= #{exp}" if @display_comp
 	val = @workspace.evaluate(exp)
-	puts "=> #{val.inspect}"
+	display val
       end
+    end
+
+    def display(val)
+      puts "=> #{@display_method.inspect_value(val)}"
+    end
+
+    #
+    def verbose?
+      if @verbose.nil?
+	if defined?(ReadlineInputMethod) && @io.kind_of?(ReadlineInputMethod)
+	  false
+	elsif !STDIN.tty? or @io.kind_of?(FileInputMethod)
+	  true
+	else
+	  false
+	end
+      else
+	@verbose
+      end
+    end
+
+
+    #
+    #
+    def display_mode=(opt)
+      if i = IRB::INSPECTORS[opt]
+	@display_mode = opt
+	@display_method = i
+	i.init
+      else
+	case opt
+	when nil
+	  self.display_mode = true
+	when /^\s*\{.*\}\s*$/
+	  begin
+	    inspector = eval "proc#{opt}"
+	  rescue Exception
+	    puts "Can't switch inspect mode(#{opt})."
+	    return
+	  end
+	  self.display_mode = inspector
+	when Proc
+	  self.display_mode = IRB::Inspector(opt)
+	when Inspector
+	  prefix = "usr%d"
+	  i = 1
+	  while INSPECTORS[format(prefix, i)]; i += 1; end
+	  @display_mode = format(prefix, i)
+	  @display_method = opt
+	  INSPECTORS.def_inspector(format(prefix, i), @display_method)
+	else
+	  puts "Can't switch inspect mode(#{opt})."
+	  return
+	end
+      end
+#      print "Switch to#{unless @inspect_mode; ' non';end} inspect mode.\n" if verbose?
+      @display_mode
     end
 
     #

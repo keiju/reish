@@ -212,6 +212,7 @@ module Reish
       begin
 	begin
 	  tk = @OP.match(@ruby_scanner)
+	  tk = EOFToken.new(@io, @prev_seek, @prev_line_no, @prev_char_no) unless tk
 	  @space_seen = tk.kind_of?(SpaceToken)
 	  last_nl = (tk.token_id == :NL)
 	rescue SyntaxError
@@ -222,7 +223,6 @@ module Reish
 #	puts "TOKEN: #{tk.inspect}"
       end while tk.kind_of?(SpaceToken) || nl_seen
       nl_seen = last_nl
-      tk = EOFToken.new(@io, @prev_seek, @prev_line_no, @prev_char_no) unless tk
       @ruby_scanner.get_readed
       tk
     end

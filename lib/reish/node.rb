@@ -64,6 +64,15 @@ module Reish
       def_accept
     end
 
+    class Command<Node
+      def intialize
+	@pipeout = nil
+	@have_redirection = nil
+      end
+
+      attr_accessor :pipeout
+    end
+
     class LogicalCommand<Node
       def_constructor
 
@@ -100,7 +109,7 @@ module Reish
       def_accept "logical_command_oo"
     end
 
-    class PipelineCommand<Node
+    class PipelineCommand<Command
       def_constructor
 
       def initialize(com)
@@ -108,6 +117,11 @@ module Reish
 	@commands = [com]
       end
       attr_reader :commands
+
+      def pipeout=(val)
+	@pipeout = val
+#	@commands.last.pipeout = val
+      end
       
       def pipe_command(attr, com)
 	@commands.last.pipeout = attr
@@ -117,21 +131,14 @@ module Reish
       def_accept
     end
 
-    class Command<Node
-      def intialize
-	@pipeout = nil
-	@have_redirection = nil
-      end
-
-      attr_accessor :pipeout
-    end
-
     class AssginCommand<Command
       def_constructor
 
       def initialize(var, val)
 	@variable = var
 	@value = val
+
+	value.pipeout=:TO_A
       end
 
       attr_reader :variable
@@ -170,6 +177,28 @@ module Reish
       def_accept
     end
 
+    class IfCommand<Command
+      def_constructor
+
+      def initialize(cond, then_list=nil, else_list=nil)
+	@cond = cond
+	@then_list = then_list
+	@else_list = else_list
+      end
+
+      attr_reader :cond
+      attr_reader :then_list
+      attr_reader :else_list
+
+      def pipeout=(val)
+	@pipeout = val
+	@then_list.last.pipeout = val if @then_list
+	@else_list.last.pipeout = val if @else_list
+      end
+
+      def_accept
+    end
+
     class WhileCommand<Command
       def_constructor
 
@@ -184,22 +213,6 @@ module Reish
       def_accept
     end
 
-    class IfCommand<Command
-      def_constructor
-
-      def initialize(cond, then_list=nil, else_list=nil)
-	@cond = cond
-	@then_list = then_list
-	@else_list = else_list
-      end
-
-      attr_reader :cond
-      attr_reader :then_list
-      attr_reader :else_list
-
-      def_accept
-    end
-
     class Group<Command
       def_constructor
 
@@ -210,10 +223,15 @@ module Reish
       
       attr_reader :node
 
+      def pipeout=(val)
+	@pipeout = val
+	@node.pipeout = val
+      end
+
       def_accept
     end
 
-    class Sequence<Node
+    class Sequence<Command
       def_constructor
 
       def initialize(com=nil)
@@ -222,11 +240,21 @@ module Reish
 	@nodes.push com if com
       end
 
+      def pipeout=(val)
+	@pipeout = val
+	
+	@nodes.each{|com| com.pipeout=val}
+      end
+
       def add_command(com)
 	@nodes.push com
       end
 
       attr_reader :nodes
+
+      def last
+	@nodes[-1]
+      end
 
       def last_command_to_async
 	@nodes[-1] = Node::AsyncCommand(@nodes[-1])
@@ -271,6 +299,15 @@ module Reish
 	@pipeout = nil
 
 	@have_redirection = nil
+
+	@args.each do |arg| 
+p "YYYYYYYYYYYY"
+	  case arg
+	  when Group
+	    arg.pipeout = :TO_A
+	  end
+p arg
+	end
       end
 
       attr_reader :name

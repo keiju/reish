@@ -77,8 +77,16 @@ module Reish
     end
 
     def visit_sequence(seq)
-      script = seq.nodes.collect{|n| n.accept(self)}.join("; ")
-      "("+script+")"
+      case seq.pipeout
+      when :BAR, :COLON2, :DOT
+	s = seq.nodes.collect{|n| n.accept(self)}.join(", ")
+	"Reish::ConcatCommand.new(#{s})"
+      when :TO_A
+	s = seq.nodes.collect{|n| n.accept(self)}.join(", ")
+	"Reish::ConcatCommand.new(#{s}).to_a"	
+      else
+	seq.nodes.collect{|n| n.accept(self)}.join("; ")
+      end
     end
 
     def visit_async_command(command)
@@ -108,13 +116,17 @@ module Reish
 	  script.concat "."
 	when :COLON2
 	  script.concat "::"
+	when :TO_A
+	  script.concat ".to_a"
 	when nil
 	  # do nothing
 	else
 	  raise NoImplementError
 	end
       end
-      script.concat ".reish_term"
+      
+      script.concat ".reish_term" unless command.pipeout
+      script
     end
 
     def visit_literal_command(com)
