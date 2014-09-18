@@ -402,6 +402,11 @@ module Reish
 	identify_regexp("/", io)
       end
 
+#      @OP.def_rule("$") do
+#	|op, io|
+#	identify_variable
+#      end
+
       @OP.def_rule(">") do
 	|op, io|
 	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '>')

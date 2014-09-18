@@ -138,7 +138,7 @@ module Reish
 	@variable = var
 	@value = val
 
-	value.pipeout=:TO_A
+	@value.pipeout=:LAST
       end
 
       attr_reader :variable
@@ -154,6 +154,8 @@ module Reish
 	@variable = var
 	@index = index
 	@value = val
+
+	@value.pipeout=:LAST
       end
 
       attr_reader :variable
@@ -301,12 +303,10 @@ module Reish
 	@have_redirection = nil
 
 	@args.each do |arg| 
-p "YYYYYYYYYYYY"
 	  case arg
 	  when Group
-	    arg.pipeout = :TO_A
+	    arg.pipeout = :LAST
 	  end
-p arg
 	end
       end
 

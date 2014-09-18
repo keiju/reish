@@ -83,7 +83,9 @@ module Reish
 	"Reish::ConcatCommand.new(#{s})"
       when :TO_A
 	s = seq.nodes.collect{|n| n.accept(self)}.join(", ")
-	"Reish::ConcatCommand.new(#{s}).to_a"	
+	"Reish::ConcatCommand.new(#{s}).to_a"
+      when :LAST
+	"("+seq.nodes.collect{|n| n.accept(self)}.join("; ")+").to_a"
       else
 	seq.nodes.collect{|n| n.accept(self)}.join("; ")
       end
@@ -117,6 +119,9 @@ module Reish
 	when :COLON2
 	  script.concat "::"
 	when :TO_A
+	  script.concat ".to_a"
+	when :LAST
+	  # do nothing
 	  script.concat ".to_a"
 	when nil
 	  # do nothing
