@@ -47,7 +47,7 @@ module Reish
       c = command.cond.accept(self)
       n = command.node.accept(self)
       
-      "WHILE(#{c}, #{n})"
+      "(while #{c} do #{n} end)"
     end
 
     def visit_if_command(command)
@@ -58,10 +58,16 @@ module Reish
       e = nil
       e = command.else_list.accept(self) if command.else_list
 
-      if e
-	"IF(#{c}, #{t}, #{e})"
+      if t
+	if e
+	  "(if(#{c}) then #{t} else #{e} end)"
+	else
+	  "(if(#{c}) then #{t} end)"
+	end
+      elsif e
+	"(if(#{c}) else #{e} end)"
       else
-	"IF(#{c}, #{t})"
+	"(if (#{c}) end))"
       end
     end
 
@@ -98,7 +104,7 @@ module Reish
       command.commands.each do |com|
 	script.concat com.accept(self)
 	case com.pipeout
-	when :BAR
+	when :BAR, :DOT
 	  script.concat "."
 	when :COLON2
 	  script.concat "::"
@@ -210,6 +216,11 @@ module Reish
 
     def visit_string(str)
       '"'+str.value+'"'
+    end
+
+
+    def visit_regexp(reg)
+      '/'+reg.value+'/'
     end
 
     def visit_redirection(red)

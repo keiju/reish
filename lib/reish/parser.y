@@ -13,9 +13,9 @@
 class Reish::Parser
 
   preclow
-    left '&' ';' '\n' EOF
+#    left '&' ';' '\n' EOF
     left AND_AND OR_OR
-    right '|' BAR_AND COLON2
+#    right '|' BAR_AND COLON2
   prechigh
 
   rule
@@ -24,7 +24,7 @@ class Reish::Parser
 		_values.push Node::InputUnit(val[0], val[1])
 	        yyaccept
 	    }
-	| '\n'
+	| NL
 	    {
 		_values.push Node::NOP
   		yyaccept
@@ -60,11 +60,11 @@ class Reish::Parser
 		result = val[0]
 	    }
 
-  logical_command: logical_command AND_AND nls logical_command
+  logical_command: logical_command AND_AND opt_nl_arg logical_command
 	    { 
 		result = Node::LogicalCommandAA(val[0], val[3])
 	    }
-	| logical_command OR_OR nls logical_command
+	| logical_command OR_OR opt_nl_arg logical_command
 	    { 
 		result = Node::LogicalCommandOO(val[0], val[3])
 	    }
@@ -73,20 +73,26 @@ class Reish::Parser
   pipeline_command: pipeline
 	| BANG pipeline
 
-  pipeline: pipeline '|' nls command
+  pipeline: pipeline '|' opt_nl command
 	    {
 	       result = val[0]
   	       result.pipe_command(:BAR, val[3])
 	    }
-	| pipeline COLON2 nls command
+	| pipeline COLON2 opt_nl command
 	    {
 	       result = val[0]
   	       result.pipe_command(:COLON2, val[3])
 	    }
-	| pipeline BAR_AND nls command
+	| pipeline BAR_AND opt_nl command
 	    {
 	       result = val[0]
   	       result.pipe_command(:BAR_AND, val[3])
+	    }
+
+	| pipeline "." opt_nl command
+	    {
+	       result = val[0]
+  	       result.pipe_command(:DOT, val[3])
 	    }
         | command
 	    {
@@ -99,20 +105,14 @@ class Reish::Parser
 #	| function_def
 
   command_element: WORD
-	| STRING
-	| NUMBER
-	| INTEGER
-	| PSEUDOVARIABLE
 	| group_command
-	| ruby_exp
-	| array
-	| hash
+	| literal
 
   simple_command: simple_command_header simple_command_element_list 
 	    {         
 	       result = Node::SimpleCommand(val[0], val[1])
 	    }
-	| command_header simple_command_element_list do_block
+	| simple_command_header simple_command_element_list do_block
 	    {
 	       result = Node::SimpleCommand(val[0], val[1], val[2])
 	    }
@@ -121,7 +121,7 @@ class Reish::Parser
             { 
 	      result = Node::DoBlock(val[1])
 	    }
-        | DO '|' block_arg nls '|' compound_list END
+        | DO '|' block_arg opt_nl '|' compound_list END
             { 
 	      result = Node::DoBlock(val[5], val[2])
 	    }
@@ -129,7 +129,7 @@ class Reish::Parser
             { 
 	      result = Node::DoBlock(val[1])
 	    }
-	| LBRACE_I nls '|' block_arg nls '|' compound_list '}'
+	| LBRACE_I opt_nl '|' block_arg opt_nl '|' compound_list '}'
             { 
 	      result = Node::DoBlock(val[6], val[3])
 	    }
@@ -138,7 +138,7 @@ class Reish::Parser
 	       @lex.lex_state = :EXPR_BEG
 	       result = []
 	    }
-	| block_arg nls ID
+	| block_arg opt_nl ID
 	    {
 	       result.push val[2]
 	    }
@@ -177,7 +177,9 @@ class Reish::Parser
 	    {
 	      result = Node::LiteralCommand(val[0])  
     	    }
+
   literal: STRING
+	| REGEXP
 	| NUMBER
 	| INTEGER
 	| PSEUDOVARIABLE
@@ -189,52 +191,52 @@ class Reish::Parser
 	    {
 	       result = Node::AssginCommand(val[0], val[2])
 	    }
-	| command LBLACK_I  nls command_element nls ']' '=' nls command_element
+	| command LBLACK_I  opt_nl command_element opt_nl ']' '=' opt_nl command_element
             {
 	       result = Node::IndexAssginCommand(val[0], val[2], val[7])
 	    }
 
-  index_ref_command: command LBLACK_I  nls command_element nls ']'
+  index_ref_command: command LBLACK_I  opt_nl command_element opt_nl ']'
 	    {
 		result = Node::IndexRefCommand(val[0], val[3])
 	    }
 
-  while_command: WHILE {@lex.cond_push(true)} nls logical_command do {@lex.cond_pop} compound_list END
+  while_command: WHILE {@lex.cond_push(true)} opt_nl logical_command do {@lex.cond_pop} compound_list END
 	    {
 	       result = Node::WhileCommand(val[3], val[6])
 	    }
 
-  do: '\n' nls
-	| ';' nls
-	| COND_DO
+  do: NL
+	| ';'
+	| DO_COND
 
-  if_command: IF nls logical_command then compound_list END
+  if_command: IF opt_nl logical_command then compound_list END
 	    {
 		result = Node::IfCommand(val[2], val[4])
 	    }
-	|	IF nls logical_command then compound_list ELSE compound_list END
+	|	IF opt_nl logical_command then compound_list ELSE compound_list END
 	    {
 		result = Node::IfCommand(val[2], val[4], val[6])
 	    }
-	|	IF nls logical_command then compound_list elsif_clause END
+	|	IF opt_nl logical_command then compound_list elsif_clause END
 	    {
 		result = Node::IfCommand(val[2], val[4], val[5])
 	    }
 
-  elsif_clause:	ELSIF nls logical_command then compound_list
+  elsif_clause:	ELSIF opt_nl logical_command then compound_list
 	    {
 		result = Node::IfCommand(val[2], val[4])
 	    }
-	|	ELSIF nls logical_coomand then compound_list ELSE compound_list
+	|	ELSIF opt_nl logical_coomand then compound_list ELSE compound_list
 	    {
 		result = Node::IfCommand(val[2], val[4], val[6])
 	    }
-	|	ELSIF nls logical_command then compound_list elif_clause
+	|	ELSIF opt_nl logical_command then compound_list elif_clause
 	    {
 		result = Node::IfCommand(val[2], val[4], val[6])
 	    }
 
-  then: '\n' nls
+  then: NL
 	| ';'
 	| THEN
 
@@ -248,56 +250,66 @@ class Reish::Parser
 		result = Node::RubyExp(val[0])
 	    }
 
-  array: LBLACK_A array_element_list nls ']'
+  array: LBLACK_A array_element_list ']'
 	    {
 		result = Node::Array(val[1])
 	    }	  
 
-  array_element_list:
-	    {
+  array_element_list: opt_nl
+  	    {
+		@lex.lex_state = :EXPR_ARG
 		result = []
 	    }
-	| array_element_list nls command_element
+	| array_element_list command_element opt_nl
 	    {
-	       result.push val[2]
+  		@lex.lex_state = :EXPR_ARG
+	        result.push val[1]
 	    }
 
-  hash: LBRACE_H hash_element_list nls '}'
+  hash: LBRACE_H hash_element_list '}'
 	    {
 		result = Node::Hash(val[1])
 	    }	  
 
-  hash_element_list:
+  hash_element_list: opt_nl
 	    {
-	      result = []
+		@lex.lex_state = :EXPR_ARG
+	        result = []
 	    } 
-	| hash_element_list nls hash_assoc
+	| hash_element_list hash_assoc
 	    {
-	       result.push val[2]
+	        @lex.lex_state = :EXPR_ARG
+	        result.push val[1]
 	    }
-  hash_assoc: command_element nls ASSOC nls command_element
+  hash_assoc: command_element opt_nl ASSOC NL lex_arg command_element opt_nl
 	    {
-		result = [val[0], val[4]]
+	        @lex.lex_state = :EXPR_ARG
+		result = [val[0], val[5]]
+	    }
+	| command_element opt_nl ASSOC command_element opt_nl
+	    {
+	        @lex.lex_state = :EXPR_ARG
+		result = [val[0], val[3]]
 	    }
 
-  compound_list: nls
+  compound_list: opt_nl
 	    {
 		result = Node::Sequence()
 	    }
-        | nls compound_list1 
+        | opt_nl compound_list1 
 	    {
 		result = val[1]
 	    }
-	| nls compound_list1 '\n' nls
+	| opt_nl compound_list1 NL opt_nl
 	    {
 		result = val[1]
 	    } 
-	| nls compound_list1 '&' nls
+	| opt_nl compound_list1 '&' opt_nl
 	    {
 		val[1].last_command_to_async
 		result = val[1]
 	    } 
-	| nls compound_list1 ';' nls
+	| opt_nl compound_list1 ';' opt_nl
 	    {
 		result = val[1]
 	    } 
@@ -306,18 +318,18 @@ class Reish::Parser
 	    {
 	        result = Node::Sequence(val[0]) 
 	    }
-	| compound_list1 "\n" nls logical_command
+	| compound_list1 NL opt_nl logical_command
 	    { 
 		val[0].add_command(val[3])
 		result = val[0]
 	    }
-	| compound_list1 "&" nls logical_command
+	| compound_list1 "&" opt_nl logical_command
 	    { 
 		val[0].last_command_to_async
 		val[0].add_command(val[3])
 		result = val[0]
 	    }
-  	| compound_list1 ";" nls logical_command 
+  	| compound_list1 ";" opt_nl logical_command 
 	    { 
 		val[0].add_command(val[3])
 		result = val[0]
@@ -383,13 +395,21 @@ class Reish::Parser
 	| AND_GREATER WORD
 	| AND_GREATER_GREATER WORD
 
-simple_list_terminator:	'\n'
+  simple_list_terminator:	NL
 	| EOF
 
-nls:
-	| nls nl
+  opt_nl_arg: lex_arg
+      | lex_arg NL 
 
-nl:     '\n'
+  opt_nl:  
+      | NL
+	
+
+  nl_beg: NL 
+
+  lex_beg: {@lex.lex_state = :EXPR_BEG}
+  lex_arg: 
+    {@lex.lex_state = :EXPR_ARG}
 
 end
 

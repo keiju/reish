@@ -14,7 +14,7 @@ require "reish/token"
 
 module Reish
   class Lex
-    Debug = true
+    Debug = false
 
     PreservedWord = {
       "class"	=> :CLASS, 
@@ -153,7 +153,7 @@ module Reish
 
 #    attr_accessor :lex_state
     def lex_state=(v)
-      puts "LEX STATE CHANGE: #{v}"
+#      puts "LEX STATE CHANGE: #{v}"
       @lex_state = v
     end
 
@@ -207,17 +207,21 @@ module Reish
       @prev_seek = @ruby_scanner.seek
       @prev_line_no = @ruby_scanner.line_no
       @prev_char_no = @ruby_scanner.char_no
+      nl_seen =false
+      last_nl = false
       begin
 	begin
 	  tk = @OP.match(@ruby_scanner)
 	  @space_seen = tk.kind_of?(SpaceToken)
+	  last_nl = (tk.token_id == :NL)
 	rescue SyntaxError
 	  raise if @exception_on_syntax_error
 	  tk = ErrorToken.new(@io, @prev_seek, @prev_line_no, @prev_char_no)
 	end
 
-	puts "TOKEN: #{tk.inspect}"
-      end while tk.kind_of?(SpaceToken)
+#	puts "TOKEN: #{tk.inspect}"
+      end while tk.kind_of?(SpaceToken) || nl_seen
+      nl_seen = last_nl
       tk = EOFToken.new(@io, @prev_seek, @prev_line_no, @prev_char_no) unless tk
       @ruby_scanner.get_readed
       tk
@@ -244,7 +248,8 @@ module Reish
 
       @OP.def_rule("\n") do
 	|op, io|
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	self.lex_state = EXPR_BEG
+	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :NL)
       end
 
       @OP.def_rules("=") do
@@ -261,9 +266,7 @@ module Reish
 
       @OP.def_rules("'", '"') do
 	|op, io|
-	str = @ruby_scanner.identify_reish_string(op)
-	self.lex_state = EXPR_END
-	StringToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+	identify_string(op, io)
       end
 
       @OP.def_rule("(") do
@@ -334,6 +337,21 @@ module Reish
 	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :COLON2)
       end
 
+      @OP.def_rule(".") do
+ 	|op, io|
+
+	if @lex_state == EXPR_BEG
+	  self.lex_state = EXPR_ARG
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :DOT_COMMAND)
+	elsif @space_seen
+	  io.ungetc
+	  identify_word(io)
+	else
+	  self.lex_state = EXPR_BEG
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, ".")
+	end
+      end
+
       @OP.def_rule(";") do
 	|op, io|
 	self.lex_state = EXPR_BEG
@@ -379,6 +397,11 @@ module Reish
 	identify_compstmt(io, RubyToken::TkRPAREN)
       end
 
+      @OP.def_rule("$/") do
+	|op, io|
+	identify_regexp("/", io)
+      end
+
       @OP.def_rule(">") do
 	|op, io|
 	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '>')
@@ -409,7 +432,7 @@ module Reish
       while /[[:graph:]]/ =~ (ch = io.getc) && /[=\|&;\(\)<>\[\{\}\]]/ !~ ch
 	print ":", ch, ":" if Debug
 
-	if /[\*\.\/]/ =~ ch
+	if ch == "/"
 	  io.ungetc
 	  return identify_path(io, token)
 	end
@@ -468,7 +491,7 @@ module Reish
       tid = PreservedWordH[token] unless tid
 
       if tid == :DO && cond?
-	tid = :COND_DO
+	tid = :DO_COND
       end
 	  
       if st = TransState[tid]
@@ -609,6 +632,20 @@ module Reish
       end
       self.lex_state = EXPR_END
       token_type.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+    end
+
+    def identify_string(op, io)
+      str = @ruby_scanner.identify_reish_string(op)
+      self.lex_state = EXPR_END
+      StringToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+    end
+
+    def identify_regexp(op, io)
+p "XXXX"
+p op
+      str = @ruby_scanner.identify_reish_string(op)
+      self.lex_state = EXPR_END
+      RegexpToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
     end
   end
 end

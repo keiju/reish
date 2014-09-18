@@ -140,6 +140,16 @@ module Reish
     end
   end
 
+  class RegexpToken<ValueToken
+    def accept(visitor)
+      visitor.visit_regexp(self)
+    end
+
+    def inspect_tag
+      "REG"
+    end
+  end
+
   class NumberToken<ValueToken
     def accept(visitor)
       visitor.visit_number(self)
@@ -214,6 +224,7 @@ module Reish
     WordToken,
     WildCardToken,
     StringToken,
+    RegexpToken,
     NumberToken,
     IntegerToken,
     FidToken,

@@ -22,6 +22,11 @@ require "reish/codegen"
 module Reish 
   class Shell
     def initialize(pwd = Dir.pwd)
+      self.output_mode = Reish.conf[:OUTPUT_MODE]
+
+      @ignore_sigint = IRB.conf[:IGNORE_SIGINT]
+      @ignore_eof = IRB.conf[:IGNORE_EOF]
+
       @lex = Lex.new
       @parser = Parser.new(@lex)
       @codegen = CodeGenerator.new
@@ -34,6 +39,8 @@ module Reish
       # name => path
       @command_cache = {}
     end
+
+    attr_accesor :output_mode
 
     attr_reader :pwd
 
@@ -52,7 +59,7 @@ module Reish
       loop do
 	@lex.lex_state = :EXPR_BEG
 	@current_input_unit = @parser.do_parse
-	p @current_input_unit
+#	p @current_input_unit
 	break if Node::EOF == @current_input_unit 
 	if Node::NOP == @current_input_unit 
 	  puts "<= (NL)"
