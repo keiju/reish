@@ -397,6 +397,12 @@ module Reish
 	identify_compstmt(io, RubyToken::TkRPAREN)
       end
 
+      @OP.def_rule("$begin") do
+	|op, io|
+	"begin".split(//).reverse.each{|c| io.ungetc c}
+	identify_compstmt(io, RubyToken::TkEND)
+      end
+
       @OP.def_rule("$/") do
 	|op, io|
 	identify_regexp("/", io)
@@ -431,7 +437,15 @@ module Reish
     end
 
     def identify_compstmt(io, close)
-      exp = @ruby_scanner.identify_compstmt(close)
+      begin
+	p = @ruby_scanner.instance_eval{@prompt}
+	set_prompt do |ltype, indent, continue, line_no|
+	  @io.prompt = "irb> "
+	end
+	exp = @ruby_scanner.identify_compstmt(close)
+      ensure
+	set_prompt &p
+      end
       
       RubyExpToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, exp)
     end
