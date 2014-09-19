@@ -182,6 +182,7 @@ class Reish::Parser
 	| REGEXP
 	| NUMBER
 	| INTEGER
+        | VARIABLE
 	| PSEUDOVARIABLE
 	| array
 	| hash

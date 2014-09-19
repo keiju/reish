@@ -79,6 +79,16 @@ module Reish
     end
   end
 
+  class VariableToken<ValueToken
+    def accept(visitor)
+      visitor.visit_variable(self)
+    end
+
+    def inspect_tag
+      "VAR"
+    end
+  end
+
   class PseudoVariableToken<ValueToken
     def accept(visitor)
       visitor.visit_pseudo_variable(self)
@@ -218,6 +228,7 @@ module Reish
   DirectlyTokenIDClasses = [
     RubyExpToken,
     CommandToken,
+    VariableToken,
     PseudoVariableToken,
     IDToken,
     PathToken,

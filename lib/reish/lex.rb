@@ -402,10 +402,15 @@ module Reish
 	identify_regexp("/", io)
       end
 
-#      @OP.def_rule("$") do
-#	|op, io|
-#	identify_variable
-#      end
+      @OP.def_rule("$$") do
+	|op, io|
+	identify_gvar(op, io)
+      end
+
+      @OP.def_rule("$") do
+	|op, io|
+	identify_variable(op, io)
+      end
 
       @OP.def_rule(">") do
 	|op, io|
@@ -646,11 +651,60 @@ module Reish
     end
 
     def identify_regexp(op, io)
-p "XXXX"
-p op
       str = @ruby_scanner.identify_reish_string(op)
       self.lex_state = EXPR_END
       RegexpToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+    end
+
+    def identify_variable(op, io)
+      token = ""
+      case io.peek(0)
+      when "$"
+	token.concat io.getc
+      when "@"
+	token.concat io.getc
+	if io.peek(0) == "@"
+	  token.concat io.getc
+	end
+      end
+
+      while /\w|_/ =~ (ch = io.getc)
+	token.concat ch
+      end
+      io.ungetc
+
+      Reish.Fail InvaritVariableName if PreservedWord[token]
+
+      self.lex_state = EXPR_END
+      VariableToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, token)
+    end
+
+    def identify_gvar(op, io)
+      @lex_state = EXPR_END
+
+      case ch = io.getc
+      when /[~_*$?!@\/\\;,=:<>".]/   #"
+	VariableToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$"+ch)
+      when "-"
+	ch = io.getc
+	VariableToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$-"+ch)
+      when "&", "`", "'", "+"
+	VariableToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$"+ch)
+      when /[1-9]/
+	token = ""
+	while ch = io.getc =~ /[0-9]/
+	  token.concat ch
+	end
+	io.ungetc
+	VariableToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$"+ch)
+      when /\w/
+	io.ungetc
+	io.ungetc
+	identify_variable
+      else
+	io.ungetc
+	Reish.Fail InvaritVariableName
+      end
     end
   end
 end

@@ -208,6 +208,7 @@ module Reish
     alias visit_integer visit_value
     alias visit_fid visit_value
     alias visit_pseudo_variable visit_value
+    alias visit_variable visit_value
 
     def visit_ruby_exp(exp)
       "("+exp.exp+")"
