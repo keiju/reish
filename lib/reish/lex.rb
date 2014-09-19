@@ -272,8 +272,12 @@ module Reish
       @OP.def_rule("(") do
 	|op, io|
 	cond_push(false)
-	self.lex_state = EXPR_BEG
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	if @lex_state == EXPR_ARG && !@spaceseen
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LPARLEN_ARG)
+	else
+	  self.lex_state = EXPR_BEG
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	end
       end
 
        @OP.def_rule("[") do
@@ -296,11 +300,12 @@ module Reish
 	if @lex_state == EXPR_BEG
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_H)
-	elsif @space_seen
+	elsif !@space_seen || @lex_state == EXPR_END
+	  self.lex_state = EXPR_BEG
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_I)
+	else
 	  io.ungetc
 	  identify_wildcard(io)
-	else
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_I)
 	end
       end
 
@@ -357,6 +362,11 @@ module Reish
 	self.lex_state = EXPR_BEG
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, ';')
       end
+
+#      @OP.def_rule(",") do
+#	|op, io|
+#	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, ',')
+#      end
 
 
       @OP.def_rule("&") do
@@ -644,6 +654,7 @@ module Reish
 	  non_digit = ch
 	else
 	  if /\s/ =~ ch || /[\|&;\(\)<>\}\]]/ =~ ch
+#	  if /\s/ =~ ch || /[\|&;\(\)<>\}\],]/ =~ ch
 	    io.ungetc
 	    break
 	  end

@@ -116,8 +116,32 @@ class Reish::Parser
 	    {
 	       result = Node::SimpleCommand(val[0], val[1], val[2])
 	    }
+        | simple_command_header LPARLEN_ARG simple_command_element_list_p ")" lex_end
+	    {
+	       result = Node::SimpleCommand(val[0], val[2])
+	    }
+        | simple_command_header LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
+	    {
+	       result = Node::SimpleCommand(val[0], val[2], val[5])
+	    }
 
-  do_block: DO compound_list END
+  simple_command_element_list_p: opt_nl
+  	    {
+		@lex.lex_state = :EXPR_ARG
+		result = []
+	    }
+	| simple_command_element_list_p simple_command_element opt_nl
+	    {
+  		@lex.lex_state = :EXPR_ARG
+	        result.push val[1]
+	    }
+#	| simple_command_element_list_p simple_command_element ',' opt_nl
+#	    {
+#  		@lex.lex_state = :EXPR_ARG
+#	        result.push val[1]
+#	    }
+
+do_block: DO compound_list END
             { 
 	      result = Node::DoBlock(val[1])
 	    }
@@ -266,6 +290,11 @@ class Reish::Parser
   		@lex.lex_state = :EXPR_ARG
 	        result.push val[1]
 	    }
+	| array_element_list command_element ',' opt_nl
+	    {
+  		@lex.lex_state = :EXPR_ARG
+	        result.push val[1]
+	    }
 
   hash: LBRACE_H hash_element_list '}'
 	    {
@@ -409,8 +438,8 @@ class Reish::Parser
   nl_beg: NL 
 
   lex_beg: {@lex.lex_state = :EXPR_BEG}
-  lex_arg: 
-    {@lex.lex_state = :EXPR_ARG}
+  lex_arg: {@lex.lex_state = :EXPR_ARG}
+  lex_end: {@lex.lex_state = :EXPR_END}
 
 end
 
