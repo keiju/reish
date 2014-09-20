@@ -49,6 +49,8 @@ module Reish
       opts = []
       ary.each do |e|
 	case e
+	when true, false, nil, Numeric, Class
+	  opts.push e.to_s
 	when String
 	  opts.push e
 	when Array

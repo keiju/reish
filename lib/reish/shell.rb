@@ -33,11 +33,14 @@ module Reish
       @ignore_sigint = Reish.conf[:IGNORE_SIGINT]
       @ignore_eof = Reish.conf[:IGNORE_EOF]
 
+      @back_trace_limit = Reish.conf[:BACK_TRACE_LIMIT]
+
       @use_readline = Reish.conf[:USE_READLINE]
       initialize_input_method(input_method)
 
       @lex = Lex.new
       @parser = Parser.new(@lex)
+      @parser.yydebug = Reish::conf[:YYDEBUG]
       @codegen = CodeGenerator.new
       @workspace = WorkSpace.new(Main.new(self))
 
@@ -47,6 +50,8 @@ module Reish
 
       # name => path
       @command_cache = {}
+
+      @debug_input = Reish.conf[:DEBUG_INPUT]
     end
 
     attr_accessor :verbose
@@ -57,6 +62,8 @@ module Reish
     alias use_readline? use_readline
 
     attr_reader :pwd
+
+    attr_accessor :debug_input
 
     def initialize_input_method(input_method)
       case input_method
@@ -88,7 +95,7 @@ module Reish
 
     def start
       @lex.set_prompt do |ltype, indent, continue, line_no|
-	@io.prompt = "reish> "
+	@io.prompt = "reish:#{line_no}> "
       end
 
       @lex.set_input(@io) do
@@ -117,8 +124,15 @@ module Reish
 
       loop do
 	@lex.lex_state = :EXPR_BEG
-	@current_input_unit = @parser.do_parse
-	p @current_input_unit
+	@current_input_unit = nil
+	begin
+	  @current_input_unit = @parser.do_parse
+	  p @current_input_unit if @debug_input
+	rescue ParseError => exc
+	rescue => exc
+	  handle_exception(exc)
+	end
+	next unless @current_input_unit
 	break if Node::EOF == @current_input_unit 
 	if Node::NOP == @current_input_unit 
 	  puts "<= (NL)"
@@ -126,13 +140,46 @@ module Reish
 	end
 	exp = @current_input_unit.accept(@codegen)
 	puts "<= #{exp}" if @display_comp
-	val = @workspace.evaluate(exp)
-	display val
+	exc = nil
+	begin
+	  val = @workspace.evaluate(exp)
+	  display val
+	rescue Interrupt => exc
+	rescue SystemExit, SignalException
+	  raise
+	rescue Exception => exc
+	end
+	handle_exception(exc, exp) if exc
       end
     end
 
     def display(val)
       puts "=> #{@display_method.inspect_value(val)}"
+    end
+
+    def handle_exception(exc, exp = nil)
+      messages = ["#{exc.class}: #{exc}"]
+      lasts = []
+      levels = 0
+
+      for m in exc.backtrace
+	if messages.size < @back_trace_limit
+	  messages.push "\tfrom "+m
+	else
+	  lasts.push "\tfrom "+m
+	  if lasts.size > @back_trace_limit
+	    lasts.shift
+	    levels += 1
+	  end
+	end
+      end
+      print messages.join("\n"), "\n"
+      unless lasts.empty?
+	printf "... %d levels...\n", levels if levels > 0
+	print lasts.join("\n")
+      end
+
+      puts "generated code: #{exp}" if exp
     end
 
     #
@@ -150,8 +197,6 @@ module Reish
       end
     end
 
-
-    #
     #
     def display_mode=(opt)
       if i = IRB::INSPECTORS[opt]
@@ -244,6 +289,11 @@ module Reish
     end
 
     attr_reader :system_env
+
+    def yydebug=(val)
+      @parser.yydebug = val
+      @lex.debug_lex_state=val
+    end
 
   end
 end

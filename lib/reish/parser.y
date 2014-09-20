@@ -60,11 +60,11 @@ class Reish::Parser
 		result = val[0]
 	    }
 
-  logical_command: logical_command AND_AND opt_nl_arg logical_command
+  logical_command: logical_command AND_AND opt_nl logical_command
 	    { 
 		result = Node::LogicalCommandAA(val[0], val[3])
 	    }
-	| logical_command OR_OR opt_nl_arg logical_command
+	| logical_command OR_OR opt_nl logical_command
 	    { 
 		result = Node::LogicalCommandOO(val[0], val[3])
 	    }
@@ -218,7 +218,7 @@ do_block: DO compound_list END
 	    }
 	| command LBLACK_I  opt_nl command_element opt_nl ']' '=' opt_nl command_element
             {
-	       result = Node::IndexAssginCommand(val[0], val[2], val[7])
+	       result = Node::IndexAssginCommand(val[0], val[3], val[8])
 	    }
 
   index_ref_command: command LBLACK_I  opt_nl command_element opt_nl ']'
@@ -456,6 +456,16 @@ end
     @lex = lex
   end
 
+  attr_accessor :yydebug
+
   def next_token
     @lex.racc_token
   end
+
+  def on_error(token_id, token, value_stack)
+    
+    puts "Reish: parse error: token line: #{token.line_no} char: #{token.char_no}"
+    raise
+
+  end
+    

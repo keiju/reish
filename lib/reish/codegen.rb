@@ -210,6 +210,11 @@ module Reish
     alias visit_pseudo_variable visit_value
     alias visit_variable visit_value
 
+#    def visit_variable(val)
+#      "((defined? #{val.value}) ? #{val.value} : (raise NameError, \"undefined variable `#{val.value}' for #{self}\"))"
+#    end
+
+
     def visit_ruby_exp(exp)
       "("+exp.exp+")"
     end

@@ -138,7 +138,7 @@ module Reish
 	@variable = var
 	@value = val
 
-	@value.pipeout=:LAST
+#	@value.pipeout=:LAST
       end
 
       attr_reader :variable
@@ -155,7 +155,7 @@ module Reish
 	@index = index
 	@value = val
 
-	@value.pipeout=:LAST
+#	@value.pipeout=:LAST
       end
 
       attr_reader :variable

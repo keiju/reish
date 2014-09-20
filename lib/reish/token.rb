@@ -37,6 +37,9 @@ module Reish
       @char_no = char_no
     end
 
+    attr_reader :line_no
+    attr_reader :char_no
+
     def token_id
       Token2TokenID[self.class]
     end

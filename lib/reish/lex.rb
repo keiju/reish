@@ -149,11 +149,15 @@ module Reish
       @lex_state = EXPR_BEG
 
       @cond_stack = []
+
+      @debug_lex_state = false
     end
+
+    attr_accessor :debug_lex_state
 
 #    attr_accessor :lex_state
     def lex_state=(v)
-#      puts "LEX STATE CHANGE: #{v}"
+      puts "LEX STATE CHANGE: #{v}" if @debug_lex_state
       @lex_state = v
     end
 
@@ -272,7 +276,7 @@ module Reish
       @OP.def_rule("(") do
 	|op, io|
 	cond_push(false)
-	if @lex_state == EXPR_ARG && !@spaceseen
+	if @lex_state == EXPR_ARG && !@space_seen
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LPARLEN_ARG)
 	else
 	  self.lex_state = EXPR_BEG
@@ -692,13 +696,12 @@ module Reish
 	  token.concat io.getc
 	end
       end
-
       while /\w|_/ =~ (ch = io.getc)
 	token.concat ch
       end
       io.ungetc
 
-      Reish.Fail InvaritVariableName if PreservedWord[token]
+      raise NameError, "reserved word: #{token}" if PreservedWord[token]
 
       self.lex_state = EXPR_END
       VariableToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, token)
