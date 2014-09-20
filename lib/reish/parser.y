@@ -46,7 +46,6 @@ class Reish::Parser
   simple_list1:	logical_command
 	    {
 		result = Node::Sequence(val[0])
-#	        result = val[0]
             }
 	| simple_list1 "&" logical_command
 	    { 
@@ -104,7 +103,14 @@ class Reish::Parser
 	| shell_command redirection_list
 #	| function_def
 
-  command_element: WORD
+  command_element: command_element_base
+# for l=*
+	| WILDCARD
+	    {
+	        yyerror val[0], "syntax error: wildcasd #{val[0].inspect} can't use this place."
+	    }
+
+  command_element_base: WORD
 	| group_command
 	| literal
 
@@ -127,17 +133,17 @@ class Reish::Parser
 
   simple_command_element_list_p: opt_nl
   	    {
-		@lex.lex_state = :EXPR_ARG
+		@lex.lex_state = Lex::EXPR_ARG
 		result = []
 	    }
 	| simple_command_element_list_p simple_command_element opt_nl
 	    {
-  		@lex.lex_state = :EXPR_ARG
+  		@lex.lex_state = Lex::EXPR_ARG
 	        result.push val[1]
 	    }
 #	| simple_command_element_list_p simple_command_element ',' opt_nl
 #	    {
-#  		@lex.lex_state = :EXPR_ARG
+#  		@lex.lex_state = Lex::EXPR_ARG
 #	        result.push val[1]
 #	    }
 
@@ -159,7 +165,7 @@ do_block: DO compound_list END
 	    }
   block_arg: 
     	    {
-	       @lex.lex_state = :EXPR_BEG
+	       @lex.lex_state = Lex::EXPR_BEG
 	       result = []
 	    }
 	| block_arg opt_nl ID
@@ -178,7 +184,7 @@ do_block: DO compound_list END
 	    {
 	       result.push val[1]
 	    }
-  simple_command_element: command_element
+  simple_command_element: command_element_base
 	| WILDCARD
 	| redirection
 
@@ -282,17 +288,17 @@ do_block: DO compound_list END
 
   array_element_list: opt_nl
   	    {
-		@lex.lex_state = :EXPR_ARG
+		@lex.lex_state = Lex::EXPR_ARG
 		result = []
 	    }
 	| array_element_list command_element opt_nl
 	    {
-  		@lex.lex_state = :EXPR_ARG
+  		@lex.lex_state = Lex::EXPR_ARG
 	        result.push val[1]
 	    }
 	| array_element_list command_element ',' opt_nl
 	    {
-  		@lex.lex_state = :EXPR_ARG
+  		@lex.lex_state = Lex::EXPR_ARG
 	        result.push val[1]
 	    }
 
@@ -303,22 +309,22 @@ do_block: DO compound_list END
 
   hash_element_list: opt_nl
 	    {
-		@lex.lex_state = :EXPR_ARG
+		@lex.lex_state = Lex::EXPR_ARG
 	        result = []
 	    } 
 	| hash_element_list hash_assoc
 	    {
-	        @lex.lex_state = :EXPR_ARG
+	        @lex.lex_state = Lex::EXPR_ARG
 	        result.push val[1]
 	    }
   hash_assoc: command_element opt_nl ASSOC NL lex_arg command_element opt_nl
 	    {
-	        @lex.lex_state = :EXPR_ARG
+	        @lex.lex_state = Lex::EXPR_ARG
 		result = [val[0], val[5]]
 	    }
 	| command_element opt_nl ASSOC command_element opt_nl
 	    {
-	        @lex.lex_state = :EXPR_ARG
+	        @lex.lex_state = Lex::EXPR_ARG
 		result = [val[0], val[3]]
 	    }
 
@@ -437,9 +443,9 @@ do_block: DO compound_list END
 
   nl_beg: NL 
 
-  lex_beg: {@lex.lex_state = :EXPR_BEG}
-  lex_arg: {@lex.lex_state = :EXPR_ARG}
-  lex_end: {@lex.lex_state = :EXPR_END}
+  lex_beg: {@lex.lex_state = Lex::EXPR_BEG}
+  lex_arg: {@lex.lex_state = Lex::EXPR_ARG}
+  lex_end: {@lex.lex_state = Lex::EXPR_END}
 
 end
 
@@ -462,10 +468,16 @@ end
     @lex.racc_token
   end
 
-  def on_error(token_id, token, value_stack)
+#   def on_error(token_id, token, value_stack)
     
-    puts "Reish: parse error: token line: #{token.line_no} char: #{token.char_no}"
-    raise
+#     puts "Reish: parse error: token line: #{token.line_no} char: #{token.char_no}"
+#     p value_stack
+#     raise
 
+#   end
+
+  def yyerror(token, msg)
+    raise ParseError, msg
   end
+
     

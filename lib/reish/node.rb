@@ -138,7 +138,11 @@ module Reish
 	@variable = var
 	@value = val
 
-#	@value.pipeout=:LAST
+	begin
+	  @value.pipeout=:LAST
+	rescue Exception
+	  #literalの時
+	end
       end
 
       attr_reader :variable
@@ -155,7 +159,10 @@ module Reish
 	@index = index
 	@value = val
 
-#	@value.pipeout=:LAST
+	begin
+	  @value.pipeout=:LAST
+	rescue Exception
+	end
       end
 
       attr_reader :variable

@@ -123,15 +123,18 @@ module Reish
       @lex.initialize_input
 
       loop do
-	@lex.lex_state = :EXPR_BEG
+	@lex.lex_state = Lex::EXPR_BEG
 	@current_input_unit = nil
 	begin
 	  @current_input_unit = @parser.do_parse
 	  p @current_input_unit if @debug_input
 	rescue ParseError => exc
+	  puts exc.message
+	  @lex.reset_input
 	rescue => exc
 	  handle_exception(exc)
 	end
+
 	next unless @current_input_unit
 	break if Node::EOF == @current_input_unit 
 	if Node::NOP == @current_input_unit 

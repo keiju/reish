@@ -16,6 +16,24 @@ module Reish
   class Lex
     Debug = false
 
+    LEX_STATES = [
+      :EXPR_BEG, 
+      :EXPR_MID,
+      :EXPR_END,
+      :EXPR_ARG,
+      :EXPR_FNAME,
+      :EXPR_DOT,
+      :EXPR_CLASS,
+      :EXPR_EQ,
+    ]
+    
+    i = 1
+    LEX_STATES.each do |st|
+      const_set(st, i)
+      i<<=1
+    end
+    EXPR_ARG_ANY= EXPR_ARG | EXPR_EQ
+
     PreservedWord = {
       "class"	=> :CLASS, 
       "module"	=> :MODULE, 
@@ -97,47 +115,47 @@ module Reish
     ]
 
     TransState = {
-      :CLASS => :EXPR_CLASS,
-      :MODULE => :EXPR_BEG,
-      :DEF => :EXPR_FNAME,
-      :UNDEF => :EXPR_FNAME,
-      :BEGIN => :EXPR_BEG,
-      :RESCUE =>  :EXPR_MID,
-      :ENSURE => :EXPR_BEG,
-      :END => :EXPR_END,
-      :IF => :EXPR_BEG,
-      :UNLESS => :EXPR_BEG,
-      :THEN => :EXPR_BEG,
-      :ELSIF => :EXPR_BEG,
-      :ELSE => :EXPR_BEG,
-      :CASE => :EXPR_BEG,
-      :WHEN => :EXPR_BEG,
-      :WHILE => :EXPR_BEG,
-      :UNTIL => :EXPR_BEG,
-      :FOR => :EXPR_BEG,
-      :BREAK => :EXPR_END,
-      :NEXT => :EXPR_END,
-      :REDO => :EXPR_END,
-      :RETRY => :EXPR_END,
-      :IN => :EXPR_BEG,
-      :DO => :EXPR_BEG,
-      :DO_COND => :EXPR_BEG,
-      :RETURN => :EXPR_MID,
-      :YIELD => :EXPR_END,
-      :SUPER => :EXPR_END,
-      :SELF =>  :EXPR_END,
-      :NIL => :EXPR_END,
-      :TRUE => :EXPR_END,
-      :FALSE => :EXPR_END,
-      :AND => :EXPR_BEG,
-      :OR => :EXPR_BEG,
-      :NOT => :EXPR_BEG,
-      :ALIAS => :EXPR_FNAME,
-      :DEFINED => :EXPR_END,
-      :BEGIN => :EXPR_END,
-      :L_END => :EXPR_END,
-      :T__LINE__ => :EXPR_END,
-      :T__FILE__ => :EXPR_END,
+      :CLASS => EXPR_CLASS,
+      :MODULE => EXPR_BEG,
+      :DEF => EXPR_FNAME,
+      :UNDEF => EXPR_FNAME,
+      :BEGIN => EXPR_BEG,
+      :RESCUE =>  EXPR_MID,
+      :ENSURE => EXPR_BEG,
+      :END => EXPR_END,
+      :IF => EXPR_BEG,
+      :UNLESS => EXPR_BEG,
+      :THEN => EXPR_BEG,
+      :ELSIF => EXPR_BEG,
+      :ELSE => EXPR_BEG,
+      :CASE => EXPR_BEG,
+      :WHEN => EXPR_BEG,
+      :WHILE => EXPR_BEG,
+      :UNTIL => EXPR_BEG,
+      :FOR => EXPR_BEG,
+      :BREAK => EXPR_END,
+      :NEXT => EXPR_END,
+      :REDO => EXPR_END,
+      :RETRY => EXPR_END,
+      :IN => EXPR_BEG,
+      :DO => EXPR_BEG,
+      :DO_COND => EXPR_BEG,
+      :RETURN => EXPR_MID,
+      :YIELD => EXPR_END,
+      :SUPER => EXPR_END,
+      :SELF =>  EXPR_END,
+      :NIL => EXPR_END,
+      :TRUE => EXPR_END,
+      :FALSE => EXPR_END,
+      :AND => EXPR_BEG,
+      :OR => EXPR_BEG,
+      :NOT => EXPR_BEG,
+      :ALIAS => EXPR_FNAME,
+      :DEFINED => EXPR_END,
+      :BEGIN => EXPR_END,
+      :L_END => EXPR_END,
+      :T__LINE__ => EXPR_END,
+      :T__FILE__ => EXPR_END,
     }
 
     def initialize
@@ -192,6 +210,7 @@ module Reish
     end
 
     def initialize_input
+      @ruby_scanner.initialize_input
       @ltype = nil
       @quoted = nil
       @indent = 0
@@ -205,6 +224,11 @@ module Reish
 
       @line = ""
       @exp_line_no = @line_no
+    end
+
+    def reset_input
+      initialize_input
+      @ruby_scanner.reset_input
     end
 
     def token
@@ -258,7 +282,7 @@ module Reish
 
       @OP.def_rules("=") do
       |op, io|
-
+	self.lex_state = EXPR_EQ
 	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "=")
       end
 
@@ -290,7 +314,7 @@ module Reish
 	if @lex_state == EXPR_BEG
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_A)
-	elsif @space_seen
+	elsif @space_seen || @lex_sate == EXPR_EQ
 	  io.ungetc
 	  identify_wildcard(io)
 	else
@@ -304,7 +328,7 @@ module Reish
 	if @lex_state == EXPR_BEG
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_H)
-	elsif !@space_seen || @lex_state == EXPR_END
+	elsif !(@space_seen || @lex_state == EXPR_EQ)|| @lex_state == EXPR_END
 	  self.lex_state = EXPR_BEG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_I)
 	else
@@ -738,6 +762,13 @@ module Reish
 end
 
 class RubyLex
+  def reset_input
+    initialize_input
+    
+    @rests.clear
+    @here_header.clear if @here_header
+  end
+
   def identify_compstmt(term)
     initialize_input
     get_readed
@@ -845,6 +876,7 @@ class RubyLex
   end
 
 end
+
 
     
 

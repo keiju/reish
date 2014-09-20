@@ -26,9 +26,10 @@ module Reish
   @CONF[:LC_MESSAGES] = Locale.new
   @CONF[:DISPLY_COMP] = true
   @CONF[:BACK_TRACE_LIMIT] = 16
-  @CONF[:YYDEBUG] = false
-#  @CONF[:YYDEBUG] = true
-#  @CONF[:DEBUG_INPUT] = true
+#  @CONF[:YYDEBUG] = false
+  @CONF[:YYDEBUG] = true
+#  @CONF[:DEBUG_INPUT] = false
+  @CONF[:DEBUG_INPUT] = true
 
   def Reish.conf_tempkey(prefix = "__Reish__", postfix = "__", &block)
     begin
