@@ -40,7 +40,6 @@ module Reish
 
       @lex = Lex.new
       @parser = Parser.new(@lex)
-      @parser.yydebug = Reish::conf[:YYDEBUG]
       @codegen = CodeGenerator.new
       @workspace = WorkSpace.new(Main.new(self))
 
@@ -52,6 +51,7 @@ module Reish
       @command_cache = {}
 
       @debug_input = Reish.conf[:DEBUG_INPUT]
+      self.yydebug = Reish::conf[:YYDEBUG]
     end
 
     attr_accessor :verbose

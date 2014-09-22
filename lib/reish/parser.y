@@ -112,6 +112,7 @@ class Reish::Parser
 
   command_element_base: WORD
 	| group_command
+	| trivial_command
 	| literal
 
   simple_command: simple_command_header simple_command_element_list 
@@ -126,7 +127,9 @@ class Reish::Parser
 	    {
 	       result = Node::SimpleCommand(val[0], val[2])
 	    }
-        | simple_command_header LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
+	| simple_command_lparen
+
+simple_command_lparen: simple_command_header LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
 	    {
 	       result = Node::SimpleCommand(val[0], val[2], val[5])
 	    }
@@ -222,15 +225,28 @@ do_block: DO compound_list END
 	    {
 	       result = Node::AssginCommand(val[0], val[2])
 	    }
-	| command LBLACK_I  opt_nl command_element opt_nl ']' '=' opt_nl command_element
+	| index_assgin_command
+
+index_assgin_command: index_ref '=' opt_nl command_element
             {
-	       result = Node::IndexAssginCommand(val[0], val[3], val[8])
+	       result = Node::IndexAssginCommand(val[0][0], val[0][1], val[3])
 	    }
 
-  index_ref_command: command LBLACK_I  opt_nl command_element opt_nl ']'
+  index_ref_command: index_ref
 	    {
-		result = Node::IndexRefCommand(val[0], val[3])
+		result = Node::IndexRefCommand(*val[0])
 	    }
+
+  index_ref: referenceable LBLACK_I  opt_nl command_element opt_nl ']'
+	    {
+		result = [val[0], val[3]]
+	    }
+
+referenceable: ID
+#	| trivial_command
+	| literal
+	| group
+	| index_ref_command
 
   while_command: WHILE {@lex.cond_push(true)} opt_nl logical_command do {@lex.cond_pop} compound_list END
 	    {
@@ -271,9 +287,29 @@ do_block: DO compound_list END
 	| ';'
 	| THEN
 
-  group_command: '(' compound_list ')'
+  group_command: '(' compound_list ')' lex_arg
 	    {
 	        result = Node::Group(val[1])
+	    }
+  trivial_command: trivial_command0 lex_arg
+
+  trivial_command0: '$' simple_command_header
+	    {         
+	       result = Node::SimpleCommand(val[1], [])
+	       result.pipeout = :RESULT
+	    }
+	| '$' simple_command_lparen
+	    {         
+	       result = val[1]
+	       result.pipeout = :RESULT
+	    }
+	| '$' index_ref_command
+	    {         
+	       result = val[1]
+	    }
+	| '$' assgin_command
+	    {         
+	       result = val[1]
 	    }
 
   ruby_exp: RUBYEXP

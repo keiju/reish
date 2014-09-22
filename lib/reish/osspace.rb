@@ -16,7 +16,7 @@ module Reish
 
     def method_missing(name, *args)
       sh = Thread.current[:__REISH_CURRENT_SHELL__]
-      super unless sh
+      return super unless sh
       back = Thread.current[:__REISH_CURRENT_SHELL__]
       Thread.current[:__REISH_CURRENT_SHELL__] = nil
       begin
@@ -24,7 +24,7 @@ module Reish
       ensure
 	Thread.current[:__REISH_CURRENT_SHELL__] = back
       end
-      super unless command
+      return super unless command
       command
     end
   end

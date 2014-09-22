@@ -169,14 +169,32 @@ module Reish
       @cond_stack = []
 
       @debug_lex_state = false
+
     end
 
     attr_accessor :debug_lex_state
 
 #    attr_accessor :lex_state
     def lex_state=(v)
-      puts "LEX STATE CHANGE: #{v}" if @debug_lex_state
+      if @debug_lex_state
+	puts "LEX STATE CHANGE: #{lex_state_sym(v).join('|')}"
+      end
+
       @lex_state = v
+    end
+
+    def lex_state_sym(v = @lex_state)
+      ary = []
+      st = 1
+      LEX_STATES.each do |name|
+	ary.push name if v & st !=0
+	st<<=1
+      end
+      ary
+    end
+
+    def print_lex_state
+      puts "LEX STATE:  #{lex_state_sym.join('|')}"
     end
 
     def cond_push(v=true)
@@ -311,10 +329,12 @@ module Reish
        @OP.def_rule("[") do
  	|op, io|
 
+print_lex_state
+
 	if @lex_state == EXPR_BEG
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_A)
-	elsif @space_seen || @lex_sate == EXPR_EQ
+	elsif @space_seen || @lex_state == EXPR_EQ
 	  io.ungetc
 	  identify_wildcard(io)
 	else
@@ -451,9 +471,16 @@ module Reish
 	identify_gvar(op, io)
       end
 
+      @OP.def_rule("$@") do
+	|op, io|
+	io.ungetc
+	identify_variable(op, io)
+      end
+
       @OP.def_rule("$") do
 	|op, io|
-	identify_variable(op, io)
+	self.lex_state = EXPR_BEG
+	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$")
       end
 
       @OP.def_rule(">") do
@@ -752,7 +779,7 @@ module Reish
       when /\w/
 	io.ungetc
 	io.ungetc
-	identify_variable
+	identify_variable(op, io)
       else
 	io.ungetc
 	Reish.Fail InvaritVariableName

@@ -139,7 +139,7 @@ module Reish
 	@value = val
 
 	begin
-	  @value.pipeout=:LAST
+	  @value.pipeout=:RESULT
 	rescue Exception
 	  #literalの時
 	end
@@ -160,7 +160,7 @@ module Reish
 	@value = val
 
 	begin
-	  @value.pipeout=:LAST
+	  @value.pipeout=:RESULT
 	rescue Exception
 	end
       end
@@ -312,7 +312,7 @@ module Reish
 	@args.each do |arg| 
 	  case arg
 	  when Group
-	    arg.pipeout = :LAST
+	    arg.pipeout = :RESULT
 	  end
 	end
       end

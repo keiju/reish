@@ -83,9 +83,9 @@ module Reish
 	"Reish::ConcatCommand.new(#{s})"
       when :TO_A
 	s = seq.nodes.collect{|n| n.accept(self)}.join(", ")
-	"Reish::ConcatCommand.new(#{s}).to_a"
-      when :LAST
-	"("+seq.nodes.collect{|n| n.accept(self)}.join("; ")+").to_a"
+	"Reish::ConcatCommand.new(#{s}).resish_result"
+      when :RESULT
+	"("+seq.nodes.collect{|n| n.accept(self)}.join("; ")+").reish_result"
       else
 	seq.nodes.collect{|n| n.accept(self)}.join("; ")
       end
@@ -120,9 +120,8 @@ module Reish
 	  script.concat "::"
 	when :TO_A
 	  script.concat ".to_a"
-	when :LAST
-	  # do nothing
-	  script.concat ".to_a"
+	when :RESULT
+	  script.concat ".reish_result"
 	when nil
 	  # do nothing
 	else

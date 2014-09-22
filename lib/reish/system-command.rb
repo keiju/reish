@@ -164,6 +164,14 @@ module Reish
       end
       @exit_status
     end
+
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	format("#<SystemCommand: @receiverr=%s, @command_path=%s, @args=%s, @exis_status=%s>", @receiver, @command_path, @args, @exit_status)
+      else
+	super
+      end
+    end
   end
 
   class CompSystemCommand<SystemCommand
@@ -267,6 +275,7 @@ end
 class Object
   def reish_term; self; end
   def reish_stat; self; end
+  def reish_result; self; end
 end
 
     
