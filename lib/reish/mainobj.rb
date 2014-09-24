@@ -29,11 +29,16 @@ module Reish
     def_delegator :@__shell__, :rehash
     def_delegator :@__shell__, :display_mode
     def_delegator :@__shell__, :display_mode=
+
+    def_delegator :@__shell__, :ignore_eof
+    def_delegator :@__shell__, :ignore_eof=
+
+
+    def_delegator :@__shell__, :verbose
+    def_delegator :@__shell__, :verbose=
+    def_delegator :@__shell__, :debug_input=
     def_delegator :@__shell__, :display_comp
     def_delegator :@__shell__, :display_comp=
-
-    def_delegator :@__shell__, :debug_input
-    def_delegator :@__shell__, :debug_input=
     def_delegator :@__shell__, :yydebug
     def_delegator :@__shell__, :yydebug=
 

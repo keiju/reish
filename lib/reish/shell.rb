@@ -25,10 +25,9 @@ module Reish
   class Shell
     def initialize(input_method = nil)
       
-      @verbose = Reish.conf[:VERBOSE]
+      @ap_name = Reish.conf[:AP_NAME]
 
       self.display_mode = Reish.conf[:DISPLY_MODE]
-      @display_comp = Reish.conf[:DISPLY_COMP]
 
       @ignore_sigint = Reish.conf[:IGNORE_SIGINT]
       @ignore_eof = Reish.conf[:IGNORE_EOF]
@@ -50,19 +49,26 @@ module Reish
       # name => path
       @command_cache = {}
 
+      @verbose = Reish.conf[:VERBOSE]
+      @display_comp = Reish.conf[:DISPLY_COMP]
       @debug_input = Reish.conf[:DEBUG_INPUT]
       self.yydebug = Reish::conf[:YYDEBUG]
     end
 
-    attr_accessor :verbose
     attr_reader :display_mode
-    attr_accessor :display_comp
 
     attr_reader :use_readline
     alias use_readline? use_readline
 
     attr_reader :pwd
 
+    attr_accessor :ignore_eof
+    alias ignore_eof? ignore_eof
+
+    attr_accessor :verbose
+    alias verbose? verbose
+
+    attr_accessor :display_comp
     attr_accessor :debug_input
 
     def initialize_input_method(input_method)
@@ -103,12 +109,19 @@ module Reish
 	  if l = @io.gets
 	    print l if verbose?
 	  else
-	    if ignore_eof? and @io.readable_atfer_eof?
+p "A1"
+p ignore_eof?
+p @io.readable_after_eof?
+	    if ignore_eof? and @io.readable_after_eof?
+p "A2"
 	      l = "\n"
+p "A3"
 	      if verbose?
+p "A4"
 		printf "Use \"exit\" to leave %s\n", @context.ap_name
 	      end
 	    else
+p "A5"
 	      print "\n"
 	    end
 	  end

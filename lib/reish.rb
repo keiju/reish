@@ -11,6 +11,7 @@
 #   
 #
 
+require "reish/init-reish"
 require "reish/locale"
 require "reish/shell"
 
@@ -22,14 +23,6 @@ module Reish
   def Reish.conf
     @CONF
   end
-
-  @CONF[:LC_MESSAGES] = Locale.new
-  @CONF[:DISPLY_COMP] = true
-  @CONF[:BACK_TRACE_LIMIT] = 16
-#  @CONF[:YYDEBUG] = false
-  @CONF[:YYDEBUG] = true
-#  @CONF[:DEBUG_INPUT] = false
-  @CONF[:DEBUG_INPUT] = true
 
   def Reish.conf_tempkey(prefix = "__Reish__", postfix = "__", &block)
     begin
@@ -43,7 +36,16 @@ module Reish
   end
 
   def Reish::start(ap_path = nil)
-    sh = Shell.new
+    $0 = File::basename(ap_path, ".rb") if ap_path
+    Reish.setup(ap_path)
+
+    if @CONF[:SCRIPT]
+      sh = Shell.new(@CONF[:SCRIPT])
+    else
+      sh = Shell.new
+    end
+
+    @CONF[:REISH_RC].call(irb.context) if @CONF[:REISH_RC]
     @CONF[:MainShell] = sh
     sh.start
   end
