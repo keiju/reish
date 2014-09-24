@@ -68,6 +68,7 @@ module Reish
       pid = Process.spawn(@__shell__.system_env, 
 			  @command_path, 
 			  *command_opts)
+      pid
     end
 
     def each(&block)

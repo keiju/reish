@@ -15,24 +15,51 @@ module Reish
   module OSSpace
 
     def method_missing(name, *args)
-      sh = Thread.current[:__REISH_CURRENT_SHELL__]
-      return super unless sh
-      back = Thread.current[:__REISH_CURRENT_SHELL__]
-      Thread.current[:__REISH_CURRENT_SHELL__] = nil
-      begin
-	command = sh.search_command(self, name, *args)
-      ensure
-	Thread.current[:__REISH_CURRENT_SHELL__] = back
+
+      return super unless Reish::active_thread?
+
+      sh = Reish::current_shell
+      command = sh.search_command(self, name, *args)
+      if command
+	return command
+      else
+	return super
       end
-      return super unless command
-      command
+    end
+
+#     def method_missing(name, *args)
+#       sh = Thread.current[:__REISH_CURRENT_SHELL__]
+#       return super unless sh
+#       back = Thread.current[:__REISH_CURRENT_SHELL__]
+#       Thread.current[:__REISH_CURRENT_SHELL__] = nil
+#       begin
+# 	command = sh.search_command(self, name, *args)
+#       ensure
+# 	Thread.current[:__REISH_CURRENT_SHELL__] = back
+#       end
+#       return super unless command
+#       command
+#     end
+
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	
+	ins = instance_variables.collect{|iv|
+	  if iv == :@__shell__
+	    "@__shell__=#{@__shell__}>"
+	  else
+	    i = instance_eval{iv}.inspect
+	    "#{iv}=#{i}"
+	  end
+	}.join(", ")
+	"#<Reish::Main: #{ins}>"
+      else
+	super
+      end
     end
   end
 end
 
-class Object
-  include Reish::OSSpace
-end
 
 
 

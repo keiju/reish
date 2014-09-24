@@ -23,6 +23,7 @@ require "irb/inspector"
 
 module Reish 
   class Shell
+
     def initialize(input_method = nil)
       
       @ap_name = Reish.conf[:AP_NAME]
@@ -47,7 +48,7 @@ module Reish
       @system_env = ENV
 
       # name => path
-      @command_cache = {}
+      @command_cache = COMMAND_CACHE_BASE.dup
 
       @verbose = Reish.conf[:VERBOSE]
       @display_comp = Reish.conf[:DISPLY_COMP]
@@ -109,19 +110,12 @@ module Reish
 	  if l = @io.gets
 	    print l if verbose?
 	  else
-p "A1"
-p ignore_eof?
-p @io.readable_after_eof?
 	    if ignore_eof? and @io.readable_after_eof?
-p "A2"
 	      l = "\n"
-p "A3"
 	      if verbose?
-p "A4"
-		printf "Use \"exit\" to leave %s\n", @context.ap_name
+		printf "Use \"exit\" to leave %s\n", @ap_name
 	      end
 	    else
-p "A5"
 	      print "\n"
 	    end
 	  end
@@ -251,37 +245,70 @@ p "A5"
 
     #
     # command methods
+    NO_SEARCH_METHODS = [:to_s, :to_a, :to_ary, :to_enum, :to_hash, :to_int, :to_io, :to_proc, :to_regexp, :to_str]
+    COMMAND_CACHE_BASE = {}
+    NO_SEARCH_METHODS.each do |m|
+      COMMAND_CACHE_BASE[m] = :COMMAND_NOTHING
+    end
+
     def search_command(receiver, name, *args)
 
-      path = @command_cache[name]
-      if path
-	return Reish::SystemCommand(self, receiver, path, *args)
-      end
+      inactivate_command_search do
+	path = @command_cache[name]
+	case path
+	when nil
+	when :COMMAND_NOTHING
+	  return nil
+	else
+	  return Reish::SystemCommand(self, receiver, path, *args)
+	end
 
-      n = name.to_s
+	n = name.to_s
+	
+	if n.include?("/")
+	  path = File.absolute_path(n, @pwd)
+	  if File.executable?(path)
+	    @command_cache[name] = path
+	    return Reish::SystemCommand(self, receiver, path, *args)
+	  else
+	    @command_cache[name] = :COMMAND_NOTHING
+	    return nil
+	  end
 
-      if n.include?("/")
-	path = File.absolute_path(n, @pwd)
-	return nil unless File.executable?(path)
+	end
 
-	@command_cache[name] = path
-	return Reish::SystemCommand(self, receiver, path, *args)
-      end
-
-      for dir_name in @system_path
-	p = File.expand_path(dir_name+"/"+n, @pwd)
-	if File.exist?(p)
+	for dir_name in @system_path
+	  p = File.expand_path(dir_name+"/"+n, @pwd)
+	  if File.exist?(p)
+	    path = p
+	    break 
+	  end
+	end
+	if path
 	  @command_cache[name] = p
-	  path = p
-	  break 
+	  Reish::SystemCommand(self, receiver, path, *args)
+	else
+	  @command_cache[name] = :COMMAND_NOTHING
+	  nil
 	end
       end
-      return nil unless path
-      Reish::SystemCommand(self, receiver, path, *args)
+    end
+
+    def inactivate_command_search(&block)
+      sh = Thread.current[:__REISH_CURRENT_SHELL__]
+      return ifnoactive.call if !sh && ifnoactive
+
+      back = sh
+      Thread.current[:__REISH_CURRENT_SHELL__] = nil
+      begin
+	block.call sh
+      ensure
+	Thread.current[:__REISH_CURRENT_SHELL__] = back
+      end
     end
 
     def rehash
-      @command_cache.clear
+      @command_cache = COMMAND_CACHE_BASE.dup
     end
 
     def system_path=(path)

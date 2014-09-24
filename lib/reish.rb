@@ -24,17 +24,6 @@ module Reish
     @CONF
   end
 
-  def Reish.conf_tempkey(prefix = "__Reish__", postfix = "__", &block)
-    begin
-      s = Thread.current.__id__.to_s(16).tr("-", "M")
-      key = (prefix+s+postfix).intern
-    
-      block.call key
-    ensure
-      @CONF.delete(key)
-    end
-  end
-
   def Reish::start(ap_path = nil)
     $0 = File::basename(ap_path, ".rb") if ap_path
     Reish.setup(ap_path)
@@ -50,6 +39,32 @@ module Reish
     sh.start
   end
 
+  def Reish::active_thread?
+    Thread.current[:__REISH_CURRENT_SHELL__]
+  end
+
+  def Reish::current_shell
+    Thread.current[:__REISH_CURRENT_SHELL__]
+  end
+
+  def Reish::inactivate_command_search(ifnoactive: nil, &block)
+    sh = Thread.current[:__REISH_CURRENT_SHELL__]
+    return ifnoactive.call if !sh && ifnoactive
+
+    sh.inactivate_command_search &block
+  end
+
+  def Reish::conf_tempkey(prefix = "__Reish__", postfix = "__", &block)
+    begin
+      s = Thread.current.__id__.to_s(16).tr("-", "M")
+      key = (prefix+s+postfix).intern
+    
+      block.call key
+    ensure
+      @CONF.delete(key)
+    end
+  end
+
   DefaultEncodings = Struct.new(:external, :internal)
   class << Reish
     private
@@ -57,7 +72,7 @@ module Reish
       verbose, $VERBOSE = $VERBOSE, nil
       Encoding.default_external = extern unless extern.nil? || extern.empty?
       Encoding.default_internal = intern unless intern.nil? || intern.empty?
-      @CONF[:ENCODINGS] = IRB::DefaultEncodings.new(extern, intern)
+      @CONF[:ENCODINGS] = Reish::DefaultEncodings.new(extern, intern)
       [$stdin, $stdout, $stderr].each do |io|
 	io.set_encoding(extern, intern)
       end
@@ -68,3 +83,6 @@ module Reish
   end
 end
 
+class Object
+  include Reish::OSSpace
+end
