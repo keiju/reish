@@ -145,14 +145,17 @@ module Reish
 	next unless @current_input_unit
 	break if Node::EOF == @current_input_unit 
 	if Node::NOP == @current_input_unit 
-	  puts "<= (NL)"
+	  puts "<= (NL)" if @display_comp
 	  next
 	end
 	exp = @current_input_unit.accept(@codegen)
 	puts "<= #{exp}" if @display_comp
 	exc = nil
 	begin
-	  val = @workspace.evaluate(exp)
+	  val = nil
+	  activate_command_search do 
+	    val = @workspace.evaluate(exp)
+	  end
 	  display val
 	rescue Interrupt => exc
 	rescue SystemExit, SignalException
@@ -291,6 +294,16 @@ module Reish
 	  @command_cache[name] = :COMMAND_NOTHING
 	  nil
 	end
+      end
+    end
+
+    def activate_command_search(&block)
+      sh = Thread.current[:__REISH_CURRENT_SHELL__]
+      Thread.current[:__REISH_CURRENT_SHELL__] = self
+      begin
+	block.call self
+      ensure
+	Thread.current[:__REISH_CURRENT_SHELL__] = sh
       end
     end
 

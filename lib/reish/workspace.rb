@@ -99,12 +99,7 @@ module Reish
     attr_reader :main
 
     def evaluate(statements, file = __FILE__, line = __LINE__)
-      Thread.current[:__REISH_CURRENT_SHELL__] = @main.__shell__
-      begin
-	eval(statements, @binding, file, line)
-      ensure
-	Thread.current[:__REISH_CURRENT_SHELL__] = nil
-      end
+      eval(statements, @binding, file, line)
     end
 
     # error message manipulator
