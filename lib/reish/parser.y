@@ -311,6 +311,10 @@ referenceable: ID
 	    {         
 	       result = val[1]
 	    }
+	| '$' PSEUDOVARIABLE
+	    {         
+	       result = val[1]
+	    }
 
   ruby_exp: RUBYEXP
 	    {
