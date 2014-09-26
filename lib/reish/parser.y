@@ -129,7 +129,7 @@ class Reish::Parser
 	    }
 	| simple_command_lparen
 
-simple_command_lparen: simple_command_header LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
+  simple_command_lparen: simple_command_header LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
 	    {
 	       result = Node::SimpleCommand(val[0], val[2], val[5])
 	    }
@@ -227,7 +227,7 @@ do_block: DO compound_list END
 	    }
 	| index_assgin_command
 
-index_assgin_command: index_ref '=' opt_nl command_element
+  index_assgin_command: index_ref '=' opt_nl command_element
             {
 	       result = Node::IndexAssginCommand(val[0][0], val[0][1], val[3])
 	    }

@@ -41,22 +41,6 @@ module Reish
 #       command
 #     end
 
-    def inspect
-      if Reish::INSPECT_LEBEL < 3
-	
-	ins = instance_variables.collect{|iv|
-	  if iv == :@__shell__
-	    "@__shell__=#{@__shell__}>"
-	  else
-	    i = instance_eval{iv}.inspect
-	    "#{iv}=#{i}"
-	  end
-	}.join(", ")
-	"#<Reish::Main: #{ins}>"
-      else
-	super
-      end
-    end
   end
 end
 

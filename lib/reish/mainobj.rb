@@ -42,6 +42,22 @@ module Reish
     def_delegator :@__shell__, :yydebug
     def_delegator :@__shell__, :yydebug=
 
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	
+	ins = instance_variables.collect{|iv|
+	  if iv == :@__shell__
+	    "@__shell__=#{@__shell__}"
+	  else
+	    v = instance_eval(iv.id2name).inspect
+	    "#{iv}=#{v}"
+	  end
+	}.join(", ")
+	"#<Reish::Main: #{ins}>"
+      else
+	super
+      end
+    end
   end
 end
 
