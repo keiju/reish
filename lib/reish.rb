@@ -19,6 +19,8 @@ module Reish
 
   INSPECT_LEBEL = 1
 
+  class Abort < Exception;end
+
   @CONF={}
   def Reish.conf
     @CONF
@@ -33,9 +35,9 @@ module Reish
     else
       sh = Shell.new
     end
+    const_set(:MAIN_SHELL, sh)
+    sh.initialize_as_main_shell
 
-    @CONF[:REISH_RC].call(irb.context) if @CONF[:REISH_RC]
-    @CONF[:MainShell] = sh
     sh.start
   end
 

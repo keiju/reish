@@ -25,6 +25,8 @@ module Reish
   class Shell
 
     def initialize(input_method = nil)
+
+      @thread = Thread.current if defined? Thread
       
       @ap_name = Reish.conf[:AP_NAME]
 
@@ -54,7 +56,12 @@ module Reish
       @display_comp = Reish.conf[:DISPLY_COMP]
       @debug_input = Reish.conf[:DEBUG_INPUT]
       self.yydebug = Reish::conf[:YYDEBUG]
+
+      @signal_status = :IN_IRB
+      Reish.conf[:REISH_RC].call(self) if Reish.conf[:REISH_RC]
     end
+
+    attr_reader :thread
 
     attr_reader :display_mode
 
@@ -66,11 +73,20 @@ module Reish
     attr_accessor :ignore_eof
     alias ignore_eof? ignore_eof
 
+    attr_accessor :ignore_sigint
+    alias ignore_sigint? ignore_sigint
+
     attr_accessor :verbose
     alias verbose? verbose
 
     attr_accessor :display_comp
     attr_accessor :debug_input
+
+    def initialize_as_main_shell
+      trap("SIGINT") do
+	signal_handle
+      end
+    end
 
     def initialize_input_method(input_method)
       case input_method
@@ -106,7 +122,7 @@ module Reish
       end
 
       @lex.set_input(@io) do
-#	signal_status(:IN_INPUT) do
+	signal_status(:IN_INPUT) do
 	  if l = @io.gets
 	    print l if verbose?
 	  else
@@ -120,10 +136,15 @@ module Reish
 	    end
 	  end
 	  l
-#	end
+	end
       end
 
-      eval_input
+      begin
+	catch(:REISH_EXIT) do
+	  eval_input
+	end
+      ensure
+      end
     end
 
     def eval_input
@@ -138,6 +159,8 @@ module Reish
 	rescue ParseError => exc
 	  puts exc.message
 	  @lex.reset_input
+	rescue Interrupt => exc
+	  
 	rescue => exc
 	  handle_exception(exc)
 	end
@@ -153,8 +176,10 @@ module Reish
 	exc = nil
 	begin
 	  val = nil
-	  activate_command_search do 
-	    val = @workspace.evaluate(exp)
+	  signal_status(:IN_EVAL) do
+	    activate_command_search do 
+	      val = @workspace.evaluate(exp)
+	    end
 	  end
 	  display val
 	rescue Interrupt => exc
@@ -193,6 +218,51 @@ module Reish
       end
 
       puts "generated code: #{exp}" if exp
+    end
+
+    def signal_handle
+      unless ignore_sigint?
+	print "\nabort!!\n" if verbose?
+	exit
+      end
+
+      case @signal_status
+      when :IN_INPUT
+	print "^C\n"
+	raise Interrupt
+      when :IN_EVAL
+	reish_abort(self)
+      when :IN_LOAD
+	reish_abort(self, LoadAbort)
+      when :IN_IRB
+	# ignore
+      else
+	# ignore other cases as well
+      end
+    end
+
+    def signal_status(status)
+      return yield if @signal_status == :IN_LOAD
+
+      signal_status_back = @signal_status
+      @signal_status = status
+      begin
+	yield
+      ensure
+	@signal_status = signal_status_back
+      end
+    end
+
+    def reish_exit(irb, ret)
+      throw :REISH_EXIT, ret
+    end
+
+    def reish_abort(irb, exception = Abort)
+      if defined? Thread
+	thread.raise exception, "abort then interrupt!!"
+      else
+	raise exception, "abort then interrupt!!"
+      end
     end
 
     #
