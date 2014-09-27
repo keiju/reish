@@ -384,6 +384,18 @@ print_lex_state
 	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '|')
       end
 
+      @OP.def_rule(":") do
+	|op, io|
+
+	if @lex_state == EXPR_END || io.peek(0) =~ /\s/
+	  @lex_state = EXPR_BEG
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	else
+	  @lex_state = EXPR_FNAME
+	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :SYMBEG)
+	end
+      end
+
       @OP.def_rule("::") do
 	|op, io|
 	self.lex_state = EXPR_BEG
@@ -493,7 +505,7 @@ print_lex_state
 
 	if /[0-9]/ =~ io.peek(0) 
 	  identify_number(io)
-	elsif @lex_state == EXPR_BEG
+	elsif @lex_state == EXPR_BEG || @lex_state == EXPR_FNAME
 	  identify_id(io)
 	else
 	  identify_word(io)
@@ -518,7 +530,7 @@ print_lex_state
     def identify_id(io)
       token = ""
 
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[=\|&;\(\)<>\[\{\}\]]/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;\(\)<>\[\{\}\]]/ !~ ch
 	print ":", ch, ":" if Debug
 
 	if ch == "/"
@@ -564,7 +576,6 @@ print_lex_state
       io.ungetc
 
       if PreservedWordH[token]
-
 	if tid = PreservedWord[token]
 	  identify_reserved_word(io, token, tid)
 	else

@@ -37,9 +37,11 @@ module Reish
 
     class ValueNode<Node
       def initialize(val)
-	super
+	super()
 	@value = val
       end
+
+      attr_reader :value
     end
 
     class SingleNode<Node
@@ -407,6 +409,11 @@ module Reish
       
       attr_reader :elements
 
+      def_accept
+    end
+
+    class Symbol<ValueNode
+      def_constructor
       def_accept
     end
 

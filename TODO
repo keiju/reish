@@ -1,5 +1,3 @@
-シンボル
-フォーマット付Number(FormedNumber)
 プロンプト表示
 リダイレクション
 &
@@ -21,6 +19,8 @@ if修飾子
 while修飾子
 until修飾子
 XSTRING(#)
+フォーマット付Number(FormedNumber)
+ハッシュ中のsym:形式
 クラス定義
 メソッド定義
 ヒアドキュメント

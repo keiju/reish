@@ -236,6 +236,10 @@ module Reish
       "{"+script+"}"
     end
 
+    def visit_symbol(sym)
+      ":" + sym.value.accept(self)
+    end
+
     def visit_string(str)
       '"'+str.value+'"'
     end

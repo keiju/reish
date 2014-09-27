@@ -219,7 +219,17 @@ do_block: DO compound_list END
 	| PSEUDOVARIABLE
 	| array
 	| hash
+	| symbol
 	| ruby_exp
+
+  symbol: SYMBEG sym
+	    {
+	      result = Node::Symbol(val[1])
+	    }
+
+  sym: ID
+	| VARIABLE
+	| STRING
 
   assgin_command: ID '=' command_element
 	    {
