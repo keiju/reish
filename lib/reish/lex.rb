@@ -533,7 +533,7 @@ print_lex_state
       while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;\(\)<>\[\{\}\]]/ !~ ch
 	print ":", ch, ":" if Debug
 
-	if ch == "/"
+	if /[\/\-]/ =~ ch
 	  io.ungetc
 	  return identify_path(io, token)
 	end
