@@ -220,7 +220,9 @@ module Reish
     end
 
     def set_prompt(&block)
-      @ruby_scanner.set_prompt &block
+      @ruby_scanner.set_prompt do |ltype, indent, continue, line_no|
+	block.call(@ltype, indent, @continue, line_no)
+      end
     end
 
     def prompt
@@ -243,6 +245,9 @@ module Reish
       @line = ""
       @exp_line_no = @line_no
     end
+
+    attr_accessor :continue
+    alias continue? continue
 
     def reset_input
       initialize_input
@@ -295,7 +300,20 @@ module Reish
       @OP.def_rule("\n") do
 	|op, io|
 	self.lex_state = EXPR_BEG
+	@continue = true
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :NL)
+      end
+
+      @OP.def_rule('\\') do
+	|op, io|
+	if io.getc == "\n"
+	  @space_seen = true
+	  @continue = true
+	  SpaceToken.new(io, @prev_seek, @prev_line_no, @prev_char_no)
+	else
+	  io.ungetc
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	end
       end
 
       @OP.def_rules("=") do
@@ -533,7 +551,7 @@ print_lex_state
       while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;\(\)<>\[\{\}\]]/ !~ ch
 	print ":", ch, ":" if Debug
 
-	if /[\/\-]/ =~ ch
+	if /[\/\-\+]/ =~ ch
 	  io.ungetc
 	  return identify_path(io, token)
 	end
@@ -736,15 +754,25 @@ print_lex_state
     end
 
     def identify_string(op, io)
-      str = @ruby_scanner.identify_reish_string(op)
-      self.lex_state = EXPR_END
-      StringToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+      @ltype = op
+      begin
+	str = @ruby_scanner.identify_reish_string(op)
+	StringToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+      ensure
+	self.lex_state = EXPR_END
+	@ltype = nil
+      end
     end
 
     def identify_regexp(op, io)
-      str = @ruby_scanner.identify_reish_string(op)
-      self.lex_state = EXPR_END
-      RegexpToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+      @ltype = op
+      begin
+	str = @ruby_scanner.identify_reish_string(op)
+	RegexpToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+      ensure
+	self.lex_state = EXPR_END
+	@ltype = nil
+      end
     end
 
     def identify_variable(op, io)

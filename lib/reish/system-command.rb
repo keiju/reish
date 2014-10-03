@@ -277,7 +277,23 @@ class Object
   def reish_term; self; end
   def reish_stat; self; end
   def reish_result; self; end
+
+  def reish_append_command_opts(opts)
+    begin
+      st = self.to_str
+      opts.push st
+    rescue
+      super
+    end
+  end
 end
+
+class Regexp
+  def reish_append_command_opts(opts)
+    opts.push self.source
+  end
+end
+
 
     
   

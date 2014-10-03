@@ -21,11 +21,13 @@ class Reish::Parser
   rule
   inputunit: simple_list simple_list_terminator
 	    {
+		@lex.continue = false
 		_values.push Node::InputUnit(val[0], val[1])
 	        yyaccept
 	    }
 	| NL
 	    {
+		@lex.continue = false
 		_values.push Node::NOP
   		yyaccept
 	    }
