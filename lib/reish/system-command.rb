@@ -124,6 +124,10 @@ module Reish
       @exit_status
     end
 
+    def reish_result
+      self.to_a
+    end
+
     alias reish_term term
 
     def receive?
@@ -183,7 +187,7 @@ module Reish
       @receiver_script = receiver.to_script
     end
 
-    def io_popen(&block)
+    def io_popen(open_mode, &block)
       IO.popen(@__shell__.system_env, to_script, open_mode, &block)
     end
 
