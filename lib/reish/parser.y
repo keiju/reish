@@ -445,7 +445,13 @@ referenceable: ID
 	| REDIR_WORD '>' WORD
 	| REDIR_WORD '<' WORD
 	| GREATER_GREATER WORD
+	  {
+	    result = Node::Redirection(1, ">>", val[1])
+	  }
 	| FID GREATER_GREATER WORD
+	  {
+	    result = Node::Redirection(val[0], ">>", val[2])
+	  }
 	| REDIR_WORD GREATER_GREATER WORD
 	| GREATER_BAR WORD
 	| FID GREATER_BAR WORD

@@ -180,21 +180,25 @@ module Reish
     end
 
     def visit_simple_command_with_redirection(command)
-      name = command.name.accept(self)
 
-      args = command.args.collect{
-	|e|
+      name = command.name.accept(self)
+      args = []
+      reds = []
+      command.args.each do |e|
 	case e
 	when Node::Redirection
-	  '('+e.accept(self)+")"
+	  reds.push e.accept(self)
 	else
-	  e.accept(self)
+	  args.push e.accept(self)
 	end
-      }.join(", ")
+      end
+
       if command.block
-	"#{name}(#{args}){#{command.block.accept(self)}}"
+	"reish_send_with_redirection('#{name}', [#{args.join(", ")}], [#{reds.join(", ")}], #{command.block})"
+
       else
-	"#{name}(#{args})"
+	"reish_send_with_redirection('#{name}', [#{args.join(", ")}], [#{reds.join(", ")}])"
+
       end
     end
 
@@ -250,9 +254,21 @@ module Reish
     end
 
     def visit_redirection(red)
-      s = red.source.accept(self)
-      r = red.red.accept(self)
-      "Reish::Redirect(#{s}, '#{red.id}', #{r}, #{red.over})"
+      if red.source.kind_of?(Integer)
+	s = red.source
+      else
+	s = red.source.accept(self)
+      end
+      if red.red.kind_of?(Integer)
+	r = red.red
+      else
+	r = red.red.accept(self)
+      end
+      if red.over
+	"Reish::Redirect(#{s}, '#{red.id}', #{r}, #{red.over})"
+      else
+	"Reish::Redirect(#{s}, '#{red.id}', #{r})"
+      end
     end
 
     def visit_nop(nop)

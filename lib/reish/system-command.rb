@@ -34,15 +34,18 @@ module Reish
       @command_path = path
       @args = args
 
+      @reds = nil
+
       @exit_status = nil
     end
 
     attr_reader :receiver
+    attr_accessor :reds
 
     def io_popen(mode, &block)
       IO.popen([@__shell__.system_env, 
 		 @command_path, 
-		 *command_opts], mode, &block)
+		 *command_opts], mode, spawn_options, &block)
     end
 
     def command_opts(ary = @args)
@@ -67,7 +70,8 @@ module Reish
     def io_spawn
       pid = Process.spawn(@__shell__.system_env, 
 			  @command_path, 
-			  *command_opts)
+			  *command_opts,
+			  spawn_options)
       pid
     end
 
@@ -170,6 +174,28 @@ module Reish
       @exit_status
     end
 
+    def spawn_options
+      opts = {}
+      return opts unless @reds
+
+      @reds.each do |red|
+	case red.id
+	when ">"
+	  opts[red.source] = [red.red, "w"]
+	when ">>"
+	  opts[red.source] = [red.red, "a"]
+	when "<"
+	  opts[red.source] = red.red
+#	when ">&"
+#	  opts[red.source] = red.red
+#	when "<&"
+#	  opts[red.source] = red.red
+#	when "&>"
+	end
+      end
+      opts
+    end
+
     def inspect
       if Reish::INSPECT_LEBEL < 3
 	format("#<SystemCommand: @receiverr=%s, @command_path=%s, @args=%s, @exis_status=%s>", @receiver, @command_path, @args, @exit_status)
@@ -185,14 +211,17 @@ module Reish
       
       @receiver = receiver.receiver
       @receiver_script = receiver.to_script
+      if receiver.reds
+	@receiver_script.concat receiver.reds.collect{|r| r.command_option_str}.join(" ")
+      end
     end
 
     def io_popen(open_mode, &block)
-      IO.popen(@__shell__.system_env, to_script, open_mode, &block)
+      IO.popen(@__shell__.system_env, to_script, open_mode, spawn_options, &block)
     end
 
     def io_spawn
-      Process.spawn(@__shell__.system_env, to_script)
+      Process.spawn(@__shell__.system_env, to_script, spawn_options)
     end
 
     def to_script
@@ -260,9 +289,19 @@ module Reish
     Redirect::new(*opts)
   end
 
+  class RedirectionCommand
+
+    def initialize(method, args, reds, &block)
+      @method = method
+      @args = args
+      @reds = reds
+      @block = block
+    end
+  end
+
   class Redirect
     def initialize(src, id, red, over = nil)
-      @source = source
+      @source = src
       @id = id
       @red = red
       @over = over
@@ -272,6 +311,10 @@ module Reish
     attr_reader :id
     attr_reader :red
     attr_reader :over
+
+    def command_option_str
+      "#{@source}#{id}#{red}"
+    end
   end
 
 end
@@ -288,6 +331,67 @@ class Object
       opts.push st
     rescue
       super
+    end
+  end
+
+  def reish_send_with_redirection(method, args, reds, &block)
+    
+    Reish::Fail InexistenceCurrentShell unless Reish::active_thread?
+
+    if Reish::inactivate_command_search{respond_to?(method, true)}
+      raise NotImpementError
+    else
+      sh = Reish::current_shell
+      com = sh.search_command(self, method, *args)
+      com.reds = reds
+      com
+    end
+  end
+
+  def reish_attach_redirection(*reds)
+
+    input = nil
+    output = nil
+
+    reds.each do |red|
+      case red.id
+      when ">"
+	if red.source != 1
+	  raise ArgumentError, "biltin ruby method not support redirection except etdout"
+	end
+	case red.red
+	when Integer
+	  output = IO.open(red.red, "w")
+	when String
+	  output = File.open(red.red, "w")
+	end
+      when ">>"
+	if red.source != 1
+	  raise ArgumentError, "biltin ruby method not support redirection except etdout"
+	end
+	case red.red
+	when Integer
+	  output = IO.open(red.red, "a")
+	when String
+	  output = File.open(red.red, "a")
+	end
+      when "<"
+	if red.source != 0
+	  raise ArgumentError, "biltin ruby method not support redirection except etdin"
+	end
+	case red.red
+	when Integer
+	  input = IO.open(red.red, "r")
+	when String
+	  input = File.open(red.red, "r")
+	end
+      end
+    end
+
+    if input
+      input.each do |e|
+	
+      end
     end
   end
 end

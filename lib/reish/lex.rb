@@ -513,9 +513,14 @@ print_lex_state
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$")
       end
 
-      @OP.def_rule(">") do
+      @OP.def_rules(">", "<") do
 	|op, io|
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '>')
+	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+      end
+
+      @OP.def_rule(">>") do
+	|op, io|
+	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :GREATER_GREATER)
       end
 
       @OP.def_rule("") do
@@ -942,8 +947,3 @@ class RubyLex
   end
 
 end
-
-
-    
-
-

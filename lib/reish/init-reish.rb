@@ -65,8 +65,8 @@ module Reish
     @CONF[:DEBUG_LEVEL] = 1
   end
 
-#  def IRB.init_error
-#    @CONF[:LOCALE].load("reish/error.rb")
-#  end
+  def Reish.init_error
+    @CONF[:LOCALE].load("reish/error.rb")
+  end
 
 end
