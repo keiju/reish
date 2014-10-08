@@ -21,7 +21,7 @@ module Reish
   def_exception :CantChangeBinding, "Can't change binding to (%s)."
   def_exception :UndefinedPromptMode, "Undefined prompt mode(%s)."
 
-  def_exception :InexistenceCurrentShell 'カレントシェルがありません"
+  def_exception :NotExistCurrentShell "Not exist current shell."
 end
 
 

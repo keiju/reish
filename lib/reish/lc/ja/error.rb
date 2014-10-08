@@ -17,5 +17,5 @@ module IRB
   def_exception :CantShiftToMultiReishMode, 'multi-irb modeに移れません.'
   def_exception :CantChangeBinding, 'バインディング(%s)に変更できません.'
   def_exception :UndefinedPromptMode, 'プロンプトモード(%s)は定義されていません.'
-  def_exception :InexistenceCurrentShell 'カレントシェルがありません"
+  def_exception :NotExistCurrentShell 'カレントシェルがありません.'
 end

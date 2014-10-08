@@ -179,20 +179,10 @@ module Reish
       return opts unless @reds
 
       @reds.each do |red|
-	case red.id
-	when ">"
-	  opts[red.source] = [red.red, "w"]
-	when ">>"
-	  opts[red.source] = [red.red, "a"]
-	when "<"
-	  opts[red.source] = red.red
-#	when ">&"
-#	  opts[red.source] = red.red
-#	when "<&"
-#	  opts[red.source] = red.red
-#	when "&>"
-	end
+	key, value = red.spawn_option_key_value
+	opts[key] = value
       end
+
       opts
     end
 
@@ -315,6 +305,28 @@ module Reish
     def command_option_str
       "#{@source}#{id}#{red}"
     end
+
+    def spawn_option_key_value
+      case @id
+      when ">", "&>"
+	[source_fid, [@red, "w"]]
+      when ">>", "&>>"
+	[source_fid, [@red, "a"]]
+      when "<"
+	[red.source_fid, @red]
+      end
+    end
+
+    def source_fid
+      case id
+      when "<"
+	0
+      when ">", ">>"
+	1
+      when "&>", "&>>"
+	[1, 2]
+      end
+    end
   end
 
 end
@@ -336,9 +348,10 @@ class Object
 
   def reish_send_with_redirection(method, args, reds, &block)
     
-    Reish::Fail InexistenceCurrentShell unless Reish::active_thread?
+    Reish::Fail NotExistCurrentShell unless Reish::active_thread?
 
     if Reish::inactivate_command_search{respond_to?(method, true)}
+      
       raise NotImpementError
     else
       sh = Reish::current_shell

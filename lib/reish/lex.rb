@@ -158,6 +158,23 @@ module Reish
       :T__FILE__ => EXPR_END,
     }
 
+    Redirection2ID = {
+      ">" => ">",
+      "<" => ">",
+      ">>" => :GREATER_GREATER,
+      ">|" => :GREATER_BAR,
+      "<>" => :LESS_GREATER,
+      "<<" => :LESS_LESS,
+      "<<-" => :LESS_LESS_MINUS,
+      "<<<" => :LESS_LESS_LESS,
+      "<&" => :LESS_AND,
+      ">&" => :GREATER_AND,
+      "&>" => :AND_GREATER,
+      "&>>" => :AND_GREATER_GREATER,
+    }
+
+    Redirections = Redirection2ID.keys
+
     def initialize
       lex_init
       @ruby_scanner = RubyLex.new
@@ -513,14 +530,9 @@ print_lex_state
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$")
       end
 
-      @OP.def_rules(">", "<") do
+      @OP.def_rules(*Redirections) do
 	|op, io|
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
-      end
-
-      @OP.def_rule(">>") do
-	|op, io|
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :GREATER_GREATER)
+	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, Redirection2ID[op])
       end
 
       @OP.def_rule("") do

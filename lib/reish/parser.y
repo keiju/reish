@@ -428,11 +428,11 @@ referenceable: ID
 
   redirection:	'>' WORD
 	  {
-	    result = Node::Redirection(1, ">", val[1])
+	    result = Node::Redirection(-1, ">", val[1])
 	  }
 	| '<' WORD
 	  {
-	    result = Node::Redirection(0, "<", val[1])
+	    result = Node::Redirection(-1, "<", val[1])
 	  }
 	| FID '>' WORD
 	  {
@@ -446,7 +446,7 @@ referenceable: ID
 	| REDIR_WORD '<' WORD
 	| GREATER_GREATER WORD
 	  {
-	    result = Node::Redirection(1, ">>", val[1])
+	    result = Node::Redirection(-1, ">>", val[1])
 	  }
 	| FID GREATER_GREATER WORD
 	  {
@@ -487,7 +487,13 @@ referenceable: ID
 	| FID  LESS_AND '-'
 	| REDIR_WORD LESS_AND '-'
 	| AND_GREATER WORD
+	  {
+	    result = Node::Redirection(-1, "&>", val[1])
+	  }
 	| AND_GREATER_GREATER WORD
+	  {
+	    result = Node::Redirection(-1, "&>>", val[1])
+	  }
 
   simple_list_terminator:	NL
 	| EOF
