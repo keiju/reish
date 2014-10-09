@@ -422,6 +422,60 @@ module Reish
 
     attr_reader :system_env
 
+    def send_with_redirection(receiver, method, args, reds, &block)
+
+      if inactivate_command_search{receiver.respond_to?(method, true)}
+	input = nil
+	output = nil
+	reds.each do |r|
+	  case r.id
+	  when "<"
+	    input = r
+	  when ">", ">>"
+	    output = r
+	  when "&>", "&>>"
+	    output = r
+	  else
+	    raise ArgumentError, "can't use redirection which specify source"
+	  end
+	end
+
+	if input
+	  case input.red
+	  when String
+	    receiver = open_file(input.red)
+	  else
+	    raise ArgumentError, "redirect target must be String"
+	  end
+	end
+	if output
+	  ret = nil
+	  open_file(output.red, output.open_mode) do |io|
+	    ret = receiver.send(method, *args, &block).each{|e|
+	      io.print e
+	    }
+	  end
+	  ret
+	else
+	  receiver.send(method, *args, &block)
+	end
+      else
+	com = search_command(self, method, *args)
+	com.reds = reds
+	com
+      end
+    end
+
+    def expand_path(name, base = @pwd)
+      File.expand_path(name, base)
+    end
+
+    #
+    def open_file(name, mode = "r", perm = 0666, &block)
+      path = expand_path(name)
+      File.open(path, mode, perm, &block)
+    end
+
     def yydebug=(val)
       @parser.yydebug = val
       @lex.debug_lex_state=val

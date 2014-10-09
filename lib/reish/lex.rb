@@ -160,7 +160,7 @@ module Reish
 
     Redirection2ID = {
       ">" => ">",
-      "<" => ">",
+      "<" => "<",
       ">>" => :GREATER_GREATER,
       ">|" => :GREATER_BAR,
       "<>" => :LESS_GREATER,
@@ -532,6 +532,7 @@ print_lex_state
 
       @OP.def_rules(*Redirections) do
 	|op, io|
+	self.lex_state = EXPR_ARG
 	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, Redirection2ID[op])
       end
 

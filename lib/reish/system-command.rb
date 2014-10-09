@@ -327,6 +327,17 @@ module Reish
 	[1, 2]
       end
     end
+
+    def open_mode
+      case @id
+      when ">", "&>"
+	"w"
+      when ">>", "&>>"
+	"a"
+      when "<"
+	"r"
+      end
+    end
   end
 
 end
@@ -347,19 +358,10 @@ class Object
   end
 
   def reish_send_with_redirection(method, args, reds, &block)
-    
     Reish::Fail NotExistCurrentShell unless Reish::active_thread?
-
-    if Reish::inactivate_command_search{respond_to?(method, true)}
-      
-      raise NotImpementError
-    else
-      sh = Reish::current_shell
-      com = sh.search_command(self, method, *args)
-      com.reds = reds
-      com
-    end
+    Reish::current_shell.send_with_redirection(self, method, args, reds, &block)
   end
+    
 
   def reish_attach_redirection(*reds)
 

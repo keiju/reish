@@ -426,74 +426,78 @@ referenceable: ID
 #redirection_list: redirection
 #	| redirection_list redirection
 
-  redirection:	'>' WORD
+  redirection:	'>' redirection_element
 	  {
 	    result = Node::Redirection(-1, ">", val[1])
 	  }
-	| '<' WORD
+	| '<' redirection_element
 	  {
 	    result = Node::Redirection(-1, "<", val[1])
 	  }
-	| FID '>' WORD
+	| FID '>' redirection_element
 	  {
 	    result = Node::Redirection(val[0], ">", val[2])
 	  }
-	| FID '<' WORD
+	| FID '<' redirection_element
 	  {
 	    result = Node::Redirection(val[0], "<", val[2])
 	  }
-	| REDIR_WORD '>' WORD
-	| REDIR_WORD '<' WORD
-	| GREATER_GREATER WORD
+	| REDIR_WORD '>' redirection_element
+	| REDIR_WORD '<' redirection_element
+	| GREATER_GREATER redirection_element
 	  {
 	    result = Node::Redirection(-1, ">>", val[1])
 	  }
-	| FID GREATER_GREATER WORD
+	| FID GREATER_GREATER redirection_element
 	  {
 	    result = Node::Redirection(val[0], ">>", val[2])
 	  }
-	| REDIR_WORD GREATER_GREATER WORD
-	| GREATER_BAR WORD
-	| FID GREATER_BAR WORD
-	| REDIR_WORD GREATER_BAR WORD
-	| LESS_GREATER WORD
-	| FID LESS_GREATER WORD
-	| REDIR_WORD LESS_GREATER WORD
-	| LESS_LESS WORD
-	| FID LESS_LESS WORD
-	| REDIR_WORD LESS_LESS WORD
-	| LESS_LESS_MINUS WORD
-	| FID LESS_LESS_MINUS WORD
-	| REDIR_WORD  LESS_LESS_MINUS WORD
-	| LESS_LESS_LESS WORD
-	| FID LESS_LESS_LESS WORD
-	| REDIR_WORD LESS_LESS_LESS WORD
-	| LESS_AND INTEGER
-	| FID LESS_AND INTEGER
-	| REDIR_WORD LESS_AND INTEGER
-	| GREATER_AND INTEGER
-	| FID GREATER_AND INTEGER
-	| REDIR_WORD GREATER_AND INTEGER
-	| LESS_AND WORD
-	| FID LESS_AND WORD
-	| REDIR_WORD LESS_AND WORD
-	| GREATER_AND WORD
-	| FID GREATER_AND WORD
-	| REDIR_WORD GREATER_AND WORD
+	| REDIR_WORD GREATER_GREATER redirection_element
+	| GREATER_BAR redirection_element
+	| FID GREATER_BAR redirection_element
+	| REDIR_WORD GREATER_BAR redirection_element
+	| LESS_GREATER redirection_element
+	| FID LESS_GREATER redirection_element
+	| REDIR_WORD LESS_GREATER redirection_element
+	| LESS_LESS redirection_element
+	| FID LESS_LESS redirection_element
+	| REDIR_WORD LESS_LESS redirection_element
+	| LESS_LESS_MINUS redirection_element
+	| FID LESS_LESS_MINUS redirection_element
+	| REDIR_WORD  LESS_LESS_MINUS redirection_element
+	| LESS_LESS_LESS redirection_element
+	| FID LESS_LESS_LESS redirection_element
+	| REDIR_WORD LESS_LESS_LESS redirection_element
+#	| LESS_AND INTEGER
+#	| FID LESS_AND INTEGER
+#	| REDIR_WORD LESS_AND INTEGER
+#	| GREATER_AND INTEGER
+#	| FID GREATER_AND INTEGER
+#	| REDIR_WORD GREATER_AND INTEGER
+	| LESS_AND redirection_element
+	| FID LESS_AND redirection_element
+	| REDIR_WORD LESS_AND redirection_element
+	| GREATER_AND redirection_element
+	| FID GREATER_AND redirection_element
+	| REDIR_WORD GREATER_AND redirection_element
 	| GREATER_AND '-'
 	| FID GREATER_AND '-'
 	| REDIR_WORD GREATER_AND '-'
 	| LESS_AND '-'
 	| FID  LESS_AND '-'
 	| REDIR_WORD LESS_AND '-'
-	| AND_GREATER WORD
+	| AND_GREATER redirection_element
 	  {
 	    result = Node::Redirection(-1, "&>", val[1])
 	  }
-	| AND_GREATER_GREATER WORD
+	| AND_GREATER_GREATER redirection_element
 	  {
 	    result = Node::Redirection(-1, "&>>", val[1])
 	  }
+
+  redirection_element: command_element_base
+	| WILDCARD
+
 
   simple_list_terminator:	NL
 	| EOF

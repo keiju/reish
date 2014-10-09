@@ -16,8 +16,10 @@ require "reish/osspace"
 
 module Reish
   class Main
+
     extend Forwardable
 
+    include Enumerable
     include OSSpace
 
     def initialize(shell)
@@ -26,7 +28,12 @@ module Reish
 
     attr_reader :__shell__
 
+    def each &block
+      STDIN.each &block
+    end
+
     def_delegator :@__shell__, :rehash
+
     def_delegator :@__shell__, :display_mode
     def_delegator :@__shell__, :display_mode=
 
