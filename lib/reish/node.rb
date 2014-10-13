@@ -334,9 +334,9 @@ module Reish
       def inspect
 	if Reish::INSPECT_LEBEL < 2
 	  if @block
-	    "#<SimpleCommand:#{@name.inspect}(#{@args.inspect})#{@block.inspect}>"
+	    "#<SimpleCommand:#{@name.inspect}@pipeout=#{@pipeout.inspect}(#{@args.inspect})#{@block.inspect}>"
 	  else
-	    "#<SimpleCommand:#{@name.inspect}(#{@args.inspect})>"
+	    "#<SimpleCommand:#{@name.inspect}@pipeout=#{@pipeout.inspect}(#{@args.inspect})>"
 	  end
 	else
 	  super
@@ -360,7 +360,7 @@ module Reish
 	  if @args
 	    "#<DoBlock:|#{@args.inspect}| #{@body.inspect}>"
 	  else
-	    "#<DoBlock: #{@args.inspect}>"
+	    "#<DoBlock: #{@body.inspect}>"
 	  end
 	else
 	  super

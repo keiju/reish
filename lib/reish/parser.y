@@ -14,6 +14,8 @@ class Reish::Parser
 
   preclow
 #    left '&' ';' '\n' EOF
+    nonassoc  LOWER
+    nonassoc DO LBRACE_I
     left AND_AND OR_OR
 #    right '|' BAR_AND COLON2
   prechigh
@@ -125,13 +127,15 @@ class Reish::Parser
 	    {
 	       result = Node::SimpleCommand(val[0], val[1], val[2])
 	    }
-        | simple_command_header LPARLEN_ARG simple_command_element_list_p ")" lex_end
+	| simple_command_lparen
+
+  simple_command_lparen: simple_command_header LPARLEN_ARG
+			 simple_command_element_list_p ")" lex_end =LOWER
+
 	    {
 	       result = Node::SimpleCommand(val[0], val[2])
 	    }
-	| simple_command_lparen
-
-  simple_command_lparen: simple_command_header LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
+	| simple_command_header LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
 	    {
 	       result = Node::SimpleCommand(val[0], val[2], val[5])
 	    }
@@ -258,7 +262,10 @@ do_block: DO compound_list END
 referenceable: ID
 #	| trivial_command
 	| literal
-	| group
+	| group_command
+	    {
+	      val[0].pipeout = :RESULT
+	    }
 	| index_ref_command
 
   while_command: WHILE {@lex.cond_push(true)} opt_nl logical_command do {@lex.cond_pop} compound_list END
@@ -306,9 +313,14 @@ referenceable: ID
 	    }
   trivial_command: trivial_command0 lex_arg
 
-  trivial_command0: '$' simple_command_header
+  trivial_command0: '$' simple_command_header =LOWER
 	    {         
 	       result = Node::SimpleCommand(val[1], [])
+	       result.pipeout = :RESULT
+	    }
+	| '$' simple_command_header do_block
+	    {         
+	       result = Node::SimpleCommand(val[1], [], val[2])
 	       result.pipeout = :RESULT
 	    }
 	| '$' simple_command_lparen
@@ -342,13 +354,13 @@ referenceable: ID
 	    {
 	       result = Node::TestCommand(val[0], val[1], val[2])
 	    }
-        | TEST LPARLEN_ARG simple_command_element_list_p ")" lex_end
+	| test_command_lparen
+
+  test_command_lparen: TEST LPARLEN_ARG simple_command_element_list_p ")" lex_end =LOWER
 	    {
 	       result = Node::TestCommand(val[0], val[2])
 	    }
-	| test_command_lparen
-
-  test_command_lparen: TEST LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
+	| TEST LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
 	    {
 	       result = Node::TestCommand(val[0], val[2], val[5])
 	    }

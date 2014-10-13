@@ -113,19 +113,21 @@ module Reish
       script = ""
       command.commands.each do |com|
 	script.concat com.accept(self)
-	case com.pipeout
-	when :BAR, :DOT
-	  script.concat "."
-	when :COLON2
-	  script.concat "::"
-	when :TO_A
-	  script.concat ".to_a"
-	when :RESULT
-	  script.concat ".reish_result"
-	when nil
-	  # do nothing
-	else
-	  raise NoImplementError
+	unless com.kind_of?(Node::SimpleCommand)
+	  case com.pipeout
+	  when :BAR, :DOT
+	    script.concat "."
+	  when :COLON2
+	    script.concat "::"
+	  when :TO_A
+	    script.concat ".to_a"
+	  when :RESULT
+	    script.concat ".reish_result"
+	  when nil
+	    # do nothing
+	  else
+	    raise NoImplementError
+	  end
 	end
       end
       
@@ -151,9 +153,9 @@ module Reish
 	  args = "("+command.args.collect{|e| e.accept(self)}.join(", ")+")"
 	end
 	if command.block
-	  "#{name}#{args}#{command.block.accept(self)}"
+	  script = "#{name}#{args}#{command.block.accept(self)}"
 	else
-	  "#{name}#{args}"
+	  script = "#{name}#{args}"
 	end
       else
 	if command.args.empty?
@@ -162,11 +164,27 @@ module Reish
 	  args = ","+command.args.collect{|e| e.accept(self)}.join(", ")
 	end
 	if command.block
-	  "send('#{name}'#{args})#{command.block.accept(self)}"
+	  script = "send('#{name}'#{args})#{command.block.accept(self)}"
 	else
-	  "send('#{name}'#{args})"
+	  script = "send('#{name}'#{args})"
 	end
       end
+
+      case command.pipeout
+      when :BAR, :DOT
+	script.concat "."
+      when :COLON2
+	script.concat "::"
+      when :TO_A
+	script.concat ".to_a"
+      when :RESULT
+	script.concat ".reish_result"
+      when nil
+	# do nothing
+      else
+	raise NoImplementError
+      end
+      script
     end
 
     def visit_do_block(command)
