@@ -21,6 +21,8 @@ require "reish/codegen"
 require "reish/input-method"
 require "irb/inspector"
 
+require "reish/builtin-command"
+
 module Reish 
   class Shell
 
@@ -470,7 +472,6 @@ module Reish
       File.expand_path(name, base)
     end
 
-    #
     def open_file(name, mode = "r", perm = 0666, &block)
       path = expand_path(name)
       File.open(path, mode, perm, &block)

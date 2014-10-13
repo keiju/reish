@@ -29,6 +29,8 @@ module Reish
       @char_no = char_no
     end
 
+    attr_reader :io
+    attr_reader :seek
     attr_reader :line_no
     attr_reader :char_no
 
@@ -102,6 +104,16 @@ module Reish
 
     def inspect_tag
       "ID"
+    end
+  end
+
+  class TestToken<ValueToken
+    def accept(visitor)
+      visitor.visit_test(self)
+    end
+
+    def inspect_tag
+      "TEST"
     end
   end
 
@@ -217,7 +229,6 @@ module Reish
 
   class SpaceToken<Token; end
   class EOFToken<Token; end
-
   class ErrorToken<Token; end
 
   DirectlyTokenIDClasses = [
@@ -226,6 +237,7 @@ module Reish
     VariableToken,
     PseudoVariableToken,
     IDToken,
+    TestToken,
     PathToken,
     WordToken,
     WildCardToken,

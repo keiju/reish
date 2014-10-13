@@ -536,6 +536,17 @@ print_lex_state
 	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, Redirection2ID[op])
       end
 
+      @OP.def_rule("-", proc{|op, io| @lex_state == EXPR_BEG}) do
+	|op, io|
+	token = ""
+	while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)\}\]]/ !~ ch
+	  token.concat ch
+	end
+	io.ungetc
+	self.lex_state = EXPR_ARG
+	TestToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, token)
+      end
+
       @OP.def_rule("") do
 	|op, io|
 

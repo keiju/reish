@@ -202,10 +202,24 @@ module Reish
       end
     end
 
+    def visit_test_command(command)
+      
+      com = IDToken.new(nil, nil, nil, nil, "Reish::Test::test")
+      
+      sub_com = StringToken.new(command.name.io,
+				command.name.seek,
+				command.name.line_no,
+				command.name.char_no,
+				command.name.value)
+
+      Node::SimpleCommand(com, [sub_com, *command.args], command.block).accept(self)
+    end
+
     def visit_value(val)
       val.value
     end
     alias visit_id visit_value
+    alias visit_test visit_value
     alias visit_path visit_value
     alias visit_number visit_value
     alias visit_integer visit_value

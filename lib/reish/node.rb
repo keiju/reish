@@ -242,6 +242,7 @@ module Reish
       def_accept
     end
 
+
     class Sequence<Command
       def_constructor
 
@@ -386,6 +387,23 @@ module Reish
       def_accept
     end
       
+    class TestCommand<SimpleCommand
+      def_constructor
+      
+      def inspect
+	if Reish::INSPECT_LEBEL < 2
+	  if @block
+	    "#<TestCommand:#{@name.inspect}(#{@args.inspect})#{@block.inspect}>"
+	  else
+	    "#<TestCommand:#{@name.inspect}(#{@args.inspect})>"
+	  end
+	else
+	  super
+	end
+      end
+      def_accept
+    end
+		     
     class Array<Node
       def_constructor
 
