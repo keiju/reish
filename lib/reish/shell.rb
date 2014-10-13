@@ -345,17 +345,20 @@ module Reish
 	end
 
 	n = name.to_s
-	
-	if n.include?("/")
-	  path = File.absolute_path(n, @pwd)
-	  if File.executable?(path)
-	    @command_cache[name] = path
-	    return Reish::SystemCommand(self, receiver, path, *args)
+	c = n.count("/")
+	if c > 0
+	  if n[0] == "/" && c == 1
+	    n[0] = ""
 	  else
-	    @command_cache[name] = :COMMAND_NOTHING
-	    return nil
+	    path = File.absolute_path(n, @pwd)
+	    if File.executable?(path)
+	      @command_cache[name] = path
+	      return Reish::SystemCommand(self, receiver, path, *args)
+	    else
+	      @command_cache[name] = :COMMAND_NOTHING
+	      return nil
+	    end
 	  end
-
 	end
 
 	for dir_name in @system_path
