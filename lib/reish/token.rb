@@ -117,6 +117,16 @@ module Reish
     end
   end
 
+  class SpecialToken<ValueToken
+    def accept(visitor)
+      visitor.visit_test(self)
+    end
+
+    def inspect_tag
+      "Special"
+    end
+  end
+
   class PathToken<ValueToken
     def accept(visitor)
       visitor.visit_path(self)
@@ -238,6 +248,7 @@ module Reish
     PseudoVariableToken,
     IDToken,
     TestToken,
+    SpecialToken,
     PathToken,
     WordToken,
     WildCardToken,

@@ -140,6 +140,20 @@ module Reish
     end
 
     def visit_simple_command(command)
+      case command.name
+      when TestToken
+	com = IDToken.new(nil, nil, nil, nil, "Reish::Test::test")
+      
+	sub_com = StringToken.new(command.name.io,
+				  command.name.seek,
+				  command.name.line_no,
+				  command.name.char_no,
+				  command.name.value)
+	command = Node::SimpleCommand(com, [sub_com, *command.args], command.block)
+      when SpecialToken
+	return visit_special_command(command)
+      end
+
       if command.have_redirection?
 	return visit_simple_command_with_redirection(command)
       end
@@ -218,6 +232,11 @@ module Reish
 	"reish_send_with_redirection('#{name}', [#{args.join(", ")}], [#{reds.join(", ")}])"
 
       end
+    end
+
+    def visit_special_command(command)
+      op = command.name.accept(self)
+      "("+command.args.collect{|e| e.accept(self)}.join(op)+")"
     end
 
     def visit_test_command(command)

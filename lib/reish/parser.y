@@ -184,6 +184,8 @@ do_block: DO compound_list END
 
   simple_command_header: ID
 	| PATH
+	| TEST
+	| SPECIAL
 
   simple_command_element_list: 
 	    {
@@ -211,7 +213,7 @@ do_block: DO compound_list END
 #	| arith_for_command
 #       | for_command
 	| group_command
-	| test_command
+#	| test_command
 
   literal_command: literal
 	    {
@@ -328,11 +330,11 @@ referenceable: ID
 	       result = val[1]
 	       result.pipeout = :RESULT
 	    }
-	| '$' test_command_lparen
-	    {         
-	       result = val[1]
-	       result.pipeout = :RESULT
-	    }
+#	| '$' test_command_lparen
+#	    {         
+#	       result = val[1]
+#	       result.pipeout = :RESULT
+#	    }
 	| '$' index_ref_command
 	    {         
 	       result = val[1]
@@ -346,24 +348,24 @@ referenceable: ID
 	       result = val[1]
 	    }
 
-  test_command: TEST simple_command_element_list 
-	    {         
-	       result = Node::TestCommand(val[0], val[1])
-	    }
-	| TEST simple_command_element_list do_block
-	    {
-	       result = Node::TestCommand(val[0], val[1], val[2])
-	    }
-	| test_command_lparen
+#  test_command: TEST simple_command_element_list 
+#	    {         
+#	       result = Node::TestCommand(val[0], val[1])
+#	    }
+#	| TEST simple_command_element_list do_block
+#	    {
+#	       result = Node::TestCommand(val[0], val[1], val[2])
+#	    }
+#	| test_command_lparen
 
-  test_command_lparen: TEST LPARLEN_ARG simple_command_element_list_p ")" lex_end =LOWER
-	    {
-	       result = Node::TestCommand(val[0], val[2])
-	    }
-	| TEST LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
-	    {
-	       result = Node::TestCommand(val[0], val[2], val[5])
-	    }
+#  test_command_lparen: TEST LPARLEN_ARG simple_command_element_list_p ")" lex_end =LOWER
+#	    {
+#	       result = Node::TestCommand(val[0], val[2])
+#	    }
+#	| TEST LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
+#	    {
+#	       result = Node::TestCommand(val[0], val[2], val[5])
+#	    }
 
 
   ruby_exp: RUBYEXP

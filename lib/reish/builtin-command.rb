@@ -100,5 +100,6 @@ module Reish
       p.call(*args, &block)
     end
   end
+
 end
 

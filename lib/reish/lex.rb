@@ -415,8 +415,13 @@ print_lex_state
 
       @OP.def_rule("|") do
 	|op, io|
-	self.lex_state = EXPR_BEG
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '|')
+	if @lex_state == EXPR_BEG
+	  self.lex_state = EXPR_ARG
+	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '|')
+	else
+	  self.lex_state = EXPR_BEG
+	  ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '|')
+	end
       end
 
       @OP.def_rule(":") do
@@ -466,20 +471,36 @@ print_lex_state
 
       @OP.def_rule("&") do
 	|op, io|
-	self.lex_state = EXPR_BEG
-	tk = SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '&')
+
+	if @lex_state == EXPR_BEG
+	  self.lex_state = EXPR_ARG
+	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	else
+	  self.lex_state = EXPR_BEG
+	  tk = SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '&')
+	end
       end
 
       @OP.def_rule("&&") do
 	|op, io|
-	self.lex_state = EXPR_BEG
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :AND_AND)
+	if @lex_state == EXPR_BEG
+	  self.lex_state = EXPR_ARG
+	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	else
+	  self.lex_state = EXPR_BEG
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :AND_AND)
+	end
       end
 
       @OP.def_rule("||") do
 	|op, io|
-	self.lex_state = EXPR_BEG
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :OR_OR)
+	if @lex_state == EXPR_BEG
+	  self.lex_state = EXPR_ARG
+	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	else
+	  self.lex_state = EXPR_BEG
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :OR_OR)
+	end
       end
 
       @OP.def_rule("$[") do
@@ -532,19 +553,40 @@ print_lex_state
 
       @OP.def_rules(*Redirections) do
 	|op, io|
-	self.lex_state = EXPR_ARG
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, Redirection2ID[op])
+	if @lex_state == EXPR_BEG && [">", "<"].include?(op)
+	  self.lex_state = EXPR_ARG
+	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	else
+	  self.lex_state = EXPR_ARG
+	  ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, Redirection2ID[op])
+	end
       end
 
       @OP.def_rule("-", proc{|op, io| @lex_state == EXPR_BEG}) do
 	|op, io|
-	token = ""
-	while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)\}\]]/ !~ ch
-	  token.concat ch
+
+	if /\s/ =~ io.peek(0)
+	  self.lex_state = EXPR_ARG
+	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	else
+	  token = ""
+	  while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)\}\]]/ !~ ch
+	    token.concat ch
+	  end
+	  io.ungetc
+	  self.lex_state = EXPR_ARG
+	  TestToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, token)
 	end
-	io.ungetc
-	self.lex_state = EXPR_ARG
-	TestToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, token)
+      end
+
+      ops = ["+", "/", "*", ">=", "<="]
+      preproc = proc{|op, io| @lex_state == EXPR_BEG && /\s/ =~ io.peek(0)}
+      ops.each do |op|
+	@OP.def_rule(op, preproc) do
+	  |op, io|
+	  self.lex_state = EXPR_ARG
+	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	end
       end
 
       @OP.def_rule("") do
