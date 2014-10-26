@@ -553,7 +553,7 @@ print_lex_state
 
       @OP.def_rules(*Redirections) do
 	|op, io|
-	if @lex_state == EXPR_BEG && [">", "<", "<<"].include?(op)
+	if @lex_state == EXPR_BEG && [">", "<", ">>", "<<"].include?(op)
 	  self.lex_state = EXPR_ARG
 	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
 	else
@@ -579,7 +579,7 @@ print_lex_state
 	end
       end
 
-      ops = ["+", "/", "*", ">=", "<=", "==", ">>", "<=>"]
+      ops = ["+", "/", "*", ">=", "<=", "==", "<=>"]
       preproc = proc{|op, io| @lex_state == EXPR_BEG && /\s/ =~ io.peek(0)}
       ops.each do |op|
 	@OP.def_rule(op, preproc) do
