@@ -236,7 +236,19 @@ module Reish
 
     def visit_special_command(command)
       op = command.name.accept(self)
+#       case op
+#       when "<", "<=", ">", ">="
+# 	sq = []
+# 	last = nil
+# 	command.args.each do |e| 
+# 	  ee = e.accept(self)
+# 	  sq.concat [last, op, ee] if last
+# 	  last = ee
+# 	end
+# 	"(" + sq.join("&&") + ")"
+#       else
       "("+command.args.collect{|e| e.accept(self)}.join(op)+")"
+#      end
     end
 
     def visit_test_command(command)
