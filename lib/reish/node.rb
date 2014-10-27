@@ -188,6 +188,18 @@ module Reish
       def_accept
     end
 
+    class BeginCommand<Command
+      def_constructor
+      
+      def initialize(node)
+	@node = node
+      end
+
+      attr_reader :node
+
+      def_accept
+    end
+
     class IfCommand<Command
       def_constructor
 

@@ -204,6 +204,7 @@ do_block: DO compound_list END
 	| index_ref_command
 	| if_command
  	| while_command
+        | begin_command
 #	| case_command
 #	| UNTIL compound_list DO compound_list DONE
 #	| select_command
@@ -269,6 +270,11 @@ referenceable: ID
 	      val[0].pipeout = :RESULT
 	    }
 	| index_ref_command
+
+  begin_command: BEGIN compound_list END
+	    {
+		result = Node::BeginCommand(val[1])
+	    }
 
   while_command: WHILE {@lex.cond_push(true)} opt_nl logical_command do {@lex.cond_pop} compound_list END
 	    {
@@ -587,5 +593,8 @@ end
   def yyerror(token, msg)
     raise ParseError, msg
   end
-
     
+# Begin Emacs Environment
+# Local Variables:
+#   mode: ruby
+# End:

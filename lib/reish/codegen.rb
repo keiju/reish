@@ -43,6 +43,11 @@ module Reish
       "#{var}[#{idx}]"
     end
 
+    def visit_begin_command(command)
+      n = command.node.accept(self)
+      "begin #{n} end"
+    end
+
     def visit_while_command(command)
       c = command.cond.accept(self)
       n = command.node.accept(self)
