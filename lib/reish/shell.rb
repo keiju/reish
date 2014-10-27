@@ -25,7 +25,6 @@ require "reish/builtin-command"
 
 module Reish 
   class Shell
-
     def initialize(input_method = nil)
 
       @thread = Thread.current if defined? Thread

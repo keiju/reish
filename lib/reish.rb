@@ -30,8 +30,12 @@ module Reish
     $0 = File::basename(ap_path, ".rb") if ap_path
     Reish.setup(ap_path)
 
-    if @CONF[:SCRIPT]
-      sh = Shell.new(@CONF[:SCRIPT])
+    if @CONF[:OPT_C]
+      im = StringInputMethod.new(@CONF[:OPT_C])
+      sh = Shell.new(im)
+    elsif !ARGV.empty?
+      f = ARGV.shift
+      sh = Shell.new(f)
     else
       sh = Shell.new
     end

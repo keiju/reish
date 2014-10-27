@@ -182,4 +182,19 @@ module Reish
     end
   rescue LoadError
   end
+
+  class StringInputMethod < InputMethod
+
+    def initialize(string)
+      super
+      @lines = string.lines
+      if /\n/ !~ @lines.last[-1] 
+	@lines.last.concat "\n"
+      end
+    end
+
+    def gets
+      @lines.shift
+    end
+  end
 end

@@ -11,13 +11,15 @@
 #   
 #
 
+require "optparse"
+
 module Reish
   
   # initialize config
   def Reish.setup(ap_path)
     Reish.init_config(ap_path)
-#    Reish.init_error
-#    Reish.parse_opts
+    Reish.init_error
+    Reish.parse_opts
 #    Reish.run_config
 #    Reish.load_modules
 
@@ -69,4 +71,11 @@ module Reish
     @CONF[:LOCALE].load("reish/error.rb")
   end
 
+  def Reish.parse_opts
+    opt = OptionParser.new do |opt|
+      opt.on("-c string"){|v| @CONF[:OPT_C] = v}
+      opt.on("-v", "--verbose"){|v| @CONF[:OPT_VERBOSE] = v == true ? 1 : v.to_i}
+    end
+    opt.parse!(ARGV)
+  end
 end
