@@ -54,7 +54,7 @@ module Reish
       @command_cache = COMMAND_CACHE_BASE.dup
 
       @verbose = Reish.conf[:VERBOSE]
-      @display_comp = Reish.conf[:DISPLY_COMP]
+      @display_comp = Reish.conf[:DISPLAY_COMP]
       @debug_input = Reish.conf[:DEBUG_INPUT]
       self.yydebug = Reish::conf[:YYDEBUG]
 

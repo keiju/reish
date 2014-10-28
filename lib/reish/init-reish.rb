@@ -20,7 +20,7 @@ module Reish
     Reish.init_config(ap_path)
     Reish.init_error
     Reish.parse_opts
-#    Reish.run_config
+    Reish.run_config if @CONF[:RC]
 #    Reish.load_modules
 
 #    unless @CONF[:PROMPT][@CONF[:PROMPT_MODE]]
@@ -39,6 +39,7 @@ module Reish
     @CONF[:REISH_LIB_PATH] = File.dirname(__FILE__)
 
     @CONF[:RC] = true
+    @CONF[:RC_FILE] = File.expand_path("~/.reishrc")
     @CONF[:LOAD_MODULES] = []
     @CONF[:REISH_RC] = nil
 
@@ -54,13 +55,12 @@ module Reish
     @CONF[:EVAL_HISTORY] = nil
     @CONF[:SAVE_HISTORY] = nil
 
-    @CONF[:VERBOSE] = nil
-    @CONF[:DISPLY_COMP] = true
     @CONF[:BACK_TRACE_LIMIT] = 16
-    #  @CONF[:YYDEBUG] = false
-    @CONF[:YYDEBUG] = true
-    #  @CONF[:DEBUG_INPUT] = false
-    @CONF[:DEBUG_INPUT] = true
+    @CONF[:VERBOSE] = nil
+
+    @CONF[:DISPLAY_COMP] = false
+    @CONF[:YYDEBUG] = false
+    @CONF[:DEBUG_INPUT] = false
 
     @CONF[:AT_EXIT] = []
     
@@ -74,8 +74,21 @@ module Reish
   def Reish.parse_opts
     opt = OptionParser.new do |opt|
       opt.on("-c string"){|v| @CONF[:OPT_C] = v}
-      opt.on("-v", "--verbose"){|v| @CONF[:OPT_VERBOSE] = v == true ? 1 : v.to_i}
+      opt.on("--norc"){|v| @CONF[:RC] = false}
+      opt.on("--rcfile filename"){|v| @CONF[:RC_FILE] = v}
+
+      opt.on("-v", "--verbose"){|v| @CONF[:VERBOSE] = v == true ? 1 : v.to_i}
+
+      opt.on("--display-comp", "--display_comp"){@CONF[:DISPLAY_COMP]=true}
+      opt.on("--debug-input", "--debug_input"){@CONF[:DEBUG_INPUT]=true}
+      opt.on("--yydebug"){@CONF[:YYDEBUG] = true}
     end
     opt.parse!(ARGV)
+  end
+
+  def Reish.run_config
+    if File.exist?(@CONF[:RC_FILE])
+      Shell.new(@CONF[:RC_FILE]).start
+    end
   end
 end

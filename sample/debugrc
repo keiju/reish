@@ -1,0 +1,5 @@
+
+
+Reish.conf[:DISPLAY_COMP] = true
+Reish.conf[:DEBUG_INPUT] = true
+Reish.conf[:YYDEBUG] = true
