@@ -44,8 +44,27 @@ module Reish
     end
 
     def visit_begin_command(command)
-      n = command.node.accept(self)
-      "begin #{n} end"
+      seq = command.seq.accept(self)
+      res = ""
+      res = ";"+command.res.accept(self) if command.res
+      els = ""
+      els = ";else "+command.els.accept(self) if command.els
+      ens = ""
+      ens = ";ensure "+command.ens.accept(self) if command.ens
+
+      "begin #{seq}#{res}#{els}#{ens} end"
+    end
+
+    def visit_rescue_command(command)
+      el = command.exc_list.collect{|exc| exc.accept(self)}.join(", ")
+      sq = command.seq.accept(self)
+      if command.exc_var
+	ev = command.exc_var.accept(self) 
+	"rescue #{el} => #{ev}; #{sq}"
+      else
+	"rescue #{el}; #{sq}"
+      end
+
     end
 
     def visit_while_command(command)

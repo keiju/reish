@@ -107,6 +107,15 @@ class Reish::Parser
 	| shell_command redirection_list
 #	| function_def
 
+  command_element_list: 
+	    {
+		result = []
+	    } 
+	| command_element_list command_element
+	    {
+		result.push val[1]
+	    }
+
   command_element: command_element_base
 # for l=*
 	| WILDCARD
@@ -205,6 +214,7 @@ do_block: DO compound_list END
 	| if_command
  	| while_command
         | begin_command
+	| rescue_command
 #	| case_command
 #	| UNTIL compound_list DO compound_list DONE
 #	| select_command
@@ -271,9 +281,50 @@ referenceable: ID
 	    }
 	| index_ref_command
 
-  begin_command: BEGIN compound_list END
+  begin_command: BEGIN body_list END
 	    {
-		result = Node::BeginCommand(val[1])
+		result = Node::BeginCommand(*val[1])
+	    }
+
+  body_list: compound_list opt_rescue opt_else opt_ensure
+	    {
+		result = val
+	    }
+
+  opt_rescue:
+	    {
+		result = nil
+	    }
+	| RESCUE command_element_list exc_var then compound_list opt_rescue
+	    {
+		result = Node::RescueCommand(val[1], val[2], val[4])
+		result = [result, val[5]] if val[5]
+		result
+	    } 
+  exc_var: 
+	    {
+		result = nil
+	    }
+	| ASSOC lex_beg opt_nl ID
+	    {
+		result = val[3]
+	    }
+  opt_else: 
+	    {
+		result = nil
+	    }
+
+	| ELSE compound_list
+	    {
+		result = val[1]
+	    }
+  opt_ensure: 
+	    {
+		result = nil
+	    }
+	| ENSURE compound_list
+	    {
+		result = val[1]
 	    }
 
   while_command: WHILE {@lex.cond_push(true)} opt_nl logical_command do {@lex.cond_pop} compound_list END
@@ -319,39 +370,78 @@ referenceable: ID
 	    {
 	        result = Node::Group(val[1])
 	    }
-  trivial_command: trivial_command0 lex_arg
+#   trivial_command: trivial_command0 lex_arg
 
-  trivial_command0: '$' simple_command_header =LOWER
+#   trivial_command0: '$' simple_command_header =LOWER
+# 	    {         
+# 	       result = Node::SimpleCommand(val[1], [])
+# 	       result.pipeout = :RESULT
+# 	    }
+# 	| '$' simple_command_header do_block
+# 	    {         
+# 	       result = Node::SimpleCommand(val[1], [], val[2])
+# 	       result.pipeout = :RESULT
+# 	    }
+# 	| '$' simple_command_lparen
+# 	    {         
+# 	       result = val[1]
+# 	       result.pipeout = :RESULT
+# 	    }
+# #	| '$' test_command_lparen
+# #	    {         
+# #	       result = val[1]
+# #	       result.pipeout = :RESULT
+# #	    }
+# 	| '$' index_ref_command
+# 	    {         
+# 	       result = val[1]
+# 	    }
+# 	| '$' assgin_command
+# 	    {         
+# 	       result = val[1]
+# 	    }
+# 	| '$' PSEUDOVARIABLE
+# 	    {         
+# 	       result = val[1]
+# 	    }
+
+
+  trivial_command: '$' lex_beg trivial_command0 lex_arg
+	    {
+		result = val[2]
+	    }
+
+  trivial_command0: simple_command_header =LOWER
 	    {         
-	       result = Node::SimpleCommand(val[1], [])
+	       result = Node::SimpleCommand(val[0], [])
 	       result.pipeout = :RESULT
 	    }
-	| '$' simple_command_header do_block
+	| simple_command_header do_block
 	    {         
-	       result = Node::SimpleCommand(val[1], [], val[2])
+	       result = Node::SimpleCommand(val[0], [], val[1])
 	       result.pipeout = :RESULT
 	    }
-	| '$' simple_command_lparen
+	| simple_command_lparen
 	    {         
-	       result = val[1]
+	       result = val[0]
 	       result.pipeout = :RESULT
 	    }
-#	| '$' test_command_lparen
+#	| test_command_lparen
 #	    {         
-#	       result = val[1]
+#	       result = val[0]
 #	       result.pipeout = :RESULT
 #	    }
-	| '$' index_ref_command
+	| index_ref_command
 	    {         
-	       result = val[1]
+	       result = val[0]
 	    }
-	| '$' assgin_command
+	| assgin_command
 	    {         
-	       result = val[1]
+	       result = val[0]
 	    }
-	| '$' PSEUDOVARIABLE
+	| PSEUDOVARIABLE
 	    {         
-	       result = val[1]
+	       result = val[0]
 	    }
 
 #  test_command: TEST simple_command_element_list 

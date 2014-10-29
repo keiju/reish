@@ -1,14 +1,14 @@
+forコマンド
+Selectコマンド
+caseコマンド
+untilコマンド
+#   trivial_command: trivial_command0 lex_arg の lex_arg正しい?
 プロンプト表示(カスタマイズ可能なプロンプト表示, インデントの処理)
 &
 %リテラル
 テスト環境
 ビルトイン関数
 Array, Hashで,を使えるようにする
-begin/endコマンド
-forコマンド
-Selectコマンド
-caseコマンド
-untilコマンド
 reish_termの振る舞い. ビルトインコマンドの場合端末に出力できるか? 
   つまり, 戻り値ではなくprintする
 完全なCompSysgemCommand - パイプライン, リダイレクションの処理

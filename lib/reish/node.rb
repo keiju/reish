@@ -191,14 +191,37 @@ module Reish
     class BeginCommand<Command
       def_constructor
       
-      def initialize(node)
-	@node = node
+      def initialize(seq, res, els, ens)
+	@seq = seq
+	@res = res
+	@els = els
+	@ens = ens
       end
 
-      attr_reader :node
+      attr_reader :seq
+      attr_reader :res
+      attr_reader :els
+      attr_reader :ens
 
       def_accept
     end
+
+    class RescueCommand<Command
+      def_constructor
+      
+      def initialize(exc_list, exc_var, seq)
+	@exc_list = exc_list
+	@exc_var = exc_var
+	@seq = seq
+      end
+
+      attr_reader :exc_list
+      attr_reader :exc_var
+      attr_reader :seq
+
+      def_accept
+    end
+      
 
     class IfCommand<Command
       def_constructor
