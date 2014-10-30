@@ -223,6 +223,7 @@ class Reish::Parser
 	| assgin_command
 	| index_ref_command
 	| if_command
+	| unless_command
  	| while_command
         | begin_command
 	| case_command
@@ -379,6 +380,11 @@ referenceable: ID
 
   then: THEN
 	| opt_terms
+
+  unless_command: UNLESS opt_nl logical_command then compound_list opt_else END
+	    {
+		result = Node::IfCommand(val[2], val[5], val[4])
+	    }
 
   for_command: FOR opt_nl for_arg opt_nl IN cond_push
 	       logical_command do cond_pop compound_list END

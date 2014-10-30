@@ -1,5 +1,4 @@
 Selectコマンド
-caseコマンド
 untilコマンド
 #   trivial_command: trivial_command0 lex_arg の lex_arg正しい?
 プロンプト表示(カスタマイズ可能なプロンプト表示, インデントの処理)

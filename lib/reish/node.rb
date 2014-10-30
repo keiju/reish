@@ -305,7 +305,6 @@ module Reish
       def_accept
     end
 
-
     class Group<Command
       def_constructor
 

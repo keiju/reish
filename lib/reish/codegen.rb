@@ -76,13 +76,6 @@ module Reish
 
     end
 
-    def visit_while_command(command)
-      c = command.cond.accept(self)
-      n = command.node.accept(self)
-      
-      "(while #{c} do #{n} end)"
-    end
-
     def visit_if_command(command)
       c = command.cond.accept(self)
       t = nil
@@ -93,15 +86,22 @@ module Reish
 
       if t
 	if e
-	  "(if(#{c}) then #{t} else #{e} end)"
+	  "if #{c} then #{t} else #{e} end"
 	else
-	  "(if(#{c}) then #{t} end)"
+	  "if #{c} then #{t} end"
 	end
       elsif e
-	"(if(#{c}) else #{e} end)"
+	"if #{c} else #{e} end"
       else
-	"(if (#{c}) end))"
+	"if #{c} end"
       end
+    end
+
+    def visit_while_command(command)
+      c = command.cond.accept(self)
+      n = command.node.accept(self)
+      
+      "(while #{c} do #{n} end)"
     end
 
     def visit_for_command(command)
