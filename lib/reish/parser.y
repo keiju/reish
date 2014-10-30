@@ -225,7 +225,6 @@ class Reish::Parser
 	| if_command
  	| while_command
         | begin_command
-	| rescue_command
 #	| case_command
 #	| UNTIL compound_list DO compound_list DONE
 #	| select_command
@@ -233,7 +232,7 @@ class Reish::Parser
 #	| arith_command
 #	| cond_command
 #	| arith_for_command
-#       | for_command
+        | for_command
 	| group_command
 #	| test_command
 
@@ -338,7 +337,7 @@ referenceable: ID
 		result = val[1]
 	    }
 
-  while_command: WHILE {@lex.cond_push(true)} opt_nl logical_command do {@lex.cond_pop} compound_list END
+  while_command: WHILE cond_push opt_nl logical_command do cond_pop compound_list END
 	    {
 	       result = Node::WhileCommand(val[3], val[6])
 	    }
@@ -376,6 +375,24 @@ referenceable: ID
   then: NL
 	| ';'
 	| THEN
+
+  for_command: FOR opt_nl for_arg opt_nl IN cond_push
+	       logical_command do cond_pop compound_list END
+	    {
+		result = Node::ForCommand(val[2], val[6], val[9])
+            }
+
+  for_arg: ID
+    	    {
+	       @lex.lex_state = Lex::EXPR_BEG
+	       result = [val[0]]
+	    }
+	| for_arg opt_nl ID
+	    {
+	      result = val[0]
+	      result.push val[2]
+	    }
+
 
   group_command: '(' compound_list ')' lex_arg
 	    {
@@ -657,6 +674,9 @@ referenceable: ID
 	
 
   nl_beg: NL 
+
+  cond_push: {@lex.cond_push(true)}
+  cond_pop: {@lex.cond_pop}
 
   lex_beg: {@lex.lex_state = Lex::EXPR_BEG}
   lex_arg: {@lex.lex_state = Lex::EXPR_ARG}

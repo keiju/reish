@@ -226,6 +226,7 @@ module Reish
 
     def cond_push(v=true)
       @cond_stack.push v
+      puts "LEX COND: #{@cond_stack.inspect}" if @debug_lex_state
     end
 
     def cond_pop
@@ -234,7 +235,7 @@ module Reish
 
     def cond_lexpop
       v = @cond_stack.shift
-      @cond_stak[0] = true if v
+      @cond_stack[0] = true if v
     end
 
     def cond?

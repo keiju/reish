@@ -259,6 +259,24 @@ module Reish
       def_accept
     end
 
+    class ForCommand<Command
+      def_constructor
+
+      def initialize(vars, enum, seq)
+	@vars = vars
+	@enum = enum
+	@seq = seq
+
+	@enum.pipeout = :RESULT
+      end
+
+      attr_reader :vars
+      attr_reader :enum
+      attr_reader :seq
+
+      def_accept
+    end
+
     class Group<Command
       def_constructor
 
@@ -276,7 +294,6 @@ module Reish
 
       def_accept
     end
-
 
     class Sequence<Command
       def_constructor

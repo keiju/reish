@@ -95,6 +95,14 @@ module Reish
       end
     end
 
+    def visit_for_command(command)
+      vl = command.vars.collect{|v| v.accept(self)}.join(", ")
+      en = command.enum.accept(self)
+      sq = command.seq.accept(self)
+
+      "for #{vl} in #{en} do #{sq} end"
+    end
+
     def visit_group(group)
       script = group.node.accept(self)
       "("+script+")"
