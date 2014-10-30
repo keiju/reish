@@ -18,13 +18,14 @@ module Reish
 
     LEX_STATES = [
       :EXPR_BEG, 
+      :EXPR_DO_BEG, 
       :EXPR_MID,
       :EXPR_END,
       :EXPR_ARG,
       :EXPR_FNAME,
       :EXPR_DOT,
       :EXPR_CLASS,
-      :EXPR_EQ,
+      :EXPR_EQ_ARG,
     ]
     
     i = 1
@@ -32,7 +33,8 @@ module Reish
       const_set(st, i)
       i<<=1
     end
-    EXPR_ARG_ANY= EXPR_ARG | EXPR_EQ
+    EXPR_BEG_ANY= EXPR_BEG | EXPR_DO_BEG
+    EXPR_ARG_ANY= EXPR_ARG | EXPR_EQ_ARG
 
     PreservedWord = {
       "class"	=> :CLASS, 
@@ -138,7 +140,7 @@ module Reish
       :REDO => EXPR_END,
       :RETRY => EXPR_END,
       :IN => EXPR_BEG,
-      :DO => EXPR_BEG,
+      :DO => EXPR_DO_BEG,
       :DO_COND => EXPR_BEG,
       :RETURN => EXPR_MID,
       :YIELD => EXPR_END,
@@ -198,6 +200,14 @@ module Reish
       end
 
       @lex_state = v
+    end
+
+    def lex_state?(v)
+      @lex_state & v != 0
+    end
+
+    def lex_state_not?(v)
+      @lex_state & v == 0
     end
 
     def lex_state_sym(v = @lex_state)
@@ -335,7 +345,7 @@ module Reish
 
       @OP.def_rules("=") do
       |op, io|
-	self.lex_state = EXPR_EQ
+	self.lex_state = EXPR_EQ_ARG
 	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "=")
       end
 
@@ -353,7 +363,7 @@ module Reish
       @OP.def_rule("(") do
 	|op, io|
 	cond_push(false)
-	if @lex_state == EXPR_ARG && !@space_seen
+	if lex_state?(EXPR_ARG) && !@space_seen
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LPARLEN_ARG)
 	else
 	  self.lex_state = EXPR_BEG
@@ -366,10 +376,10 @@ module Reish
 
 print_lex_state
 
-	if @lex_state == EXPR_BEG
+	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_A)
-	elsif @space_seen || @lex_state == EXPR_EQ
+	elsif @space_seen || lex_state?(EXPR_EQ_ARG)
 	  io.ungetc
 	  identify_wildcard(io)
 	else
@@ -380,11 +390,11 @@ print_lex_state
       @OP.def_rule("{") do
  	|op, io|
 
-	if @lex_state == EXPR_BEG
+	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_H)
-	elsif !(@space_seen || @lex_state == EXPR_EQ)|| @lex_state == EXPR_END
-	  self.lex_state = EXPR_BEG
+	elsif !(@space_seen || lex_state?(EXPR_EQ_ARG|EXPR_END))
+	  self.lex_state = EXPR_DO_BEG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_I)
 	else
 	  io.ungetc
@@ -415,10 +425,10 @@ print_lex_state
 
       @OP.def_rule("|") do
 	|op, io|
-	if @lex_state == EXPR_BEG
+	if lex_state?(EXPR_BEG)
 	  self.lex_state = EXPR_ARG
 	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '|')
-	else
+	else # lex_state?(EXPR_DO_BEG)
 	  self.lex_state = EXPR_BEG
 	  ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '|')
 	end
@@ -427,7 +437,7 @@ print_lex_state
       @OP.def_rule(":") do
 	|op, io|
 
-	if @lex_state == EXPR_END || io.peek(0) =~ /\s/
+	if lex_state?(EXPR_END) || io.peek(0) =~ /\s/
 	  @lex_state = EXPR_BEG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
 	else
@@ -445,7 +455,7 @@ print_lex_state
       @OP.def_rule(".") do
  	|op, io|
 
-	if @lex_state == EXPR_BEG
+	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :DOT_COMMAND)
 	elsif @space_seen
@@ -472,7 +482,7 @@ print_lex_state
       @OP.def_rule("&") do
 	|op, io|
 
-	if @lex_state == EXPR_BEG
+	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
 	else
@@ -483,7 +493,7 @@ print_lex_state
 
       @OP.def_rule("&&") do
 	|op, io|
-	if @lex_state == EXPR_BEG
+	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
 	else
@@ -494,7 +504,7 @@ print_lex_state
 
       @OP.def_rule("||") do
 	|op, io|
-	if @lex_state == EXPR_BEG
+	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
 	else
@@ -553,7 +563,7 @@ print_lex_state
 
       @OP.def_rules(*Redirections) do
 	|op, io|
-	if @lex_state == EXPR_BEG && [">", "<", ">>", "<<"].include?(op)
+	if lex_state?(EXPR_BEG_ANY) && [">", "<", ">>", "<<"].include?(op)
 	  self.lex_state = EXPR_ARG
 	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
 	else
@@ -562,7 +572,7 @@ print_lex_state
 	end
       end
 
-      @OP.def_rule("-", proc{|op, io| @lex_state == EXPR_BEG}) do
+      @OP.def_rule("-", proc{|op, io| lex_state?(EXPR_BEG_ANY)}) do
 	|op, io|
 
 	if /\s/ =~ io.peek(0)
@@ -580,7 +590,7 @@ print_lex_state
       end
 
       ops = ["+", "/", "*", ">=", "<=", "==", "<=>"]
-      preproc = proc{|op, io| @lex_state == EXPR_BEG && /\s/ =~ io.peek(0)}
+      preproc = proc{|op, io| lex_state?(EXPR_BEG_ANY) && /\s/ =~ io.peek(0)}
       ops.each do |op|
 	@OP.def_rule(op, preproc) do
 	  |op, io|
@@ -594,7 +604,7 @@ print_lex_state
 
 	if /[0-9]/ =~ io.peek(0) 
 	  identify_number(io)
-	elsif @lex_state == EXPR_BEG || @lex_state == EXPR_FNAME
+	elsif lex_state?(EXPR_BEG_ANY|EXPR_FNAME)
 	  identify_id(io)
 	else
 	  identify_word(io)
@@ -731,7 +741,7 @@ print_lex_state
 	when /[89]/
 	  return identify_word(io, token)
 	else
-	  if @lex_state == EXPR_BEG && (/\s/ =~ ch || /[\|&;\(\)<>\{\[\}\]\.\:]/ =~ ch)
+	  if lex_state?(EXPR_BEG_ANY) && (/\s/ =~ ch || /[\|&;\(\)<>\{\[\}\]\.\:]/ =~ ch)
 	    self.lex_state = EXPR_END
 	    return IntegerToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
 	  elsif  /\s/ !~ ch && /[\|&;\(\)<>\}\]]/ !~ ch
@@ -817,7 +827,7 @@ print_lex_state
 	  return identify_word(io, token)
 	end
       end
-      if @lex_state != EXPR_BEG && token_type==IntegerToken && /[<>]/ =~ io.peek(0)
+      if !lex_state?(EXPR_BEG_ANY) && token_type==IntegerToken && /[<>]/ =~ io.peek(0)
 	return FidToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
       end
       self.lex_state = EXPR_END

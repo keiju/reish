@@ -165,30 +165,41 @@ class Reish::Parser
 #	        result.push val[1]
 #	    }
 
-do_block: DO compound_list END
+  do_block: DO opt_block_arg compound_list END
             { 
-	      result = Node::DoBlock(val[1])
+	      if val[1]
+		result = Node::DoBlock(val[2], val[1])
+	      else
+		result = Node::DoBlock(val[2])
+	      end
 	    }
-        | DO '|' block_arg opt_nl '|' compound_list END
+	| LBRACE_I opt_block_arg compound_list '}'
             { 
-	      result = Node::DoBlock(val[5], val[2])
+	      if val[1]
+		result = Node::DoBlock(val[2], val[1])
+	      else
+		result = Node::DoBlock(val[2])
+	      end
 	    }
-	| LBRACE_I compound_list '}'
-            { 
-	      result = Node::DoBlock(val[1])
+
+  opt_block_arg: 
+	    {
+	      result = nil
 	    }
-	| LBRACE_I opt_nl '|' block_arg opt_nl '|' compound_list '}'
-            { 
-	      result = Node::DoBlock(val[6], val[3])
+	| '|' block_arg '|'
+	    {
+	      result = val[1]
 	    }
+
   block_arg: 
     	    {
-	       @lex.lex_state = Lex::EXPR_BEG
+	       @lex.lex_state = Lex::EXPR_DO_BEG
 	       result = []
 	    }
 	| block_arg opt_nl ID
 	    {
-	       result.push val[2]
+	      result = val[0]
+	      result.push val[2]
 	    }
 
   simple_command_header: ID
