@@ -225,7 +225,7 @@ class Reish::Parser
 	| if_command
  	| while_command
         | begin_command
-#	| case_command
+	| case_command
 #	| UNTIL compound_list DO compound_list DONE
 #	| select_command
 #	| subshell
@@ -308,8 +308,13 @@ referenceable: ID
 	| RESCUE command_element_list exc_var then compound_list opt_rescue
 	    {
 		result = Node::RescueCommand(val[1], val[2], val[4])
-		result = [result, val[5]] if val[5]
-		result
+		if val[5]
+		   result, t = val[5], result
+		   result = [result] unless result.kind_of?(Array)
+		   result.unshift t
+		else
+		   result = Node::RescueCommand(val[1], val[2], val[4])
+		end		  
 	    } 
   exc_var: 
 	    {
@@ -372,9 +377,8 @@ referenceable: ID
 		result = Node::IfCommand(val[2], val[4], val[6])
 	    }
 
-  then: NL
-	| ';'
-	| THEN
+  then: THEN
+	| opt_terms
 
   for_command: FOR opt_nl for_arg opt_nl IN cond_push
 	       logical_command do cond_pop compound_list END
@@ -393,6 +397,22 @@ referenceable: ID
 	      result.push val[2]
 	    }
 
+  case_command: CASE logical_command opt_terms case_body END
+	    {
+		result = Node::CaseCommand(val[1], val[3])
+	    }
+
+  case_body: WHEN simple_command_element_list then compound_list cases
+            {
+		if val[4]
+		  result = val[4]
+		  result.unshift Node::WhenCommand(val[1], val[3])
+		else
+		  result = [Node::WhenCommand(val[1], val[3])]
+		end
+	    }
+  cases:  opt_else
+	| case_body
 
   group_command: '(' compound_list ')' lex_arg
 	    {
@@ -662,12 +682,14 @@ referenceable: ID
   redirection_element: command_element_base
 	| WILDCARD
 
-
   simple_list_terminator:	NL
 	| EOF
 
   opt_nl_arg: lex_arg
       | lex_arg NL 
+
+  opt_terms: ';'
+      | NL
 
   opt_nl:  
       | NL

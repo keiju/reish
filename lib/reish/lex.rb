@@ -131,7 +131,7 @@ module Reish
       :ELSIF => EXPR_BEG,
       :ELSE => EXPR_BEG,
       :CASE => EXPR_BEG,
-      :WHEN => EXPR_BEG,
+      :WHEN => EXPR_ARG,
       :WHILE => EXPR_BEG,
       :UNTIL => EXPR_BEG,
       :FOR => EXPR_BEG,

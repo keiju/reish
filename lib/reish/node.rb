@@ -277,6 +277,35 @@ module Reish
       def_accept
     end
 
+    class CaseCommand<Command
+      def_constructor
+
+      def initialize(cond, body)
+	@cond = cond
+	@body = body
+      end
+
+      attr_reader :cond
+      attr_reader :body
+
+      def_accept
+    end
+
+    class WhenCommand<Command
+      def_constructor
+
+      def initialize(cond, seq)
+	@cond = cond
+	@seq = seq
+      end
+
+      attr_reader :cond
+      attr_reader :seq
+
+      def_accept
+    end
+
+
     class Group<Command
       def_constructor
 

@@ -45,8 +45,17 @@ module Reish
 
     def visit_begin_command(command)
       seq = command.seq.accept(self)
-      res = ""
-      res = ";"+command.res.accept(self) if command.res
+
+      case command.res
+      when nil
+	res = ""
+      when Array
+	res = ";"+command.res.collect{|r| r.accept(self)}.join(";")
+      else
+	res = ""
+	res = ";"+command.res.accept(self)
+      end
+
       els = ""
       els = ";else "+command.els.accept(self) if command.els
       ens = ""
@@ -106,6 +115,18 @@ module Reish
     def visit_group(group)
       script = group.node.accept(self)
       "("+script+")"
+    end
+
+    def visit_case_command(command)
+      cd = command.cond.accept(self)
+      bd = command.body.collect{|b| b.accept(self)}.join("; ")
+      "case #{cd}; #{bd}; end"
+    end
+
+    def visit_when_command(command)
+      cd = command.cond.collect{|e| e.accept(self)}.join(", ")
+      sq = command.seq.accept(self)
+      "when #{cd}; #{sq}"
     end
 
     def visit_sequence(seq)
