@@ -424,7 +424,7 @@ referenceable: ID
 		result = Node::IfCommand(val[2], val[5], val[4])
 	    }
 
-  for_command: FOR opt_nl for_arg opt_nl IN lex_arg simple_command_element_list do compound_list END
+  for_command: FOR opt_nl for_arg opt_nl IN lex_arg simple_command_element do compound_list END
 	    {
 		result = Node::ForCommand(val[2], val[6], val[8])
             }

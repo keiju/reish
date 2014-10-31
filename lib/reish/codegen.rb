@@ -114,7 +114,7 @@ module Reish
 
     def visit_for_command(command)
       vl = command.vars.collect{|v| v.accept(self)}.join(", ")
-      en = command.ary.collect{|e| e.accept(self)}.join(", ")
+      en = command.enum.accept(self)
       sq = command.seq.accept(self)
 
       "for #{vl} in #{en} do #{sq} end"
