@@ -114,7 +114,7 @@ module Reish
 
     def visit_for_command(command)
       vl = command.vars.collect{|v| v.accept(self)}.join(", ")
-      en = command.enum.accept(self)
+      en = command.ary.collect{|e| e.accept(self)}.join(", ")
       sq = command.seq.accept(self)
 
       "for #{vl} in #{en} do #{sq} end"
@@ -127,8 +127,14 @@ module Reish
 
     def visit_case_command(command)
       cd = command.cond.accept(self)
-      bd = command.body.collect{|b| b.accept(self)}.join("; ")
-      "case #{cd}; #{bd}; end"
+      if command.body.last.kind_of?(Node::Sequence)
+	el = command.body.pop.accept(self)
+	bd = command.body.collect{|b| b.accept(self)}.join("; ")
+	"case #{cd}; #{bd}; else #{el}; end"
+      else
+	bd = command.body.collect{|b| b.accept(self)}.join("; ")
+	"case #{cd}; #{bd}; end"
+      end
     end
 
     def visit_when_command(command)

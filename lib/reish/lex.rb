@@ -142,7 +142,7 @@ module Reish
       :THEN => EXPR_BEG,
       :ELSIF => EXPR_BEG,
       :ELSE => EXPR_BEG,
-      :CASE => EXPR_BEG,
+      :CASE => EXPR_ARG,
       :WHEN => EXPR_ARG,
       :WHILE => EXPR_BEG,
       :MOD_WHILE => EXPR_BEG,

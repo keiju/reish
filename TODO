@@ -1,5 +1,3 @@
-untilコマンド
-#   trivial_command: trivial_command0 lex_arg の lex_arg正しい?
 プロンプト表示(カスタマイズ可能なプロンプト表示, インデントの処理)
 &
 %リテラル
@@ -8,13 +6,11 @@ untilコマンド
 Array, Hashで,を使えるようにする
 * reish_termの振る舞い. ビルトインコマンドの場合端末に出力できるか?
   つまり, 戻り値ではなくprintする
+#   trivial_command: trivial_command0 lex_arg の lex_arg正しい?
 完全なCompSystemCommand - パイプライン, リダイレクションの処理
 エリアス(bashの)
 コンプレーション機能
 ^Z
-if修飾子
-while修飾子
-until修飾子
 XSTRING(#)
 フォーマット付Number(FormedNumber)
 ハッシュ中のsym:形式

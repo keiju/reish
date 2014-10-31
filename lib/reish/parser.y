@@ -424,10 +424,9 @@ referenceable: ID
 		result = Node::IfCommand(val[2], val[5], val[4])
 	    }
 
-  for_command: FOR opt_nl for_arg opt_nl IN cond_push
-	       logical_command do cond_pop compound_list END
+  for_command: FOR opt_nl for_arg opt_nl IN lex_arg simple_command_element_list do compound_list END
 	    {
-		result = Node::ForCommand(val[2], val[6], val[9])
+		result = Node::ForCommand(val[2], val[6], val[8])
             }
 
   for_arg: ID
@@ -441,18 +440,21 @@ referenceable: ID
 	      result.push val[2]
 	    }
 
-  case_command: CASE logical_command opt_terms case_body END
+  case_command: CASE simple_command_element opt_terms case_body END
 	    {
 		result = Node::CaseCommand(val[1], val[3])
 	    }
 
   case_body: WHEN simple_command_element_list then compound_list cases
             {
-		if val[4]
+		case val[4]
+		when Array
 		  result = val[4]
 		  result.unshift Node::WhenCommand(val[1], val[3])
-		else
+		when nil
 		  result = [Node::WhenCommand(val[1], val[3])]
+		else
+		  result = [Node::WhenCommand(val[1], val[3]), val[4]]
 		end
 	    }
   cases:  opt_else

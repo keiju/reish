@@ -244,6 +244,19 @@ module Reish
       @pattern = pat
     end
 
+    def ===(other)
+      File.fnmatch?(@pattern, other)
+    end
+
+    def glob
+      if @pattern[0] == "/"
+        files = Dir[@pattern]
+      else
+        prefix = @shell.pwd+"/"
+        files = Dir[prefix+@pattern].collect{|p| p.sub(prefix, "")}
+      end
+    end
+
     def append_command_opts(opts)
 
       files = glob
@@ -256,15 +269,6 @@ module Reish
     end
 
     alias reish_append_command_opts append_command_opts
-
-    def glob
-      if @pattern[0] == "/"
-        files = Dir[@pattern]
-      else
-        prefix = @shell.pwd+"/"
-        files = Dir[prefix+@pattern].collect{|p| p.sub(prefix, "")}
-      end
-    end
 
     def inspect
       if Reish::INSPECT_LEBEL < 3

@@ -289,16 +289,14 @@ module Reish
     class ForCommand<Command
       def_constructor
 
-      def initialize(vars, enum, seq)
+      def initialize(vars, ary, seq)
 	@vars = vars
-	@enum = enum
+	@ary = ary
 	@seq = seq
-
-	@enum.pipeout = :RESULT
       end
 
       attr_reader :vars
-      attr_reader :enum
+      attr_reader :ary
       attr_reader :seq
 
       def_accept
