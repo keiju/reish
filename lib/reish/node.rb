@@ -305,6 +305,105 @@ module Reish
       def_accept
     end
 
+    class BreakCommand<Command
+      def_constructor
+
+      def initialize(args)
+	@args=args
+	@pipepout = :NONE
+      end
+
+      attr_reader :args
+
+      def pipeout=(val)
+	#ignore
+      end
+
+      def_accept
+    end
+
+
+    class NextCommand<Command
+      def_constructor
+
+      def initialize(args)
+	@args=args
+	@pipepout = :NONE
+      end
+
+      attr_reader :args
+
+      def pipeout=(val)
+	#ignore
+      end
+
+      def_accept
+    end
+
+    class RedoCommand<Command
+      def_constructor
+
+      def initialize
+	@pipepout = :NONE
+      end
+      def pipeout=(val)
+	#ignore
+      end
+
+      def_accept
+    end
+
+    class RaieCommand<Command
+      def_constructor
+
+      def initialize(args)
+	@args=args
+	@pipepout = :NONE
+      end
+
+      attr_reader :args
+
+      def pipeout=(val)
+	#ignore
+      end
+
+      def_accept
+    end
+
+    class ReturnCommand<Command
+      def_constructor
+
+      def initialize(args)
+	@args=args
+	@pipepout = :NONE
+      end
+
+      attr_reader :args
+
+      def pipeout=(val)
+	#ignore
+      end
+
+      def_accept
+    end
+
+    class YieldCommand<Command
+      def_constructor
+
+      def initialize(args)
+	@args=args
+	@pipepout = :NONE
+      end
+
+      attr_reader :args
+
+      def pipeout=(val)
+	#ignore
+      end
+
+      def_accept
+    end
+
     class Group<Command
       def_constructor
 

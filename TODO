@@ -1,4 +1,3 @@
-Selectコマンド
 untilコマンド
 #   trivial_command: trivial_command0 lex_arg の lex_arg正しい?
 プロンプト表示(カスタマイズ可能なプロンプト表示, インデントの処理)
@@ -7,9 +6,9 @@ untilコマンド
 テスト環境
 ビルトイン関数
 Array, Hashで,を使えるようにする
-reish_termの振る舞い. ビルトインコマンドの場合端末に出力できるか? 
+* reish_termの振る舞い. ビルトインコマンドの場合端末に出力できるか?
   つまり, 戻り値ではなくprintする
-完全なCompSysgemCommand - パイプライン, リダイレクションの処理
+完全なCompSystemCommand - パイプライン, リダイレクションの処理
 エリアス(bashの)
 コンプレーション機能
 ^Z
@@ -25,3 +24,4 @@ XSTRING(#)
 公開
 リリース
 コマンド引数にEnumerableが渡ったときの処理
+# bash selectコマンド(ひつようない?)

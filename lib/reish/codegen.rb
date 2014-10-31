@@ -129,6 +129,54 @@ module Reish
       "when #{cd}; #{sq}"
     end
 
+    def visit_break_command(command)
+      if command.args.nil? || command.args.empty?
+	"break;"
+      else
+	"break "+command.args.collect{|e| e.accept(self)}.join(", ")+";"
+      end
+    end
+
+    def visit_next_command(command)
+      if command.args.nil? || command.args.empty?
+	"next;"
+      else
+	"next "+command.args.collect{|e| e.accept(self)}.join(", ")+";"
+      end
+    end
+
+    def visit_redo_command(command)
+      "redo;"
+    end
+
+    def visit_retry_command(command)
+      "retry;"
+    end
+
+    def visit_raise_command(command)
+      if command.args.nil? || command.args.empty?
+	"raise;"
+      else
+	"raise "+command.args.collect{|e| e.accept(self)}.join(", ")+";"
+      end
+    end
+
+    def visit_return_command(command)
+      if command.args.nil? || command.args.empty?
+	"return;"
+      else
+	"return "+command.args.collect{|e| e.accept(self)}.join(", ")+";"
+      end
+    end
+
+    def visit_yield_command(command)
+      if command.args.nil? || command.args.empty?
+	"yield;"
+      else
+	"yield "+command.args.collect{|e| e.accept(self)}.join(", ")+";"
+      end
+    end
+
     def visit_sequence(seq)
       case seq.pipeout
       when :BAR, :COLON2, :DOT

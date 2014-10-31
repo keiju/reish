@@ -72,6 +72,13 @@ class Reish::Parser
 		result = Node::LogicalCommandOO(val[0], val[3])
 	    }
       	| pipeline_command
+	| break_command
+	| next_command
+	| redo_command
+	| retry_command
+	| raise_command
+	| return_command
+	| yield_command
 
   pipeline_command: pipeline
 	| BANG pipeline
@@ -419,6 +426,41 @@ referenceable: ID
 	    }
   cases:  opt_else
 	| case_body
+
+  break_command: BREAK simple_command_element_list
+	    {
+		result = Node::BreakCommand(val[1])
+	    }
+
+  next_command: NEXT simple_command_element_list
+	    {
+		result = Node::NextCommand(val[1])
+	    }
+
+  redo_command: REDO
+	    {
+		result = Node::RedoCommand()
+	    }
+
+  retry_command: Retry
+	    {
+		result = Node::RetryCommand()
+	    }
+
+  raise_command: RAISE simple_command_element_list
+	    {
+		result = Node::RaiseCommand(val[1])
+	    }
+
+  return_command: RETURN simple_command_element_list
+	    {
+		result = Node::ReturnCommand(val[1])
+	    }
+
+  yield_command: YIELD simple_command_element_list
+	    {
+		result = Node::YieldCommand(val[1])
+	    }
 
   group_command: '(' compound_list ')' lex_arg
 	    {

@@ -33,7 +33,7 @@ module Reish
       const_set(st, i)
       i<<=1
     end
-    EXPR_BEG_ANY= EXPR_BEG | EXPR_DO_BEG
+    EXPR_BEG_ANY= EXPR_BEG | EXPR_DO_BEG | EXPR_MID | EXPR_CLASS
     EXPR_ARG_ANY= EXPR_ARG | EXPR_EQ_ARG
 
     PreservedWord = {
@@ -59,11 +59,12 @@ module Reish
       "next"	=> :NEXT, 
       "redo"	=> :REDO, 
       "retry"	=> :RETRY, 
+      "raise"	=> :RAISE, 
       "in"	=> :IN, 
       "do"	=> :DO, 
       "return"	=> :RETURN, 
       "yield"	=> :YIELD, 
-      "super"	=> :SUPER, 
+#      "super"	=> :SUPER, 
       "self"	=> :SELF, 
       "nil"	=> :NIL, 
       "true"	=> :TRUE, 
@@ -114,7 +115,7 @@ module Reish
       :TRUE,
       :FALSE,
       :SELF,
-    ]
+p    ]
 
     TransState = {
       :CLASS => EXPR_CLASS,
@@ -122,7 +123,7 @@ module Reish
       :DEF => EXPR_FNAME,
       :UNDEF => EXPR_FNAME,
       :BEGIN => EXPR_BEG,
-      :RESCUE =>  EXPR_MID,
+      :RESCUE =>  EXPR_ARG,
       :ENSURE => EXPR_BEG,
       :END => EXPR_END,
       :IF => EXPR_BEG,
@@ -135,16 +136,17 @@ module Reish
       :WHILE => EXPR_BEG,
       :UNTIL => EXPR_BEG,
       :FOR => EXPR_BEG,
-      :BREAK => EXPR_END,
-      :NEXT => EXPR_END,
-      :REDO => EXPR_END,
-      :RETRY => EXPR_END,
+      :BREAK => EXPR_ARG,
+      :NEXT => EXPR_ARG,
+      :REDO => EXPR_ARG,
+      :RETRY => EXPR_ARG,
+      :RAISE => EXPR_ARG,
       :IN => EXPR_BEG,
       :DO => EXPR_DO_BEG,
       :DO_COND => EXPR_BEG,
-      :RETURN => EXPR_MID,
-      :YIELD => EXPR_END,
-      :SUPER => EXPR_END,
+      :RETURN => EXPR_ARG,
+      :YIELD => EXPR_ARG,
+      :SUPER => EXPR_ARG,
       :SELF =>  EXPR_END,
       :NIL => EXPR_END,
       :TRUE => EXPR_END,
