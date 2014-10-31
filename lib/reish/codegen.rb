@@ -101,7 +101,15 @@ module Reish
       c = command.cond.accept(self)
       n = command.node.accept(self)
       
-      "(while #{c} do #{n} end)"
+      "while #{c} do #{n} end"
+    end
+
+
+    def visit_until_command(command)
+      c = command.cond.accept(self)
+      n = command.node.accept(self)
+      
+      "until #{c} do #{n} end"
     end
 
     def visit_for_command(command)
@@ -175,6 +183,41 @@ module Reish
       else
 	"yield "+command.args.collect{|e| e.accept(self)}.join(", ")+";"
       end
+    end
+
+    def visit_bang_command(command)
+      com = command.com.accept(self)
+      "!#{com}"
+    end
+
+    def visit_mod_if_command(command)
+      t = command.com.accept(self)
+      c = command.cond.accept(self)
+      "#{t} if #{c}; "
+    end
+
+    def visit_mod_unless_command(command)
+      t = command.com.accept(self)
+      c = command.cond.accept(self)
+      "#{t} unless #{c}; "
+    end
+
+    def visit_mod_while_command(command)
+      t = command.com.accept(self)
+      c = command.cond.accept(self)
+      "#{t} while #{c}; "
+    end
+
+    def visit_mod_until_command(command)
+      t = command.com.accept(self)
+      c = command.cond.accept(self)
+      "#{t} until #{c}; "
+    end
+
+    def visit_mod_rescue_command(command)
+      t = command.com.accept(self)
+      a = command.args.collect{|a| a.accept(self)}.join(", ")
+      "#{t} rescue #{a}; "
     end
 
     def visit_sequence(seq)

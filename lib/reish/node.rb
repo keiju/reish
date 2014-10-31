@@ -111,6 +111,18 @@ module Reish
       def_accept "logical_command_oo"
     end
 
+    class BangCommand<Command
+      def_constructor
+
+      def initialize(com)
+	@com = com
+      end
+      
+      attr_reader :com
+
+      def_accept
+    end
+
     class PipelineCommand<Command
       def_constructor
 
@@ -245,7 +257,22 @@ module Reish
       def_accept
     end
 
+
     class WhileCommand<Command
+      def_constructor
+
+      def initialize(cond, node)
+	@cond = cond
+	@node = node
+      end
+
+      attr_reader :cond
+      attr_reader :node
+
+      def_accept
+    end
+
+    class UntilCommand<Command
       def_constructor
 
       def initialize(cond, node)
@@ -400,6 +427,76 @@ module Reish
       def pipeout=(val)
 	#ignore
       end
+
+      def_accept
+    end
+
+    class ModIfCommand<Command
+      def_constructor
+
+      def initialize(com, cond)
+	@com = com
+	@cond = cond
+      end
+
+      attr_reader :com
+      attr_reader :cond
+
+      def_accept
+    end
+
+    class ModUnlessCommand<Command
+      def_constructor
+
+      def initialize(com, cond)
+	@com = com
+	@cond = cond
+      end
+
+      attr_reader :cond
+      attr_reader :com
+
+      def_accept
+    end
+
+    class ModWhileCommand<Command
+      def_constructor
+
+      def initialize(com, cond)
+	@com = com
+	@cond = cond
+      end
+
+      attr_reader :cond
+      attr_reader :com
+
+      def_accept
+    end
+
+    class ModUntilCommand<Command
+      def_constructor
+
+      def initialize(com, cond)
+	@com = com
+	@cond = cond
+      end
+
+      attr_reader :cond
+      attr_reader :com
+
+      def_accept
+    end
+
+    class ModRescueCommand<Command
+      def_constructor
+
+      def initialize(com, args)
+	@com = com
+	@args = args
+      end
+
+      attr_reader :com
+      attr_reader :args
 
       def_accept
     end

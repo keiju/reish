@@ -83,6 +83,14 @@ module Reish
       "!"       => :BANG,
     }
 
+    Modifiers = {
+      "$if" => :MOD_IF,
+      "$unless" => :MOD_UNLESS,
+      "$while" => :MOD_WHILE,
+      "$until" => :MOD_UNTIL,
+      "$rescue" => :MOD_RESCUE,
+    }
+
     PreservedWordH = {
 #      "rescue"	=> :RESCUE, 
 #      "ensure"	=> :ENSURE, 
@@ -115,7 +123,7 @@ module Reish
       :TRUE,
       :FALSE,
       :SELF,
-p    ]
+    ]
 
     TransState = {
       :CLASS => EXPR_CLASS,
@@ -124,22 +132,28 @@ p    ]
       :UNDEF => EXPR_FNAME,
       :BEGIN => EXPR_BEG,
       :RESCUE =>  EXPR_ARG,
+      :MOD_RESCUE =>  EXPR_ARG,
       :ENSURE => EXPR_BEG,
       :END => EXPR_END,
       :IF => EXPR_BEG,
+      :MOD_IF => EXPR_BEG,
       :UNLESS => EXPR_BEG,
+      :MOD_UNLESS => EXPR_BEG,
       :THEN => EXPR_BEG,
       :ELSIF => EXPR_BEG,
       :ELSE => EXPR_BEG,
       :CASE => EXPR_BEG,
       :WHEN => EXPR_ARG,
       :WHILE => EXPR_BEG,
+      :MOD_WHILE => EXPR_BEG,
       :UNTIL => EXPR_BEG,
+      :MOD_UNTIL => EXPR_BEG,
       :FOR => EXPR_BEG,
       :BREAK => EXPR_ARG,
       :NEXT => EXPR_ARG,
       :REDO => EXPR_ARG,
       :RETRY => EXPR_ARG,
+      :RAISE => EXPR_ARG,
       :RAISE => EXPR_ARG,
       :IN => EXPR_BEG,
       :DO => EXPR_DO_BEG,
@@ -556,6 +570,17 @@ print_lex_state
 	|op, io|
 	io.ungetc
 	identify_variable(op, io)
+      end
+
+      mods =["$if", "$unless", "$while", "$until", "$rescue"]
+      preproc = proc{|op, io| !lex_state?(EXPR_BEG_ANY) && /\s/ =~ io.peek(0)}
+      mods.each do |mod|
+	@OP.def_rule(mod, preproc) do
+	  |op, io|
+	  tid = Modifiers[mod]
+	  self.lex_state = TransState[tid]
+	  ReservedWordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, tid)
+	end
       end
 
       @OP.def_rule("$") do

@@ -15,9 +15,13 @@ class Reish::Parser
   preclow
 #    left '&' ';' '\n' EOF
     nonassoc  LOWER
+  
     nonassoc DO LBRACE_I
+    nonassoc MOD_IF MOD_UNLESS MOD_WHILE MOD_UNTIL
+    left MOD_RESCUE
     left AND_AND OR_OR
 #    right '|' BAR_AND COLON2
+    right BANG
   prechigh
 
   rule
@@ -71,6 +75,30 @@ class Reish::Parser
 	    { 
 		result = Node::LogicalCommandOO(val[0], val[3])
 	    }
+	| logical_command MOD_IF opt_nl logical_command
+	    { 
+		result = Node::ModIfCommand(val[0], val[3])
+	    }
+	| logical_command MOD_UNLESS opt_nl logical_command
+	    { 
+		result = Node::ModUnlessCommand(val[0], val[3])
+	    }
+	| logical_command MOD_WHILE opt_nl logical_command
+	    { 
+		result = Node::ModWhileCommand(val[0], val[3])
+	    }
+	| logical_command MOD_UNTIL opt_nl logical_command
+	    { 
+		result = Node::ModUntilCommand(val[0], val[3])
+	    }
+	| logical_command MOD_RESCUE simple_command_element_list
+	    { 
+		result = Node::ModRescueCommand(val[0], val[2])
+	    }
+	| BANG logical_command
+            {
+		result = Node::BangCommand(val[1])
+	    }
       	| pipeline_command
 	| break_command
 	| next_command
@@ -81,7 +109,6 @@ class Reish::Parser
 	| yield_command
 
   pipeline_command: pipeline
-	| BANG pipeline
 
   pipeline: pipeline '|' opt_nl command
 	    {
@@ -232,9 +259,9 @@ class Reish::Parser
 	| if_command
 	| unless_command
  	| while_command
+ 	| until_command
         | begin_command
 	| case_command
-#	| UNTIL compound_list DO compound_list DONE
 #	| select_command
 #	| subshell
 #	| arith_command
@@ -242,7 +269,6 @@ class Reish::Parser
 #	| arith_for_command
         | for_command
 	| group_command
-#	| test_command
 
   literal_command: literal
 	    {
@@ -358,6 +384,11 @@ referenceable: ID
   do: NL
 	| ';'
 	| DO_COND
+
+  until_command: UNTIL cond_push opt_nl logical_command do cond_pop compound_list END
+	    {
+	       result = Node::UntilCommand(val[3], val[6])
+	    }
 
   if_command: IF opt_nl logical_command then compound_list END
 	    {
