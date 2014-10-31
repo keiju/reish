@@ -239,6 +239,8 @@ module Reish
   end
 
   class WildCard
+    include Enumerable
+
     def initialize(sh, pat)
       @shell = sh
       @pattern = pat
@@ -255,6 +257,10 @@ module Reish
         prefix = @shell.pwd+"/"
         files = Dir[prefix+@pattern].collect{|p| p.sub(prefix, "")}
       end
+    end
+
+    def each(&block)
+      self.glob.each &block
     end
 
     def append_command_opts(opts)
