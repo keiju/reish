@@ -7,6 +7,7 @@ Array, Hashで,を使えるようにする
 * reish_termの振る舞い. ビルトインコマンドの場合端末に出力できるか?
   つまり, 戻り値ではなくprintする
 #   trivial_command: trivial_command0 lex_arg の lex_arg正しい?
+# .の処理がまだイマイチ
 完全なCompSystemCommand - パイプライン, リダイレクションの処理
 エリアス(bashの)
 コンプレーション機能

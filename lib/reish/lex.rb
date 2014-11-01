@@ -199,7 +199,7 @@ module Reish
       @ruby_scanner.exception_on_syntax_error = false
       @io = STDIN
 
-      @lex_state = EXPR_BEG
+      self.lex_state = EXPR_BEG
 
       @cond_stack = []
 
@@ -279,7 +279,7 @@ module Reish
       @quoted = nil
       @indent = 0
       @indent_stack = []
-      @lex_state = EXPR_BEG
+      self.lex_state = EXPR_BEG
       @space_seen = false
       @here_header = false
 
@@ -455,11 +455,11 @@ print_lex_state
 	|op, io|
 
 	if lex_state?(EXPR_END) || io.peek(0) =~ /\s/
-	  @lex_state = EXPR_BEG
+	  self.lex_state = EXPR_BEG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
 	else
-	  @lex_state = EXPR_FNAME
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :SYMBEG)
+	  self.lex_state = EXPR_FNAME
+	  ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :SYMBEG)
 	end
       end
 
@@ -617,7 +617,7 @@ print_lex_state
 	end
       end
 
-      ops = ["+", "/", "*", ">=", "<=", "==", "<=>"]
+      ops = ["+", "/", "*", ">=", "<=", "==", "<=>", "=~", "!~"]
       preproc = proc{|op, io| lex_state?(EXPR_BEG_ANY) && /\s/ =~ io.peek(0)}
       ops.each do |op|
 	@OP.def_rule(op, preproc) do
@@ -907,7 +907,7 @@ print_lex_state
     end
 
     def identify_gvar(op, io)
-      @lex_state = EXPR_END
+      self.lex_state = EXPR_END
 
       case ch = io.getc
       when /[~_*$?!@\/\\;,=:<>".]/   #"
@@ -1029,7 +1029,7 @@ class RubyLex
       @quoted = nil
       @indent = 0
       @indent_stack = []
-      @lex_state = EXPR_BEG
+      self.lex_state = EXPR_BEG
       
       loop do
 	@continue = false
@@ -1045,7 +1045,7 @@ class RubyLex
       @ltype = reserve_ltype
       @indent = reserve_indent
       @indent_stack = reserve_indent_stack
-      @lex_state = reserve_state
+      self.lex_state = reserve_state
       @quoted = reserve_quoted
     end
   end

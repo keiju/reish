@@ -286,9 +286,9 @@ class Reish::Parser
 	| symbol
 	| ruby_exp
 
-  symbol: SYMBEG sym
+  symbol: SYMBEG lex_beg sym
 	    {
-	      result = Node::Symbol(val[1])
+	      result = Node::Symbol(val[2])
 	    }
 
   sym: ID

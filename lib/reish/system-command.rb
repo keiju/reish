@@ -60,6 +60,8 @@ module Reish
 	  opts.concat command_opts(e)
 	when Hash
 	  opts.concat e.collect{|key, value| "--#{key}=#{value}"}
+	when Symbol
+	  opts.push "--"+e.id2name
 	else
 	  e.reish_append_command_opts(opts)
 	end
