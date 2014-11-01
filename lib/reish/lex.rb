@@ -530,18 +530,23 @@ print_lex_state
 	end
       end
 
-      @OP.def_rule("$[") do
+      @OP.def_rules("$[", "%[") do
  	|op, io|
  	cond_push(false)
  	self.lex_state = EXPR_ARG
  	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_A)
       end
 
-      @OP.def_rule("${") do
+      @OP.def_rules("${", "%{") do
  	|op, io|
  	cond_push(false)
  	self.lex_state = EXPR_ARG
  	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_H)
+      end
+
+      @OP.def_rules("$/", "%/") do
+	|op, io|
+	identify_regexp("/", io)
       end
 
       @OP.def_rule("$(") do
@@ -554,11 +559,6 @@ print_lex_state
 	|op, io|
 	"begin".split(//).reverse.each{|c| io.ungetc c}
 	identify_compstmt(io, RubyToken::TkEND)
-      end
-
-      @OP.def_rule("$/") do
-	|op, io|
-	identify_regexp("/", io)
       end
 
       @OP.def_rule("$$") do
