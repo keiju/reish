@@ -431,6 +431,7 @@ print_lex_state
       @OP.def_rules("]", ")", "}") do
 	|op, io|
 	cond_lexpop
+	self.lex_state = EXPR_END
 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
       end
 

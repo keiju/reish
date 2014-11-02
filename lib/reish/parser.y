@@ -15,13 +15,16 @@ class Reish::Parser
   preclow
 #    left '&' ';' '\n' EOF
     nonassoc  LOWER
-  
-    nonassoc DO LBRACE_I
     nonassoc MOD_IF MOD_UNLESS MOD_WHILE MOD_UNTIL
+    right '='
+    nonassoc DO LBRACE_I
+    nonassoc LBLACK_I
+    left '.' COLON2
     left MOD_RESCUE
     left AND_AND OR_OR
 #    right '|' BAR_AND COLON2
     right BANG
+    nonassoc HIGHER
   prechigh
 
   rule
@@ -115,27 +118,62 @@ class Reish::Parser
 	       result = val[0]
   	       result.pipe_command(:BAR, val[3])
 	    }
-	| pipeline COLON2 opt_nl command
-	    {
-	       result = val[0]
-  	       result.pipe_command(:COLON2, val[3])
-	    }
+#	| pipeline COLON2 opt_nl command
+#	    {
+#	       result = val[0]
+#  	       result.pipe_command(:COLON2, val[3])
+#	    }
 	| pipeline BAR_AND opt_nl command
 	    {
 	       result = val[0]
   	       result.pipe_command(:BAR_AND, val[3])
 	    }
 
-	| pipeline "." opt_nl command
-	    {
-	       result = val[0]
-  	       result.pipe_command(:DOT, val[3])
-	    }
+#	| pipeline "." opt_nl command
+#	    {
+#	       result = val[0]
+#  	       result.pipe_command(:DOT, val[3])
+#	    }
         | command
 	    {
 		result = Node::PipelineCommand(val[0])
             }
-	
+	| strict_pipeline
+
+  strict_pipeline: referenceable '.' opt_nl strict_command
+	    {
+		if val[0].kind_of?(IDToken) || val[0].kind_of?(PathToken)
+  		  val[0] = Node::SimpleCommand(val[0], [])
+		end
+		result = Node::PipelineCommand(val[0])
+  		result.pipe_command(:DOT, val[3])
+	    }
+	| strict_pipeline '.' opt_nl strict_command
+      	    {
+	       result = val[0]
+  	       result.pipe_command(:DOT, val[3])
+	    }
+	| strict_command COLON2 opt_nl strict_command
+	    {
+	       result = Node::PipelineCommand(val[0])
+  	       result.pipe_command(:COLON2, val[3])
+	    }
+	| strict_pipeline COLON2 opt_nl strict_command
+	    {
+	       result = val[0]
+  	       result.pipe_command(:COLON2, val[3])
+	    }
+
+ strict_command: ID
+	    {
+  	       result = Node::SimpleCommand(val[0], [])
+	    }
+ 	| PATH
+ 	    {
+   	       result = Node::SimpleCommand(val[0], [])
+ 	    }
+	| simple_command_lparen
+
   command: simple_command
 	| shell_command
 	| shell_command redirection_list
@@ -311,19 +349,29 @@ class Reish::Parser
 		result = Node::IndexRefCommand(*val[0])
 	    }
 
-  index_ref: referenceable LBLACK_I  opt_nl command_element opt_nl ']'
+  index_ref: referenceable  LBLACK_I opt_nl command_element opt_nl ']'
 	    {
 		result = [val[0], val[3]]
 	    }
 
 referenceable: ID
+	| PATH
+	| simple_command_lparen
 #	| trivial_command
-	| literal
+	| literal_command
 	| group_command
 	    {
 	      val[0].pipeout = :RESULT
 	    }
 	| index_ref_command
+	| if_command
+	| unless_command
+ 	| while_command
+ 	| until_command
+        | begin_command
+	| case_command
+        | for_command
+	| strict_pipeline =LOWER
 
   begin_command: BEGIN body_list END
 	    {

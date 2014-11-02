@@ -25,7 +25,7 @@ module Reish
       var = command.variable.accept(self)
       val = command.value.accept(self)
 
-      "#{var}=#{val}"
+      "(#{var}=#{val})"
     end
 
     def visit_index_assgin_command(command)
@@ -33,7 +33,7 @@ module Reish
       idx = command.index.accept(self)
       val = command.value.accept(self)
 
-      "#{var}[#{idx}]=#{val}"
+      "(#{var}[#{idx}]=#{val})"
     end
 
     def visit_index_ref_command(command)
