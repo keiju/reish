@@ -68,10 +68,12 @@ module Reish
 
     class Command<Node
       def intialize
+	@pipein = nil
 	@pipeout = nil
 	@have_redirection = nil
       end
 
+      attr_accessor :pipein
       attr_accessor :pipeout
     end
 
@@ -139,6 +141,7 @@ module Reish
       
       def pipe_command(attr, com)
 	@commands.last.pipeout = attr
+	com.pipein = @commands.last
 	@commands.push com
       end
 

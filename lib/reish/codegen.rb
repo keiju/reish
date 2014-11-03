@@ -77,6 +77,8 @@ module Reish
     end
 
     def visit_if_command(command)
+      return visit_if_command_with_pipe(command) if command.pipein
+
       c = command.cond.accept(self)
       t = nil
       t = command.then_list.accept(self)if command.then_list
@@ -95,6 +97,17 @@ module Reish
       else
 	"if #{c} end"
       end
+    end
+
+    def visit_if_command_with_pipe(command)
+      c = command.cond.accept(self)
+      t = nil
+      t = command.then_list.accept(self)if command.then_list
+
+      e = nil
+      e = command.else_list.accept(self) if command.else_list
+
+      "reish_if(%{#{c}}, %{#{t}}, %{#{e}})"
     end
 
     def visit_while_command(command)

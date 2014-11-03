@@ -110,6 +110,7 @@ class Reish::Parser
 	| raise_command
 	| return_command
 	| yield_command
+	| assgin_command
 
   pipeline_command: pipeline
 
@@ -292,7 +293,6 @@ class Reish::Parser
 	| redirection
 
   shell_command: literal_command
-	| assgin_command
 	| index_ref_command
 	| if_command
 	| unless_command

@@ -464,7 +464,7 @@ module Reish
 	  receiver.send(method, *args, &block)
 	end
       else
-	com = search_command(self, method, *args)
+	com = search_command(receiver, method, *args)
 	com.reds = reds
 	com
       end
