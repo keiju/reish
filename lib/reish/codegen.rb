@@ -78,7 +78,14 @@ module Reish
 
     def visit_if_command(command)
       return visit_if_command_with_pipe(command) if command.pipein
+      if_command_code(command)
+    end
 
+    def visit_if_command_with_pipe(command)
+      "reish_eval(%{#{if_command_code(command)}})"
+    end
+
+    def if_command_code(command)
       c = command.cond.accept(self)
       t = nil
       t = command.then_list.accept(self)if command.then_list
@@ -99,24 +106,17 @@ module Reish
       end
     end
 
-    def visit_if_command_with_pipe(command)
-      c = command.cond.accept(self)
-      t = nil
-      t = command.then_list.accept(self)if command.then_list
-
-      e = nil
-      e = command.else_list.accept(self) if command.else_list
-
-      "reish_if(%{#{c}}, %{#{t}}, %{#{e}})"
-    end
-
     def visit_while_command(command)
       c = command.cond.accept(self)
       n = command.node.accept(self)
-      
-      "while #{c} do #{n} end"
-    end
 
+      code = "while #{c} do #{n} end"
+      if command.pipein
+	"reish_eval(%{#{code}})"
+      else
+	code
+      end
+    end
 
     def visit_until_command(command)
       c = command.cond.accept(self)
@@ -275,6 +275,8 @@ module Reish
     def visit_pipeline_command(command)
       script = ""
       command.commands.each do |com|
+p com
+p com.accept(self)
 	script.concat com.accept(self)
 	unless com.kind_of?(Node::SimpleCommand)
 	  case com.pipeout

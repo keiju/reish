@@ -422,17 +422,8 @@ class Object
     end
   end
 
-  def reish_if(cond, then_code = nil, else_code = nil)
-p self
-    if eval(cond)
-      eval(then_code) if then_code
-    else
-      eval(else_code) if else_code
-    end
-  end
-  
-  def reish_filter(code)
-    
+  def reish_eval(code)
+    eval(code)
   end
 end
 
