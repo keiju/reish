@@ -120,11 +120,11 @@ module Reish
     def start
       @lex.set_prompt do |ltype, indent, continue, line_no|
 	if ltype
-	  @io.prompt = "reish:#{line_no}#{ltype} "
+	  @io.prompt = "reish:#{indent.inspect}:#{line_no}#{ltype} "
 	elsif continue
-	  @io.prompt = "reish:#{line_no}? "
+	  @io.prompt = "reish:#{indent.inspect}:#{line_no}? "
 	else
-	  @io.prompt = "reish:#{line_no}> "
+	  @io.prompt = "reish:#{indent.inspect}:#{line_no}> "
 	end
       end
 

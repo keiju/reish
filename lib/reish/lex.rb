@@ -258,6 +258,16 @@ module Reish
       @cond_stack.last
     end
 
+    def indent_push(tk)
+      @indent += 1
+      @indent_stack.push tk
+    end
+
+    def indent_pop
+      @indent -= 1
+      @indent_stack.pop
+    end
+
     def set_input(io, p = nil, &block)
       @io = io
       @ruby_scanner.set_input(io, p, &block)
@@ -265,7 +275,7 @@ module Reish
 
     def set_prompt(&block)
       @ruby_scanner.set_prompt do |ltype, indent, continue, line_no|
-	block.call(@ltype, indent, @continue, line_no)
+	block.call(@ltype, @indent_stack, @continue, line_no)
       end
     end
 

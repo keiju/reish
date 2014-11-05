@@ -211,15 +211,19 @@ class Reish::Parser
 	    }
 	| simple_command_lparen
 
-  simple_command_lparen: simple_command_header LPARLEN_ARG
-			 simple_command_element_list_p ")" lex_end =LOWER
+  simple_command_lparen: simple_command_lparen_header =LOWER
 
 	    {
-	       result = Node::SimpleCommand(val[0], val[2])
+	       result = Node::SimpleCommand(val[0][0], val[0][1])
 	    }
-	| simple_command_header LPARLEN_ARG simple_command_element_list_p ")" lex_end do_block
+        | simple_command_lparen_header do_block
 	    {
-	       result = Node::SimpleCommand(val[0], val[2], val[5])
+	       result = Node::SimpleCommand(val[0][0], val[0][1], val[2])
+	    }
+
+  simple_command_lparen_header: simple_command_header LPARLEN_ARG {@lex.indent_push(:LPAREN_ARG)} simple_command_element_list_p indent_pop ")" lex_end 
+	    {
+	      result = [val[0], val[3]]
 	    }
 
   simple_command_element_list_p: opt_nl
@@ -238,20 +242,20 @@ class Reish::Parser
 #	        result.push val[1]
 #	    }
 
-  do_block: DO opt_block_arg compound_list END
+  do_block: DO {@lex.indent_push(:DO)} opt_block_arg compound_list indent_pop END
             { 
-	      if val[1]
-		result = Node::DoBlock(val[2], val[1])
+	      if val[2]
+		result = Node::DoBlock(val[3], val[2])
 	      else
-		result = Node::DoBlock(val[2])
+		result = Node::DoBlock(val[3])
 	      end
 	    }
-	| LBRACE_I opt_block_arg compound_list '}'
+	| LBRACE_I {@lex.indent_push(:LBRACE_I)} opt_block_arg compound_list indent_pop '}'
             { 
-	      if val[1]
-		result = Node::DoBlock(val[2], val[1])
+	      if val[2]
+		result = Node::DoBlock(val[3], val[2])
 	      else
-		result = Node::DoBlock(val[2])
+		result = Node::DoBlock(val[3])
 	      end
 	    }
 
@@ -373,9 +377,9 @@ referenceable: ID
         | for_command
 	| strict_pipeline =LOWER
 
-  begin_command: BEGIN body_list END
+  begin_command: BEGIN {@lex.indent_push(:BEGIN)} body_list indent_pop END
 	    {
-		result = Node::BeginCommand(*val[1])
+		result = Node::BeginCommand(*val[2])
 	    }
 
   body_list: compound_list opt_rescue opt_else opt_ensure
@@ -424,34 +428,37 @@ referenceable: ID
 		result = val[1]
 	    }
 
-  while_command: WHILE cond_push opt_nl logical_command do cond_pop compound_list END
+  while_command: WHILE cond_push opt_nl logical_command do {@lex.indent_push(:WHILE)} cond_pop compound_list indent_pop END
 	    {
-	       result = Node::WhileCommand(val[3], val[6])
+	       result = Node::WhileCommand(val[3], val[7])
 	    }
 
   do: NL
 	| ';'
 	| DO_COND
 
-  until_command: UNTIL cond_push opt_nl logical_command do cond_pop compound_list END
+  until_command: UNTIL cond_push opt_nl logical_command do {@lex.indent_push(:UNTIL)} cond_pop compound_list indent_pop END
 	    {
-	       result = Node::UntilCommand(val[3], val[6])
+	       result = Node::UntilCommand(val[3], val[7])
 	    }
 
-  if_command: IF opt_nl logical_command then compound_list END
+  if_command: if_head indent_pop END
 	    {
-		result = Node::IfCommand(val[2], val[4])
+		result = Node::IfCommand(val[0][0], val[0][1])
 	    }
-	|	IF opt_nl logical_command then compound_list ELSE
-	lex_beg compound_list END
+	| if_head ELSE lex_beg compound_list indent_pop END
 	    {
-		result = Node::IfCommand(val[2], val[4], val[6])
+		result = Node::IfCommand(val[0][0], val[0][1], val[3])
 	    }
-	|	IF opt_nl logical_command then compound_list elsif_clause END
+	| if_head elsif_clause indent_pop END
 	    {
-		result = Node::IfCommand(val[2], val[4], val[5])
+		result = Node::IfCommand(val[0][0], val[0][1], val[1])
 	    }
 
+  if_head: IF opt_nl logical_command {@lex.indent_push(:IF)} then compound_list 
+	    {
+		result = [val[2], val[5]]
+	    }
   elsif_clause:	ELSIF opt_nl logical_command then compound_list
 	    {
 		result = Node::IfCommand(val[2], val[4])
@@ -468,14 +475,14 @@ referenceable: ID
   then: THEN
 	| opt_terms
 
-  unless_command: UNLESS opt_nl logical_command then compound_list opt_else END
+  unless_command: UNLESS opt_nl logical_command then {@lex.indent_push(:UNLESS)} compound_list opt_else indent_pop END
 	    {
-		result = Node::IfCommand(val[2], val[5], val[4])
+		result = Node::IfCommand(val[2], val[6], val[5])
 	    }
 
-  for_command: FOR opt_nl for_arg opt_nl IN lex_arg simple_command_element do compound_list END
+  for_command: FOR opt_nl for_arg opt_nl IN lex_arg simple_command_element do {@lex.indent_push(:FOR)} compound_list indent_pop END
 	    {
-		result = Node::ForCommand(val[2], val[6], val[8])
+		result = Node::ForCommand(val[2], val[6], val[9])
             }
 
   for_arg: ID
@@ -489,9 +496,9 @@ referenceable: ID
 	      result.push val[2]
 	    }
 
-  case_command: CASE simple_command_element opt_terms case_body END
+  case_command: CASE simple_command_element opt_terms {@lex.indent_push(:CASE)} case_body indent_pop END
 	    {
-		result = Node::CaseCommand(val[1], val[3])
+		result = Node::CaseCommand(val[1], val[4])
 	    }
 
   case_body: WHEN simple_command_element_list then compound_list cases
@@ -544,9 +551,9 @@ referenceable: ID
 		result = Node::YieldCommand(val[1])
 	    }
 
-  group_command: '(' compound_list ')' lex_arg
+  group_command: '(' {@lex.indent_push(:LPAREN_G)} compound_list indent_pop ')' lex_arg
 	    {
-	        result = Node::Group(val[1])
+	        result = Node::Group(val[2])
 	    }
 #   trivial_command: trivial_command0 lex_arg
 
@@ -647,9 +654,9 @@ referenceable: ID
 		result = Node::RubyExp(val[0])
 	    }
 
-  array: LBLACK_A array_element_list ']'
+  array: LBLACK_A {@lex.indent_push(:LBLACK_A)} array_element_list indent_pop ']'
 	    {
-		result = Node::Array(val[1])
+		result = Node::Array(val[2])
 	    }	  
 
   array_element_list: opt_nl
@@ -668,9 +675,9 @@ referenceable: ID
 	        result.push val[1]
 	    }
 
-  hash: LBRACE_H hash_element_list '}'
+  hash: LBRACE_H {@lex.indent_push(:LBRACE_H)} hash_element_list indent_pop '}'
 	    {
-		result = Node::Hash(val[1])
+		result = Node::Hash(val[2])
 	    }	  
 
   hash_element_list: opt_nl
@@ -833,6 +840,8 @@ referenceable: ID
   lex_beg: {@lex.lex_state = Lex::EXPR_BEG}
   lex_arg: {@lex.lex_state = Lex::EXPR_ARG}
   lex_end: {@lex.lex_state = Lex::EXPR_END}
+
+  indent_pop: {@lex.indent_pop}  
 
 end
 
