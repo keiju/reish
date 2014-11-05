@@ -61,7 +61,12 @@ module Reish
       ens = ""
       ens = ";ensure "+command.ens.accept(self) if command.ens
 
-      "begin #{seq}#{res}#{els}#{ens} end"
+      code = "begin #{seq}#{res}#{els}#{ens} end"
+      if command.pipein
+	"reish_eval(%{#{code}}, binding)"
+      else
+	code
+      end
     end
 
     def visit_rescue_command(command)
@@ -82,7 +87,7 @@ module Reish
     end
 
     def visit_if_command_with_pipe(command)
-      "reish_eval(%{#{if_command_code(command)}})"
+      "reish_eval(%{#{if_command_code(command)}}, binding)"
     end
 
     def if_command_code(command)
@@ -112,7 +117,7 @@ module Reish
 
       code = "while #{c} do #{n} end"
       if command.pipein
-	"reish_eval(%{#{code}})"
+	"reish_eval(%{#{code}}, binding)"
       else
 	code
       end
@@ -122,7 +127,12 @@ module Reish
       c = command.cond.accept(self)
       n = command.node.accept(self)
       
-      "until #{c} do #{n} end"
+      code = "until #{c} do #{n} end"
+      if command.pipein
+	"reish_eval(%{#{code}}, binding)"
+      else
+	code
+      end
     end
 
     def visit_for_command(command)
@@ -130,12 +140,22 @@ module Reish
       en = command.enum.accept(self)
       sq = command.seq.accept(self)
 
-      "for #{vl} in #{en} do #{sq} end"
+      code = "for #{vl} in #{en} do #{sq} end"
+      if command.pipein
+	"reish_eval(%{#{code}}, binding)"
+      else
+	code
+      end
     end
 
     def visit_group(group)
       script = group.node.accept(self)
-      "("+script+")"
+      code = "("+script+")"
+      if group.pipein
+	"reish_eval(%{#{code}}, binding)"
+      else
+	code
+      end
     end
 
     def visit_case_command(command)
@@ -143,17 +163,27 @@ module Reish
       if command.body.last.kind_of?(Node::Sequence)
 	el = command.body.pop.accept(self)
 	bd = command.body.collect{|b| b.accept(self)}.join("; ")
-	"case #{cd}; #{bd}; else #{el}; end"
+	code = "case #{cd}; #{bd}; else #{el}; end"
       else
 	bd = command.body.collect{|b| b.accept(self)}.join("; ")
-	"case #{cd}; #{bd}; end"
+	code = "case #{cd}; #{bd}; end"
+      end
+      if command.pipein
+	"reish_eval(%{#{code}}, binding)"
+      else
+	code
       end
     end
 
     def visit_when_command(command)
       cd = command.cond.collect{|e| e.accept(self)}.join(", ")
       sq = command.seq.accept(self)
-      "when #{cd}; #{sq}"
+      code = "when #{cd}; #{sq}"
+      if command.pipein
+	"reish_eval(%{#{code}}, binding)"
+      else
+	code
+      end
     end
 
     def visit_break_command(command)
@@ -301,7 +331,12 @@ p com.accept(self)
     end
 
     def visit_literal_command(com)
-      com.value.accept(self)
+      code = com.value.accept(self)
+      if com.pipein
+	"reish_eval(%{#{code}}, binding)"
+      else
+	code
+      end
     end
 
     def visit_simple_command(command)

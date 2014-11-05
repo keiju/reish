@@ -422,8 +422,9 @@ class Object
     end
   end
 
-  def reish_eval(code)
-    eval(code)
+  def reish_eval(code, bind)
+    Thread.current[:__REISH_SELF__] = self
+    eval(%{Thread.current[:__REISH_SELF__].instance_eval %{#{code}}}, bind)
   end
 end
 

@@ -442,7 +442,8 @@ referenceable: ID
 	    {
 		result = Node::IfCommand(val[2], val[4])
 	    }
-	|	IF opt_nl logical_command then compound_list ELSE compound_list END
+	|	IF opt_nl logical_command then compound_list ELSE
+	lex_beg compound_list END
 	    {
 		result = Node::IfCommand(val[2], val[4], val[6])
 	    }
@@ -455,7 +456,7 @@ referenceable: ID
 	    {
 		result = Node::IfCommand(val[2], val[4])
 	    }
-	|	ELSIF opt_nl logical_coomand then compound_list ELSE compound_list
+	|	ELSIF opt_nl logical_coomand then compound_list ELSE lex_beg compound_list
 	    {
 		result = Node::IfCommand(val[2], val[4], val[6])
 	    }
