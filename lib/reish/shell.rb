@@ -11,7 +11,7 @@
 #   
 #
 
-require "reish/workspace"
+require "reish/exenv"
 require "reish/system-command"
 
 require "reish/lex"
@@ -27,61 +27,22 @@ module Reish
   class Shell
     def initialize(input_method = nil)
 
-      @thread = Thread.current if defined? Thread
-      
-      @ap_name = Reish.conf[:AP_NAME]
-
-      self.display_mode = Reish.conf[:DISPLY_MODE]
-
-      @ignore_sigint = Reish.conf[:IGNORE_SIGINT]
-      @ignore_eof = Reish.conf[:IGNORE_EOF]
-
-      @back_trace_limit = Reish.conf[:BACK_TRACE_LIMIT]
-
-      @use_readline = Reish.conf[:USE_READLINE]
-      initialize_input_method(input_method)
+      @thread = Thread.current
 
       @lex = Lex.new
       @parser = Parser.new(@lex)
       @codegen = CodeGenerator.new
-      @workspace = WorkSpace.new(Main.new(self))
 
-      @pwd = Dir.pwd
-      @system_path = ENV["PATH"].split(":")
-      @system_env = ENV
+      @exenv = Exenv.new(self, Reish.conf)
+      initialize_input_method(input_method)
 
       # name => path
       @command_cache = COMMAND_CACHE_BASE.dup
 
-      @verbose = Reish.conf[:VERBOSE]
-      @display_comp = Reish.conf[:DISPLAY_COMP]
-      @debug_input = Reish.conf[:DEBUG_INPUT]
-      self.yydebug = Reish::conf[:YYDEBUG]
-
       @signal_status = :IN_IRB
-      Reish.conf[:REISH_RC].call(self) if Reish.conf[:REISH_RC]
     end
 
     attr_reader :thread
-
-    attr_reader :display_mode
-
-    attr_reader :use_readline
-    alias use_readline? use_readline
-
-    attr_reader :pwd
-
-    attr_accessor :ignore_eof
-    alias ignore_eof? ignore_eof
-
-    attr_accessor :ignore_sigint
-    alias ignore_sigint? ignore_sigint
-
-    attr_accessor :verbose
-    alias verbose? verbose
-
-    attr_accessor :display_comp
-    attr_accessor :debug_input
 
     def initialize_as_main_shell
       trap("SIGINT") do
@@ -92,7 +53,7 @@ module Reish
     def initialize_input_method(input_method)
       case input_method
       when nil
-	case use_readline?
+	case @exenv.use_readline?
 	when nil
 	  if defined?(ReadlineInputMethod) && STDIN.tty?
 	    @io = ReadlineInputMethod.new
@@ -110,8 +71,8 @@ module Reish
 	end
       when String
 	@io = FileInputMethod.new(input_method)
-	@irb_name = File.basename(input_method)
-	@irb_path = input_method
+	@exenv.ap_name = File.basename(input_method)
+	@exenv.src_path = input_method
       else
 	@io = input_method
       end
@@ -119,24 +80,19 @@ module Reish
 
     def start
       @lex.set_prompt do |ltype, indent, continue, line_no|
-	if ltype
-	  @io.prompt = "reish:#{indent.inspect}:#{line_no}#{ltype} "
-	elsif continue
-	  @io.prompt = "reish:#{indent.inspect}:#{line_no}? "
-	else
-	  @io.prompt = "reish:#{indent.inspect}:#{line_no}> "
-	end
+	
+	@io.prompt = @exenv.prompt.call(@exenv, line_no, indent, ltype, continue)
       end
 
       @lex.set_input(@io) do
 	signal_status(:IN_INPUT) do
 	  if l = @io.gets
-	    print l if verbose?
+	    print l if @exenv.verbose?
 	  else
-	    if ignore_eof? and @io.readable_after_eof?
+	    if @exenv.ignore_eof? and @io.readable_after_eof?
 	      l = "\n"
-	      if verbose?
-		printf "Use \"exit\" to leave %s\n", @ap_name
+	      if @exenv.verbose?
+		printf "Use \"exit\" to leave %s\n", @exenv.ap_name
 	      end
 	    else
 	      print "\n"
@@ -162,7 +118,7 @@ module Reish
 	@current_input_unit = nil
 	begin
 	  @current_input_unit = @parser.do_parse
-	  p @current_input_unit if @debug_input
+	  p @current_input_unit if @exenv.debug_input
 	rescue ParseError => exc
 	  puts exc.message
 	  @lex.reset_input
@@ -175,17 +131,17 @@ module Reish
 	next unless @current_input_unit
 	break if Node::EOF == @current_input_unit 
 	if Node::NOP == @current_input_unit 
-	  puts "<= (NL)" if @display_comp
+	  puts "<= (NL)" if @exenv.display_comp
 	  next
 	end
 	exp = @current_input_unit.accept(@codegen)
-	puts "<= #{exp}" if @display_comp
+	puts "<= #{exp}" if @exenv.display_comp
 	exc = nil
 	begin
 	  val = nil
 	  signal_status(:IN_EVAL) do
 	    activate_command_search do 
-	      val = @workspace.evaluate(exp)
+	      val = eval(exp, @exenv.binding, @exenv.src_path, @lex.prev_line_no)
 	    end
 	  end
 	  display val
@@ -199,7 +155,7 @@ module Reish
     end
 
     def display(val)
-      puts "=> #{@display_method.inspect_value(val)}"
+      puts "=> #{@exenv.display_method.inspect_value(val)}"
     end
 
     def handle_exception(exc, exp = nil)
@@ -208,11 +164,11 @@ module Reish
       levels = 0
 
       for m in exc.backtrace
-	if messages.size < @back_trace_limit
+	if messages.size < @exenv.back_trace_limit
 	  messages.push "\tfrom "+m
 	else
 	  lasts.push "\tfrom "+m
-	  if lasts.size > @back_trace_limit
+	  if lasts.size > @exenv.back_trace_limit
 	    lasts.shift
 	    levels += 1
 	  end
@@ -228,7 +184,7 @@ module Reish
     end
 
     def signal_handle
-      unless ignore_sigint?
+      unless @exenv.ignore_sigint?
 	print "\nabort!!\n" if verbose?
 	exit
       end
@@ -273,57 +229,6 @@ module Reish
     end
 
     #
-    def verbose?
-      if @verbose.nil?
-	if defined?(ReadlineInputMethod) && @io.kind_of?(ReadlineInputMethod)
-	  false
-	elsif !STDIN.tty? or @io.kind_of?(FileInputMethod)
-	  true
-	else
-	  false
-	end
-      else
-	@verbose
-      end
-    end
-
-    #
-    def display_mode=(opt)
-      if i = IRB::INSPECTORS[opt]
-	@display_mode = opt
-	@display_method = i
-	i.init
-      else
-	case opt
-	when nil
-	  self.display_mode = true
-	when /^\s*\{.*\}\s*$/
-	  begin
-	    inspector = eval "proc#{opt}"
-	  rescue Exception
-	    puts "Can't switch inspect mode(#{opt})."
-	    return
-	  end
-	  self.display_mode = inspector
-	when Proc
-	  self.display_mode = IRB::Inspector(opt)
-	when Inspector
-	  prefix = "usr%d"
-	  i = 1
-	  while INSPECTORS[format(prefix, i)]; i += 1; end
-	  @display_mode = format(prefix, i)
-	  @display_method = opt
-	  INSPECTORS.def_inspector(format(prefix, i), @display_method)
-	else
-	  puts "Can't switch inspect mode(#{opt})."
-	  return
-	end
-      end
-#      print "Switch to#{unless @inspect_mode; ' non';end} inspect mode.\n" if verbose?
-      @display_mode
-    end
-
-    #
     # command methods
     NO_SEARCH_METHODS = [:to_s, :to_a, :to_ary, :to_enum, :to_hash, :to_int, :to_io, :to_proc, :to_regexp, :to_str]
     COMMAND_CACHE_BASE = {}
@@ -340,7 +245,7 @@ module Reish
 	when :COMMAND_NOTHING
 	  return nil
 	else
-	  return Reish::SystemCommand(self, receiver, path, *args)
+	  return Reish::SystemCommand(@exenv, receiver, path, *args)
 	end
 
 	n = name.to_s
@@ -352,7 +257,7 @@ module Reish
 	    path = File.absolute_path(n, @pwd)
 	    if File.executable?(path)
 	      @command_cache[name] = path
-	      return Reish::SystemCommand(self, receiver, path, *args)
+	      return Reish::SystemCommand(@exenv, receiver, path, *args)
 	    else
 	      @command_cache[name] = :COMMAND_NOTHING
 	      return nil
@@ -360,8 +265,8 @@ module Reish
 	  end
 	end
 
-	for dir_name in @system_path
-	  p = File.expand_path(dir_name+"/"+n, @pwd)
+	for dir_name in @exenv.path
+	  p = File.expand_path(dir_name+"/"+n, @exenv.pwd)
 	  if File.exist?(p)
 	    path = p
 	    break 
@@ -369,7 +274,7 @@ module Reish
 	end
 	if path
 	  @command_cache[name] = p
-	  Reish::SystemCommand(self, receiver, path, *args)
+	  Reish::SystemCommand(@exenv, receiver, path, *args)
 	else
 	  @command_cache[name] = :COMMAND_NOTHING
 	  nil
@@ -403,28 +308,6 @@ module Reish
     def rehash
       @command_cache = COMMAND_CACHE_BASE.dup
     end
-
-    def system_path=(path)
-      case path
-      when String
-	@system_path = path.split(":")
-      when Array
-	@system_path = path
-      else
-	raise TypeError
-      end
-
-      @comand_cache.clear
-
-      if @sytem_env.equal?(ENV)
-	@system_env = @system_env.to_hash
-      end
-
-      @system_env["PATH"] = @system_path.join(":")
-
-    end
-
-    attr_reader :system_env
 
     def send_with_redirection(receiver, method, args, reds, &block)
 

@@ -11,7 +11,7 @@
 # command | if ... をもっとちゃんと対応したい
 # com1.com2 の対応. このままでよいのか?
 完全なCompSystemCommand - パイプライン, リダイレクションの処理
-Array, Hashで,を使えるようにする
+Array, Hashで,を使えるようにする?
 エリアス(bashの)
 コンプレーション機能
 ^Z
@@ -21,6 +21,7 @@ XSTRING(#)
 クラス定義
 メソッド定義
 ヒアドキュメント
+shell server/shell client
 公開
 リリース
 コマンド引数にEnumerableが渡ったときの処理

@@ -18,6 +18,7 @@ module Reish
   def_exception :ReishSwitchedToCurrentThread, "Switched to current thread."
   def_exception :NoSuchJob, "No such job(%s)."
   def_exception :CantShiftToMultiReishMode, "Can't shift to multi reish mode."
+  def_exception :CantSetBinding, "Can't set binding to (%s)."
   def_exception :CantChangeBinding, "Can't change binding to (%s)."
   def_exception :UndefinedPromptMode, "Undefined prompt mode(%s)."
 

@@ -14,11 +14,35 @@
 require "optparse"
 
 module Reish
+
+    PromptSet = {
+    :FULL => proc{|exenv, line_no, indent, ltype, continue|
+      base = "#{exenv.ap_name}##{exenv.env["USER"]}@#{exenv.hostname}:#{exenv.pwd}(#{exenv.main.class}):#{indent}:#{line_no}"
+      if ltype
+	base+ltype+" "
+      elsif continue
+	base+"? "
+      else
+	base+"> "
+      end
+    },
+      
+    :STANDARD => proc{|exenv, line_no, indent, ltype, continue|
+      base = "#{exenv.env["USER"]}@#{exenv.hostname}(#{exenv.main.class})#{exenv.pwd}"
+      if ltype
+	base+ltype+" "
+      elsif continue
+	base+"? "
+      else
+	base+"> "
+      end
+    }
+  }
   
   # initialize config
   def Reish.setup(ap_path)
-    Reish.init_config(ap_path)
     Reish.init_error
+    Reish.init_config(ap_path)
     Reish.parse_opts
     Reish.run_config if @CONF[:RC]
 #    Reish.load_modules
@@ -43,14 +67,14 @@ module Reish
     @CONF[:LOAD_MODULES] = []
     @CONF[:REISH_RC] = nil
 
+    @CONF[:PROMPT] = PromptSet[:STANDARD]
+
     @CONF[:USE_READLINE] = false unless defined?(ReadlineInputMethod)
     @CONF[:DISPLY_MODE] = true
 
     @CONF[:IGNORE_SIGINT] = true
     @CONF[:IGNORE_EOF] = false
     @CONF[:ECHO] = nil
-
-    @CONF[:LOCALE] = Locale.new
 
     @CONF[:EVAL_HISTORY] = nil
     @CONF[:SAVE_HISTORY] = nil
@@ -68,6 +92,7 @@ module Reish
   end
 
   def Reish.init_error
+    @CONF[:LOCALE] = Locale.new
     @CONF[:LOCALE].load("reish/error.rb")
   end
 
@@ -76,6 +101,7 @@ module Reish
       opt.on("-c string"){|v| @CONF[:OPT_C] = v}
       opt.on("--norc"){|v| @CONF[:RC] = false}
       opt.on("--rcfile filename"){|v| @CONF[:RC_FILE] = v}
+      opt.on("--prompt mode"){|mode| @CONF[:PROMPT]=PromptSet[mode.upcase.intern]}
 
       opt.on("-v", "--verbose"){|v| @CONF[:VERBOSE] = v == true ? 1 : v.to_i}
 

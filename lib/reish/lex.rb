@@ -332,6 +332,8 @@ module Reish
       tk
     end
 
+    attr_reader :prev_line_no
+
     def racc_token
       tk = token
       [tk.token_id, tk]

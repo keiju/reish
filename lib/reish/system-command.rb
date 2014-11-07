@@ -13,14 +13,14 @@
 #
 
 module Reish
-  def Reish.SystemCommand(shell, receiver, path, *args)
+  def Reish.SystemCommand(exenv, receiver, path, *args)
     case receiver
     when Reish::Main
-      SystemCommand.new(shell, receiver, path, *args)
+      SystemCommand.new(exenv, receiver, path, *args)
     when SystemCommand
-      CompSystemCommand.new(shell, receiver, path, *args)
+      CompSystemCommand.new(exenv, receiver, path, *args)
     else
-      SystemCommand.new(shell, receiver, path, *args)
+      SystemCommand.new(exenv, receiver, path, *args)
     end
   end
     
@@ -28,8 +28,8 @@ module Reish
     include Enumerable
     include OSSpace
 
-    def initialize(shell, receiver, path, *args)
-      @__shell__ = shell
+    def initialize(exenv, receiver, path, *args)
+      @exenv = exenv
       @receiver = receiver
       @command_path = path
       @args = args
@@ -43,7 +43,7 @@ module Reish
     attr_accessor :reds
 
     def io_popen(mode, &block)
-      IO.popen([@__shell__.system_env, 
+      IO.popen([@exenv.env, 
 		 @command_path, 
 		 *command_opts], mode, spawn_options, &block)
     end
@@ -70,7 +70,7 @@ module Reish
     end
 
     def io_spawn
-      pid = Process.spawn(@__shell__.system_env, 
+      pid = Process.spawn(@exenv.env, 
 			  @command_path, 
 			  *command_opts,
 			  spawn_options)
@@ -198,7 +198,7 @@ module Reish
   end
 
   class CompSystemCommand<SystemCommand
-    def initialize(shell, receiver, path, *args)
+    def initialize(exenv, receiver, path, *args)
       super
       
       @receiver = receiver.receiver
@@ -209,11 +209,11 @@ module Reish
     end
 
     def io_popen(open_mode, &block)
-      IO.popen(@__shell__.system_env, to_script, open_mode, spawn_options, &block)
+      IO.popen(@exenv.env, to_script, open_mode, spawn_options, &block)
     end
 
     def io_spawn
-      Process.spawn(@__shell__.system_env, to_script, spawn_options)
+      Process.spawn(@exenv.env, to_script, spawn_options)
     end
 
     def to_script
@@ -236,15 +236,15 @@ module Reish
   end
 
   def Reish::WildCard(wc)
-    sh = Thread.current[:__REISH_CURRENT_SHELL__]
-    WildCard::new(sh, wc)
+    exenv = Thread.current[:__REISH_CURRENT_SHELL__].exenv
+    WildCard::new(exenv, wc)
   end
 
   class WildCard
     include Enumerable
 
-    def initialize(sh, pat)
-      @shell = sh
+    def initialize(exenv, pat)
+      @exenv = exenv
       @pattern = pat
     end
 
@@ -256,7 +256,7 @@ module Reish
       if @pattern[0] == "/"
         files = Dir[@pattern]
       else
-        prefix = @shell.pwd+"/"
+        prefix = @exenv.pwd+"/"
         files = Dir[prefix+@pattern].collect{|p| p.sub(prefix, "")}
       end
     end

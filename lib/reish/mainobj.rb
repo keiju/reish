@@ -22,39 +22,39 @@ module Reish
     include Enumerable
     include OSSpace
 
-    def initialize(shell)
-      @__shell__ = shell
+    def initialize(exenv)
+      @exenv = exenv
     end
 
-    attr_reader :__shell__
+    attr_reader :exenv
 
     def each &block
       STDIN.each &block
     end
 
-    def_delegator :@__shell__, :rehash
+    def_delegator :@exenv, :rehash
 
-    def_delegator :@__shell__, :display_mode
-    def_delegator :@__shell__, :display_mode=
+    def_delegator :@exenv, :display_mode
+    def_delegator :@exenv, :display_mode=
 
-    def_delegator :@__shell__, :ignore_eof
-    def_delegator :@__shell__, :ignore_eof=
+    def_delegator :@exenv, :ignore_eof
+    def_delegator :@exenv, :ignore_eof=
 
 
-    def_delegator :@__shell__, :verbose
-    def_delegator :@__shell__, :verbose=
-    def_delegator :@__shell__, :debug_input=
-    def_delegator :@__shell__, :display_comp
-    def_delegator :@__shell__, :display_comp=
-    def_delegator :@__shell__, :yydebug
-    def_delegator :@__shell__, :yydebug=
+    def_delegator :@exenv, :verbose
+    def_delegator :@exenv, :verbose=
+    def_delegator :@exenv, :debug_input=
+    def_delegator :@exenv, :display_comp
+    def_delegator :@exenv, :display_comp=
+    def_delegator :@exenv, :yydebug
+    def_delegator :@exenv, :yydebug=
 
     def inspect
       if Reish::INSPECT_LEBEL < 3
 	
 	ins = instance_variables.collect{|iv|
-	  if iv == :@__shell__
-	    "@__shell__=#{@__shell__}"
+	  if iv == :@exenv
+	    "@exenv=#{@exenv}"
 	  else
 	    v = instance_eval(iv.id2name).inspect
 	    "#{iv}=#{v}"
