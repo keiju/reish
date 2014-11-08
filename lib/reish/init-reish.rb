@@ -17,7 +17,7 @@ module Reish
 
     PromptSet = {
     :FULL => proc{|exenv, line_no, indent, ltype, continue|
-      base = "#{exenv.ap_name}##{exenv.env["USER"]}@#{exenv.hostname}:#{exenv.pwd}(#{exenv.main.class}):#{indent}:#{line_no}"
+      base = "#{exenv.ap_name}##{exenv.env["USER"]}@#{exenv.hostname}(#{exenv.main.class}):#{exenv.ppwd}:#{line_no}:#{indent}"
       if ltype
 	base+ltype+" "
       elsif continue
@@ -26,9 +26,8 @@ module Reish
 	base+"> "
       end
     },
-      
-    :STANDARD => proc{|exenv, line_no, indent, ltype, continue|
-      base = "#{exenv.env["USER"]}@#{exenv.hostname}(#{exenv.main.class})#{exenv.pwd}"
+    :FULL2 => proc{|exenv, line_no, indent, ltype, continue|
+      base = "#{exenv.ap_name}##{exenv.env["USER"]}@#{exenv.hostname}(#{exenv.main.class})\n#{exenv.ppwd}:#{line_no}:#{indent}"
       if ltype
 	base+ltype+" "
       elsif continue
@@ -36,7 +35,38 @@ module Reish
       else
 	base+"> "
       end
-    }
+    },
+    :STANDARD => proc{|exenv, line_no, indent, ltype, continue|
+      base = "#{exenv.ap_name}(#{exenv.main.class}):#{exenv.ppwd}:#{line_no}:#{indent.size}"
+      if ltype
+	base+ltype+" "
+      elsif continue
+	base+"? "
+      else
+	base+"> "
+      end
+    },
+    :BASH => proc{|exenv, line_no, indent, ltype, continue|
+      base = "#{exenv.env["USER"]}@#{exenv.hostname}:#{exenv.ppwd}"
+      if ltype
+	base+ltype+" "
+      elsif continue
+	base+"? "
+      else
+	base+"$ "
+      end
+    },
+    :IRB => proc{|exenv, line_no, indent, ltype, continue|
+      base = "#{exenv.ap_name}(#{exenv.main.class}):#{line_no}:#{indent.size}"
+      if ltype
+	base+ltype+" "
+      elsif continue
+	base+"? "
+      else
+	base+"> "
+      end
+    },
+
   }
   
   # initialize config

@@ -80,8 +80,11 @@ module Reish
     attr_reader :pwd
 
     def ppwd
-      
-      @pwd 
+      if @pwd[0..@home.size-1] == @home
+	"~"+@pwd[@home.size..-1]
+      else
+	@pwd
+      end
     end
 
     attr_reader :env
@@ -250,7 +253,7 @@ module Reish
 	  if iv == :@shell
 	    "@shell=#{@shell}"
 	  elsif iv == :@env
-	    "@env=#{@env}"
+	    "@env=#{@envs}"
 	  else
 	    v = instance_eval(iv.id2name).inspect
 	    "#{iv}=#{v}"

@@ -203,6 +203,9 @@ module Reish
 
       @cond_stack = []
 
+      @indent = 0
+      @indent_stack = []
+
       @debug_lex_state = false
 
     end

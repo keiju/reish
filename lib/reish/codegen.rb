@@ -305,8 +305,6 @@ module Reish
     def visit_pipeline_command(command)
       script = ""
       command.commands.each do |com|
-p com
-p com.accept(self)
 	script.concat com.accept(self)
 	unless com.kind_of?(Node::SimpleCommand)
 	  case com.pipeout
