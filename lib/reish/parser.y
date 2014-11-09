@@ -348,7 +348,7 @@ class Reish::Parser
 
   assgin_command: ID '=' opt_nl command_element
 	    {
-	       result = Node::AssginCommand(val[0], val[2])
+	       result = Node::AssginCommand(val[0], val[3])
 	    }
 	| index_assgin_command
 
