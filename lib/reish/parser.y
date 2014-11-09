@@ -19,11 +19,11 @@ class Reish::Parser
     right '='
     nonassoc DO LBRACE_I
     nonassoc LBLACK_I
-    left '.' COLON2
     left MOD_RESCUE
     left AND_AND OR_OR
 #    right '|' BAR_AND COLON2
     right BANG
+    left '.' COLON2
     nonassoc HIGHER
   prechigh
 
@@ -114,7 +114,7 @@ class Reish::Parser
 
   pipeline_command: pipeline
 
-  pipeline: pipeline '|' opt_nl command
+  pipeline: pipeline '|' opt_nl pipeline_element
 	    {
 	       result = val[0]
   	       result.pipe_command(:BAR, val[3])
@@ -124,7 +124,7 @@ class Reish::Parser
 #	       result = val[0]
 #  	       result.pipe_command(:COLON2, val[3])
 #	    }
-	| pipeline BAR_AND opt_nl command
+	| pipeline BAR_AND opt_nl pipeline_element
 	    {
 	       result = val[0]
   	       result.pipe_command(:BAR_AND, val[3])
@@ -135,50 +135,41 @@ class Reish::Parser
 #	       result = val[0]
 #  	       result.pipe_command(:DOT, val[3])
 #	    }
-        | command
+        | pipeline_element
+
+  pipeline_element: command
 	    {
 		result = Node::PipelineCommand(val[0])
             }
 	| strict_pipeline
 
-  strict_pipeline: referenceable '.' opt_nl strict_command
+  strict_pipeline: strict_command 
 	    {
-		if val[0].kind_of?(IDToken) || val[0].kind_of?(PathToken)
-  		  val[0] = Node::SimpleCommand(val[0], [])
-		end
 		result = Node::PipelineCommand(val[0])
-  		result.pipe_command(:DOT, val[3])
 	    }
 	| strict_pipeline '.' opt_nl strict_command
       	    {
 	       result = val[0]
   	       result.pipe_command(:DOT, val[3])
 	    }
-	| strict_command COLON2 opt_nl strict_command
-	    {
-	       result = Node::PipelineCommand(val[0])
-  	       result.pipe_command(:COLON2, val[3])
-	    }
+#	| strict_command COLON2 opt_nl strict_command
+#	    {
+#	       result = Node::PipelineCommand(val[0])
+#  	       result.pipe_command(:COLON2, val[3])
+#	    }
 	| strict_pipeline COLON2 opt_nl strict_command
 	    {
 	       result = val[0]
   	       result.pipe_command(:COLON2, val[3])
 	    }
 
- strict_command: ID
-	    {
-  	       result = Node::SimpleCommand(val[0], [])
-	    }
- 	| PATH
- 	    {
-   	       result = Node::SimpleCommand(val[0], [])
- 	    }
-	| simple_command_lparen
-
   command: simple_command
-	| shell_command
+#	| strict_command
 	| shell_command redirection_list
 #	| function_def
+
+  strict_command: simple_strict_command
+	| shell_command
 
   command_element_list: 
 	    {
@@ -201,24 +192,29 @@ class Reish::Parser
 	| trivial_command
 	| literal
 
-  simple_command: simple_command_header simple_command_element_list 
-	    {         
-	       result = Node::SimpleCommand(val[0], val[1])
-	    }
-	| simple_command_header simple_command_element_list do_block
+  simple_command: simple_command_header simple_command_element_list1 opt_do_block
 	    {
 	       result = Node::SimpleCommand(val[0], val[1], val[2])
 	    }
+#	| simple_strict_command
+
+  simple_strict_command: simple_command_header opt_do_block
+	    {
+  	       result = Node::SimpleCommand(val[0], [], val[1])
+	    }
 	| simple_command_lparen
 
-  simple_command_lparen: simple_command_lparen_header =LOWER
-
+#   simple_command_lparen: simple_command_lparen_header =LOWER
+# 	    {
+# 	       result = Node::SimpleCommand(val[0][0], val[0][1])
+# 	    }
+#         | simple_command_lparen_header do_block
+# 	    {
+# 	       result = Node::SimpleCommand(val[0][0], val[0][1], val[1])
+# 	    }
+  simple_command_lparen: simple_command_lparen_header opt_do_block
 	    {
-	       result = Node::SimpleCommand(val[0][0], val[0][1])
-	    }
-        | simple_command_lparen_header do_block
-	    {
-	       result = Node::SimpleCommand(val[0][0], val[0][1], val[2])
+	       result = Node::SimpleCommand(val[0][0], val[0][1], val[1])
 	    }
 
   simple_command_lparen_header: simple_command_header LPARLEN_ARG {@lex.indent_push(:LPAREN_ARG)} simple_command_element_list_p indent_pop ")" lex_end 
@@ -241,6 +237,12 @@ class Reish::Parser
 #  		@lex.lex_state = Lex::EXPR_ARG
 #	        result.push val[1]
 #	    }
+
+  opt_do_block: =LOWER
+	    {
+		result = nil
+	    }
+        | do_block
 
   do_block: DO {@lex.indent_push(:DO)} opt_block_arg compound_list indent_pop END
             { 
@@ -288,10 +290,17 @@ class Reish::Parser
 	    {
 	       result = []
 	    }
-	| simple_command_element_list simple_command_element
+	| simple_command_element_list1
+
+  simple_command_element_list1: simple_command_element
+	    {
+	       result = [val[0]]
+	    }
+	| simple_command_element_list1 simple_command_element
 	    {
 	       result.push val[1]
 	    }
+
   simple_command_element: command_element_base
 	| WILDCARD
 	| redirection
@@ -337,7 +346,7 @@ class Reish::Parser
 	| VARIABLE
 	| STRING
 
-  assgin_command: ID '=' command_element
+  assgin_command: ID '=' opt_nl command_element
 	    {
 	       result = Node::AssginCommand(val[0], val[2])
 	    }
@@ -358,24 +367,21 @@ class Reish::Parser
 		result = [val[0], val[3]]
 	    }
 
-referenceable: ID
-	| PATH
-	| simple_command_lparen
-#	| trivial_command
-	| literal_command
-	| group_command
-	    {
-	      val[0].pipeout = :RESULT
-	    }
-	| index_ref_command
-	| if_command
-	| unless_command
- 	| while_command
- 	| until_command
-        | begin_command
-	| case_command
-        | for_command
-	| strict_pipeline =LOWER
+  referenceable: strict_command
+#	| literal_command
+#	| group_command
+#	    {
+#	      val[0].pipeout = :RESULT
+#	    }
+#	| index_ref_command
+#	| if_command
+#	| unless_command
+# 	| while_command
+# 	| until_command
+#        | begin_command
+#	| case_command
+#        | for_command
+#	| strict_pipeline
 
   begin_command: BEGIN {@lex.indent_push(:BEGIN)} body_list indent_pop END
 	    {
@@ -596,38 +602,38 @@ referenceable: ID
 		result = val[2]
 	    }
 
-  trivial_command0: simple_command_header =LOWER
-	    {         
-	       result = Node::SimpleCommand(val[0], [])
-	       result.pipeout = :RESULT
-	    }
-	| simple_command_header do_block
-	    {         
-	       result = Node::SimpleCommand(val[0], [], val[1])
-	       result.pipeout = :RESULT
-	    }
-	| simple_command_lparen
-	    {         
-	       result = val[0]
-	       result.pipeout = :RESULT
-	    }
-#	| test_command_lparen
-#	    {         
-#	       result = val[0]
-#	       result.pipeout = :RESULT
-#	    }
-	| index_ref_command
-	    {         
-	       result = val[0]
-	    }
-	| assgin_command
-	    {         
-	       result = val[0]
-	    }
-	| PSEUDOVARIABLE
-	    {         
-	       result = val[0]
-	    }
+  trivial_command0: referenceable
+ 	    {         
+ 	       result.pipeout = :RESULT
+ 	    }
+
+#   trivial_command0: simple_command_header opt_do_block
+# 	    {         
+# 	       result = Node::SimpleCommand(val[0], [], val[1])
+# 	       result.pipeout = :RESULT
+# 	    }
+# 	| simple_command_lparen
+# 	    {         
+# 	       result = val[0]
+# 	       result.pipeout = :RESULT
+# 	    }
+# #	| test_command_lparen
+# #	    {         
+# #	       result = val[0]
+# #	       result.pipeout = :RESULT
+# #	    }
+# 	| index_ref_command
+# 	    {         
+# 	       result = val[0]
+# 	    }
+# 	| assgin_command
+# 	    {         
+# 	       result = val[0]
+# 	    }
+# 	| PSEUDOVARIABLE
+# 	    {         
+# 	       result = val[0]
+# 	    }
 
 #  test_command: TEST simple_command_element_list 
 #	    {         

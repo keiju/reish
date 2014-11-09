@@ -425,7 +425,7 @@ print_lex_state
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_H)
-	elsif !(@space_seen || lex_state?(EXPR_EQ_ARG|EXPR_END))
+	elsif !@space_seen && lex_state?(EXPR_ARG|EXPR_END)
 	  self.lex_state = EXPR_DO_BEG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_I)
 	else
