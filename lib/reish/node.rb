@@ -141,8 +141,20 @@ module Reish
       
       def pipe_command(attr, com)
 	@commands.last.pipeout = attr
-	com.pipein = @commands.last
-	@commands.push com
+	case com
+	when Node::PipelineCommand
+	  com0 = self
+	  com.commands.each do |c|
+	    if com0
+	      com0.pipein = true
+	      com0 = nil
+	    end
+	    @commands.push c
+	  end
+	else
+	  com.pipein = true
+	  @commands.push com
+	end
       end
 
       def_accept
@@ -195,6 +207,8 @@ module Reish
       def initialize(var,index)
 	@variable = var
 	@index = index
+
+	@variable.pipeout = :RESULT
       end
 
       attr_reader :variable

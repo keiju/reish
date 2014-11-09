@@ -340,14 +340,16 @@ module Reish
     def visit_simple_command(command)
       case command.name
       when TestToken
-	com = IDToken.new(nil, nil, nil, nil, "Reish::Test::test")
+	tk = IDToken.new(nil, nil, nil, nil, "Reish::Test::test")
       
 	sub_com = StringToken.new(command.name.io,
 				  command.name.seek,
 				  command.name.line_no,
 				  command.name.char_no,
 				  command.name.value)
-	command = Node::SimpleCommand(com, [sub_com, *command.args], command.block)
+	new_com = Node::SimpleCommand(tk, [sub_com, *command.args], command.block)
+	new_com.pipeout = command.pipeout
+	command = new_com
       when SpecialToken
 	return visit_special_command(command)
       end
@@ -445,8 +447,25 @@ module Reish
 # 	end
 # 	"(" + sq.join("&&") + ")"
 #       else
-      "("+command.args.collect{|e| e.accept(self)}.join(op)+")"
+      script = "("+command.args.collect{|e| e.accept(self)}.join(op)+")"
 #      end
+
+      case command.pipeout
+      when :BAR, :DOT
+	script.concat "."
+      when :COLON2
+	script.concat "::"
+      when :TO_A
+	script.concat ".to_a"
+      when :RESULT
+	script.concat ".reish_result"
+      when nil
+	# do nothing
+      else
+	raise NoImplementError
+      end
+
+      script
     end
 
     def visit_test_command(command)

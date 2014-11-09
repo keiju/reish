@@ -18,7 +18,7 @@ class Reish::Parser
     nonassoc MOD_IF MOD_UNLESS MOD_WHILE MOD_UNTIL
     right '='
     nonassoc DO LBRACE_I
-    nonassoc LBLACK_I
+    nonassoc LBLACK_I 
     left MOD_RESCUE
     left AND_AND OR_OR
 #    right '|' BAR_AND COLON2
@@ -143,11 +143,7 @@ class Reish::Parser
             }
 	| strict_pipeline
 
-  strict_pipeline: strict_command 
-	    {
-		result = Node::PipelineCommand(val[0])
-	    }
-	| strict_pipeline '.' opt_nl strict_command
+  strict_pipeline: strict_pipeline '.' opt_nl strict_command
       	    {
 	       result = val[0]
   	       result.pipe_command(:DOT, val[3])
@@ -161,6 +157,14 @@ class Reish::Parser
 	    {
 	       result = val[0]
   	       result.pipe_command(:COLON2, val[3])
+	    }
+	| strict_command
+	    {
+		result = Node::PipelineCommand(val[0])
+	    }
+	| index_ref_command
+	    {
+		result = Node::PipelineCommand(val[0])
 	    }
 
   command: simple_command
@@ -306,7 +310,7 @@ class Reish::Parser
 	| redirection
 
   shell_command: literal_command
-	| index_ref_command
+#	| index_ref_command
 	| if_command
 	| unless_command
  	| while_command
@@ -367,7 +371,7 @@ class Reish::Parser
 		result = [val[0], val[3]]
 	    }
 
-  referenceable: strict_command
+  referenceable: strict_pipeline
 #	| literal_command
 #	| group_command
 #	    {
@@ -602,7 +606,7 @@ class Reish::Parser
 		result = val[2]
 	    }
 
-  trivial_command0: referenceable
+  trivial_command0: strict_pipeline
  	    {         
  	       result.pipeout = :RESULT
  	    }
