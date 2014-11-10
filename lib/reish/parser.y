@@ -49,10 +49,13 @@ class Reish::Parser
   simple_list: simple_list1
 	| simple_list1 '&'
 	    {
-		val[0].last_command_to_async
-		result = val[0]
+		result.last_command_to_async
+		result.pipeout = :STATUS
 	    } 
 	| simple_list1 ';'
+	    {
+		result.pipeout = :STATUS
+	    } 
 
   simple_list1:	logical_command
 	    {
@@ -193,6 +196,7 @@ class Reish::Parser
 
   command_element_base: WORD
 	| group_command
+	| xstring_command
 	| trivial_command
 	| literal
 
@@ -324,6 +328,7 @@ class Reish::Parser
 #	| arith_for_command
         | for_command
 	| group_command
+	| xstring_command
 
   literal_command: literal
 	    {
@@ -564,6 +569,11 @@ class Reish::Parser
   group_command: '(' {@lex.indent_push(:LPAREN_G)} compound_list indent_pop ')' lex_arg
 	    {
 	        result = Node::Group(val[2])
+	    }
+
+  xstring_command: XSTRING_BEG {@lex.indent_push(:BACK_QUOTE)} compound_list XSTRING_END indent_pop lex_arg
+	    {
+	        result = Node::XString(val[2])
 	    }
 #   trivial_command: trivial_command0 lex_arg
 

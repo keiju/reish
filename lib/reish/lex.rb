@@ -392,6 +392,20 @@ module Reish
 	identify_string(op, io)
       end
 
+      @OP.def_rules("`") do
+	|op, io|
+	if lex_state?(EXPR_FNAME)
+	  self.lex_state = EXPR_END
+	  Token(op)
+	elsif @indent_stack.last == :BACK_QUOTE
+	  self.lex_state = EXPR_END
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :XSTRING_END)
+	else
+	  self.lex_state = EXPR_BEG
+	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :XSTRING_BEG)
+	end
+      end
+
       @OP.def_rule("(") do
 	|op, io|
 	cond_push(false)
@@ -405,9 +419,6 @@ module Reish
 
        @OP.def_rule("[") do
  	|op, io|
-
-print_lex_state
-
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_A)
@@ -673,7 +684,7 @@ print_lex_state
     def identify_id(io)
       token = ""
 
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;\(\)<>\[\{\}\]]/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;\(\)<>\[\{\}\]\`]/ !~ ch
 	print ":", ch, ":" if Debug
 
 	if /[\/\-\+]/ =~ ch
@@ -883,6 +894,17 @@ print_lex_state
       begin
 	str = @ruby_scanner.identify_reish_string(op)
 	StringToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+      ensure
+	self.lex_state = EXPR_END
+	@ltype = nil
+      end
+    end
+
+    def identify_xstring(op, io)
+      @ltype = op
+      begin
+	str = @ruby_scanner.identify_reish_string(op)
+	XStringToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
       ensure
 	self.lex_state = EXPR_END
 	@ltype = nil

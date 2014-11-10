@@ -1,4 +1,3 @@
-# referenceable[idx]のコード生成
 &
 %リテラル
 * `コマンド
@@ -9,7 +8,6 @@
 #   trivial_command: trivial_command0 lex_arg の lex_arg正しい?
 # コード生成での括弧, セミコロンの使い方
 # command | if ... をもっとちゃんと対応したい
-# com1.com2 の対応. このままでよいのか?
 完全なCompSystemCommand - パイプライン, リダイレクションの処理
 Array, Hashで,を使えるようにする?
 エリアス(bashの)
@@ -21,6 +19,7 @@ XSTRING(#)
 クラス定義
 メソッド定義
 ヒアドキュメント
+計算式文 $exp ... end $exp{...}
 shell server/shell client
 公開
 リリース

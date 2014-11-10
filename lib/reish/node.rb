@@ -521,17 +521,36 @@ module Reish
 
       def initialize(node)
 	super()
-	@node = node
+	@nodes = node.nodes
       end
       
-      attr_reader :node
+      attr_reader :nodes
 
       def pipeout=(val)
 	@pipeout = val
-	@node.pipeout = val
+	@nodes.last.pipeout = val
       end
 
       def_accept
+    end
+
+    class XString<Command
+      def_constructor
+
+      def initialize(node)
+	super()
+	@nodes = node.nodes
+	self.pipeout = :NONE
+      end
+      
+      attr_reader :nodes
+
+      def pipeout=(val)
+	@pipeout = val
+	@nodes.each{|n| n.pipeout = val}
+      end
+
+      def_accept "xstring"
     end
 
     class Sequence<Command

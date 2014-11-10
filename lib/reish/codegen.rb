@@ -149,9 +149,19 @@ module Reish
     end
 
     def visit_group(group)
-      script = group.node.accept(self)
+      script = group.nodes.collect{|n| n.accept(self)}.join("; ")
       code = "("+script+")"
       if group.pipein
+	"reish_eval(%{#{code}}, binding)"
+      else
+	code
+      end
+    end
+
+    def visit_xstring(xstring)
+      script = xstring.nodes.collect{|n| n.accept(self)}.join(", ")
+      code = "Reish::ConcatCommand.new("+script+").reish_result"
+      if xstring.pipein
 	"reish_eval(%{#{code}}, binding)"
       else
 	code
@@ -316,7 +326,7 @@ module Reish
 	    script.concat ".to_a"
 	  when :RESULT
 	    script.concat ".reish_result"
-	  when nil
+	  when nil, :NONE
 	    # do nothing
 	  else
 	    raise NoImplementError
@@ -324,7 +334,22 @@ module Reish
 	end
       end
       
-      script.concat ".reish_term" unless command.pipeout
+      case command.pipeout
+      when :BAR, :DOT
+	script.concat "."
+      when :COLON2
+	script.concat "::"
+      when :TO_A
+	script.concat ".to_a"
+      when :RESULT
+	script.concat ".reish_result"
+      when :NONE
+	# do nothing
+      when nil
+	script.concat ".reish_term"
+      else
+	raise NoImplementError
+      end
       script
     end
 

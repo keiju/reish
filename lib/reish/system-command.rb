@@ -233,6 +233,9 @@ module Reish
       @commands.each{|com| com.each &block}
     end
 
+    def reish_result
+      self.to_a
+    end
   end
 
   def Reish::WildCard(wc)
