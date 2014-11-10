@@ -716,7 +716,7 @@ module Reish
     end
 
     def identify_word(io, token = "")
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\}\]]/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\}\]\`]/ !~ ch
 	print ":", ch, ":" if Debug
 
 	break if ch == "=" && io.peek(0) == ">"

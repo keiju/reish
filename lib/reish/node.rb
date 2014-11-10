@@ -540,14 +540,14 @@ module Reish
       def initialize(node)
 	super()
 	@nodes = node.nodes
-	self.pipeout = :NONE
+	nodes.each{|n| n.pipeout = :NONE}
       end
       
       attr_reader :nodes
 
       def pipeout=(val)
 	@pipeout = val
-	@nodes.each{|n| n.pipeout = val}
+#	@nodes.each{|n| n.pipeout = val}
       end
 
       def_accept "xstring"
