@@ -101,5 +101,13 @@ module Reish
     end
   end
 
+  module BuiltIn
+    def command(name, *opts)
+      sh = Reish.current_shell
+      com = sh.search_command(self, name, *opts)
+      Reish.Fail CommandNotFound, name unless com
+      com
+    end
+  end
 end
 

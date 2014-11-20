@@ -143,11 +143,11 @@ module Reish
 	@commands.last.pipeout = attr
 	case com
 	when Node::PipelineCommand
-	  com0 = self
+	  com0 = nil
 	  com.commands.each do |c|
-	    if com0
+	    unless com0
+	      com0 = c
 	      com0.pipein = true
-	      com0 = nil
 	    end
 	    @commands.push c
 	  end

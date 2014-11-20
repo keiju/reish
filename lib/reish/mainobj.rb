@@ -13,6 +13,7 @@
 require "forwardable"
 
 require "reish/osspace"
+require "reish/builtin-command"
 
 module Reish
   class Main
@@ -21,6 +22,7 @@ module Reish
 
     include Enumerable
     include OSSpace
+    include BuiltIn
 
     def initialize(exenv)
       @exenv = exenv

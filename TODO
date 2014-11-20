@@ -1,18 +1,22 @@
+計算式文 $expr ... end $expr{...}, %e...
 &
-%リテラル
 テスト環境
 ビルトイン関数
+* ary[...] の ... 部分のリスト化
 * reish_termの振る舞い. ビルトインコマンドの場合端末に出力できるか?
   つまり, 戻り値ではなくprintする
 #   trivial_command: trivial_command0 lex_arg の lex_arg正しい?
 # コード生成での括弧, セミコロンの使い方
-# command | if ... をもっとちゃんと対応したい
 完全なCompSystemCommand - パイプライン, リダイレクションの処理
 Array, Hashで,を使えるようにする?
+# def_main arg1 ... argn -flag1 .. -fragn --key1 val1 ...  の対応
+  ARGVの自動パーズ機能
 エリアス(bashの)
 コンプレーション機能
 ^Z
-DSTRING(#)
+* %リテラル
+ XSTRINGの仕様変更. 文字列として渡してeval形式にする
+ DSTRING(#)
 フォーマット付Number(FormedNumber)
 ハッシュ中のsym:形式
 クラス定義
@@ -23,4 +27,6 @@ shell server/shell client
 公開
 リリース
 コマンド引数にEnumerableが渡ったときの処理
+# command | if ... をもっとちゃんと対応したい(instance_evalを使わなく
+  て実現できるか?)
 # bash selectコマンド(ひつようない?)

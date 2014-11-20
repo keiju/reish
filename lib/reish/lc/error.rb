@@ -23,6 +23,7 @@ module Reish
   def_exception :UndefinedPromptMode, "Undefined prompt mode(%s)."
 
   def_exception :NotExistCurrentShell "Not exist current shell."
+  def_exception :CommandNotFound "Command not found(%s)"
 end
 
 
