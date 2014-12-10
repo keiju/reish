@@ -657,7 +657,7 @@ module Reish
       @OP.def_rule("") do
 	|op, io|
 
-	if /[0-9]/ =~ io.peek(0) 
+	if /[0-9]/ =~ io.peek(0) || /[-+]/ =~ io.peek(0) && /[0-9]/ =~ io.peek(1)
 	  identify_number(io)
 	elsif lex_state?(EXPR_BEG_ANY|EXPR_FNAME)
 	  identify_id(io)
@@ -772,6 +772,9 @@ module Reish
     end
 
     def identify_number(io, token = "")
+      if /[+-]/ =~ io.peek(0)
+	token.concat io.getc
+      end
       if io.peek(0) == "0" && io.peek(1) !~ /[.eE]/
 	token.concat io.getc
 	case ch = io.peek(0)
