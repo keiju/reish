@@ -43,6 +43,7 @@ module Reish
     end
 
     attr_reader :thread
+    attr_reader :exenv
 
     def initialize_as_main_shell
       trap("SIGINT") do
