@@ -145,6 +145,7 @@ class Reish::Parser
 		result = Node::PipelineCommand(val[0])
             }
 	| strict_pipeline
+        | trivial_command
 
   strict_pipeline: strict_pipeline '.' opt_nl strict_command
       	    {
@@ -611,7 +612,7 @@ class Reish::Parser
 # 	    }
 
 
-  trivial_command: '$' lex_beg trivial_command0 lex_arg
+  trivial_command: "$" lex_beg trivial_command0 lex_arg
 	    {
 		result = val[2]
 	    }
