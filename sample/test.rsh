@@ -1,21 +1,21 @@
-# シンプルコマンド
+echo "シンプルコマンド"
 ls
 ls -l
 ls -l -F
 /ls -l
 
 
-# コンポジット
+echo "コンポジット"
 ls; ls
 ls; ls; ls
 
-# 論理コマンド
+echo "論理コマンド"
 true
 false
 true && ls
 false || ls
 
-# パイプライン
+echo "パイプライン"
 ls | cat
 ls -l | grep %/TODO/
 ls -l | /grep TODO
@@ -33,31 +33,37 @@ ls(-l)::/grep(TODO)
 ls | grep %/TODO/ | cat
 ls | /grep TODO | cat
 
+echo "ワイルドカード"
 ls *
 ls TODO*
 ls [a-z]*
 #ls ~
 
-# イテレータ
+echo "イテレータ"
 ls | each do |l| p $l end
 ls | each{|l| p $l}
 ls.each{|l| p $l}
 ls::each{|l| p $l}
 
-# グループコマンド
+echo "グループ"
 puts (ls)
 puts (ls;ls -l)
 
-# xstringコマンド
+echo "グループコマンド"
+(ls)
+(ls;ls -l)
+(ls;ls -l) | grep %/R/
+
+echo "xstringコマンド"
 puts `ls`
 puts `ls; ls -l`
 
-#trivial command
+echo "trivial command"
 $ls
 echo $ls
 echo $ls(-l)
 
-# literal
+echo "literal"
 p foo
 p "foo"
 p %/foo/
@@ -69,19 +75,19 @@ p %{foo => bar}
 p :foo
 p $(1 + 2)
 
-# アサインコマンド
+echo "アサインコマンド"
 foo = foo
 bar = 100
 baz = %[1 2 foo]
 
-# インデックスアサインコマンド
+echo "インデックスアサインコマンド"
 baz[2] = bar
 
-# インデックスレフ
+echo "インデックスレフ"
 baz[2]
 echo $baz[2]
 
-#BEGIN
+echo "BEGIN..END"
 begin
   ls
   ls -l

@@ -528,7 +528,12 @@ module Reish
 
       def pipeout=(val)
 	@pipeout = val
-	@nodes.last.pipeout = val
+	case val
+	when :BAR, :COLON2, :BAR_AND, :DOT
+	  @nodes.last.pipeout = :RESULT
+	else
+	  @nodes.last.pipeout = val
+	end
       end
 
       def_accept
