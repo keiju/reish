@@ -567,7 +567,8 @@ class Reish::Parser
 		result = Node::YieldCommand(val[1])
 	    }
 
-  group_command: '(' {@lex.indent_push(:LPAREN_G)} compound_list indent_pop ')' lex_arg
+  group_command: '(' {@lex.indent_push(:LPAREN_G); @lex.lex_state = Lex::EXPR_BEG} compound_list indent_pop ')' lex_arg
+#  group_command: '(' {@lex.indent_push(:LPAREN_G)} compound_list indent_pop ')' lex_arg
 	    {
 	        result = Node::Group(val[2])
 	    }
