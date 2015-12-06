@@ -26,7 +26,8 @@ module Reish
       :EXPR_DOT,
       :EXPR_CLASS,
       :EXPR_EQ_ARG,
-    ]
+      :EXPR_ARG0, 
+   ]
     
     i = 1
     LEX_STATES.each do |st|
@@ -34,7 +35,7 @@ module Reish
       i<<=1
     end
     EXPR_BEG_ANY= EXPR_BEG | EXPR_DO_BEG | EXPR_MID | EXPR_CLASS
-    EXPR_ARG_ANY= EXPR_ARG | EXPR_EQ_ARG
+    EXPR_ARG_ANY= EXPR_ARG | EXPR_EQ_ARG | EXPR_ARG0
 
     PreservedWord = {
       "class"	=> :CLASS, 
@@ -409,7 +410,8 @@ module Reish
       @OP.def_rule("(") do
 	|op, io|
 	cond_push(false)
-	if lex_state?(EXPR_ARG) && !@space_seen
+	if lex_state?(EXPR_ARG0) && !@space_seen
+	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LPARLEN_ARG)
 	else
 	  self.lex_state = EXPR_BEG
@@ -436,7 +438,7 @@ module Reish
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_H)
-	elsif !@space_seen && lex_state?(EXPR_ARG|EXPR_END)
+	elsif !@space_seen && lex_state?(EXPR_ARG0 | EXPR_ARG | EXPR_END)
 	  self.lex_state = EXPR_DO_BEG
 	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_I)
 	else
@@ -698,7 +700,7 @@ module Reish
       if tid = PreservedWord[token]
 	identify_reserved_word(io, token, tid)
       else
-	self.lex_state = EXPR_ARG
+	self.lex_state = EXPR_ARG0
 	IDToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
       end
     end
@@ -711,7 +713,7 @@ module Reish
       end
       io.ungetc
 
-      self.lex_state = EXPR_ARG
+      self.lex_state = EXPR_ARG0
       PathToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
     end
 
