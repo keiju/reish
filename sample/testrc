@@ -1,4 +1,5 @@
 Reish.conf[:ECHO] = true
 Reish.conf[:PROMPT] = $Reish::PromptSet[:IRB]
 Reish.conf[:DISPLAY_COMP] = true
+Reish.conf[:VERBOSE] = true
 

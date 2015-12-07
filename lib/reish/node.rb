@@ -167,6 +167,8 @@ module Reish
 	@variable = var
 	@value = val
 
+	@variable.pipeout=:NONE
+
 	begin
 	  @value.pipeout=:RESULT
 	rescue Exception

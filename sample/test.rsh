@@ -1,9 +1,15 @@
+
 echo "シンプルコマンド"
 ls
 ls -l
 ls -l -F
 /ls -l
 
+echo "括弧付きシンプルコマンド"
+ls(-l)
+ls(-l -F)
+ls(-l, -F)
+/ls(-l)
 
 echo "コンポジット"
 ls; ls
@@ -79,6 +85,8 @@ echo "アサインコマンド"
 foo = foo
 bar = 100
 baz = %[1 2 foo]
+
+baz[2] = zoo
 
 echo "インデックスアサインコマンド"
 baz[2] = bar

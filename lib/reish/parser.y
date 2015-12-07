@@ -356,16 +356,24 @@ class Reish::Parser
 	| VARIABLE
 	| STRING
 
-  assgin_command: ID '=' opt_nl command_element
+  assgin_command: assginable '=' opt_nl command_element
 	    {
+               case val[0].commands.last
+	       when Node::SimpleCommand
+		  if val[0].commands.last.args.size > 0
+		    yyerror val[0], "syntax error not assginable #{val[0].inspect}."
+		  end
+	       end
 	       result = Node::AssginCommand(val[0], val[3])
 	    }
-	| index_assgin_command
+#        | index_assgin_command 
 
-  index_assgin_command: index_ref '=' opt_nl command_element
-            {
-	       result = Node::IndexAssginCommand(val[0][0], val[0][1], val[3])
-	    }
+#  index_assgin_command: index_ref '=' opt_nl command_element
+#            {
+#	       result = Node::IndexAssginCommand(val[0][0], val[0][1], val[3])
+#	    }
+
+  assginable: strict_pipeline
 
   index_ref_command: index_ref
 	    {
