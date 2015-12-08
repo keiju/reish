@@ -87,6 +87,10 @@ module Reish
       end
     end
 
+    def chdir(path)
+      @pwd = path
+    end
+
     attr_reader :env
 
     #

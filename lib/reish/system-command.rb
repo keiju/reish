@@ -177,7 +177,7 @@ module Reish
     end
 
     def spawn_options
-      opts = {}
+      opts = {:chdir => @exenv.pwd}
       return opts unless @reds
 
       @reds.each do |red|
