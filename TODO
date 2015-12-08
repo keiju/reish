@@ -1,3 +1,4 @@
+foo()=const を構文的にNGにする.
 計算式文 $expr ... end $expr{...}, %e...
 &
 テスト環境
