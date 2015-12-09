@@ -255,7 +255,7 @@ module Reish
 	  if n[0] == "/" && c == 1
 	    n[0] = ""
 	  else
-	    path = File.absolute_path(n, @pwd)
+	    path = File.absolute_path(n, @exenv.pwd)
 	    if File.executable?(path)
 	      @command_cache[name] = path
 	      return Reish::SystemCommand(@exenv, receiver, path, *args)
@@ -354,7 +354,7 @@ module Reish
       end
     end
 
-    def expand_path(name, base = @pwd)
+    def expand_path(name, base = @exenv.pwd)
       File.expand_path(name, base)
     end
 

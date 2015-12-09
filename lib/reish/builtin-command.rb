@@ -13,18 +13,23 @@ module Reish
 
     TestSuperCommands = ["A", "C", "G", "M", "O", "R", "S", "X", "W", 
       "b", "c", "d", "e", "f", "g", "k", "l", "o", "p", "r", 
-      "s", "u", "w", "x", "z", "=", ">", "<", "-"]
+      "s", "u", "w", "x", "z"]
 
     TestSuperCommands.each do |sub|
-      TestMap[sub] = proc{|*args| test_org(sub, *args)}
+      TestMap[sub] = proc{|sh, f| test_org(sub, sh.expand_path(f))}
+    end
+
+    TestSuperCommands2 = ["=", ">", "<", "-"]
+    TestSuperCommands2.each do |sub|
+      TestMap[sub] = proc{|sh, f, g| test_org(sub, sh.expand_path(f), sh.expand_path(g))}
     end
     
-    TestTestMap = {"L" => "l",  "a" => "e", "h" => "l", # from bash teest
+    TestTestMap = {"L" => "l",  "a" => "e", "h" => "l", # from bash test
       "mtime<" => "<", "mtime>" => ">", "mtime=" => "=", 
       "eq" => "-", 
     }
     TestTestMap.each do |key, sub|
-      TestMap[key] = proc{|*args| test_org(sub, *args)}
+      TestMap[key] = TestMap[TestTestMap[key]]
     end
     
     TestFileCommands = ["absolute_path", "atime", "basename", "blockdev?", 
@@ -37,67 +42,60 @@ module Reish
       "size?", "socket?", "split", "stat", "sticky?", "symlink", "symlink?", 
       "truncate", "umask", "utime", "world_readble?", "world_writable?", 
       "writable?", "writable_real?", "zero?"]
+
     TestFileCommands.each do |sub|
-      TestMap[sub] = proc{|*args| File.send(sub, *args)}
+      TestMap[sub] = proc{|sh, f| File.send(sub, sh.expand_path(f))}
     end
 
     TestFileStatCommands = ["blksize", "blocks", "dev", "dev_major", 
       "dev_miner", "gid", "ino", "mode", "nlink", "rdev", "rdev_major",
       "rdev_miner", "uid"]
+
     TestFileStatCommands.each do |sub|
-      TestMap[sub] = proc{|*args| File.stat(args[0]).send(sub)}
+      TestMap[sub] = proc{|sh, f| File.stat(sh.expand_path(f)).send(sub)}
     end
-    
-    TestProcs = {
-      "mtime<=" => proc{|fn1, fn2| !test_org(?>, fn1, fn2)},
-      "mtime>=" => proc{|fn1, fn2| !test_org(?<, fn1, fn2)},
 
-      "atime>" => proc{|fn1, fn2| File.atime(fn1) > File.atime(fn2)},
-      "atime>=" => proc{|fn1, fn2| File.atime(fn1) >= File.atime(fn2)},
-      "atime<" => proc{|fn1, fn2| File.atime(fn1) < File.atime(fn2)},
-      "atime<=" => proc{|fn1, fn2| File.atime(fn1) <= File.atime(fn2)},
-      "atime=" => proc{|fn1, fn2| File.atime(fn1) == File.atime(fn2)},
+    TestMap["mtime<="] = proc{|sh, fn1, fn2| !test_org(?>, sh.expand_path(fn1), sh.expand_path(fn2))}
+    TestMap["mtime>="] = proc{|sh, fn1, fn2| !test_org(?<, sh.expand_path(fn1), sh.expand_path(fn2))}
 
-      "ctime>" => proc{|fn1, fn2| File.ctime(fn1) > File.ctime(fn2)},
-      "ctime>=" => proc{|fn1, fn2| File.ctime(fn1) >= File.ctime(fn2)},
-      "ctime<" => proc{|fn1, fn2| File.ctime(fn1) < File.ctime(fn2)},
-      "ctime<=" => proc{|fn1, fn2| File.ctime(fn1) <= File.ctime(fn2)},
-      "ctime=" => proc{|fn1, fn2| File.ctime(fn1) == File.ctime(fn2)},
+    ["atime", "ctime", "size"].each do |key|
+      [">", ">=", "<", "<=", "="].each do |op|
 
-      "size>" => proc{|fn1, fn2| File.size(fn1) > File.size(fn2)},
-      "size>=" => proc{|fn1, fn2| File.size(fn1) >= File.size(fn2)},
-      "size<" => proc{|fn1, fn2| File.size(fn1) < File.size(fn2)},
-      "size<=" => proc{|fn1, fn2| File.size(fn1) <= File.size(fn2)},
-      "size=" => proc{|fn1, fn2| File.size(fn1) == File.size(fn2)},
+	op1 = op
+	op1 = "==" if op == "="
+	TestMap[key+op] = eval "proc{|sh, f, g| File.#{key}(sh.expand_path(f)) #{op1} File.#{key}(sh.expand_path(g))}"
+      end
+    end
 
-      "owner" => proc{|fn| 
-	require "etc"
-	Etc::getpwuid(File.stat(fn).uid).name
-      },
-
-      "owner?" => proc{|fn, usr| 
-	require "etc"
-	ret = false
-	begin
-	  pw = Etc::getpwnam(usr)
-	  ret = File.stat(fn).uid == pw.uid
-	rescue ArgumentError
-	end
-	ret
-      }
+    TestMap["owner"] = proc{|sh, fn| 
+      require "etc"
+      Etc::getpwuid(File.stat(sh.expand_path(fn)).uid).name
     }
-
-    TestProcs.each do |key, sub|
-      TestMap[key] = proc{|*args| sub.call *args}
-    end
+    TestMap["owner?"] = proc{|sh, fn, usr| 
+      require "etc"
+      ret = false
+      begin
+	pw = Etc::getpwnam(usr)
+	ret = File.stat(sh.expand_path(fn)).uid == pw.uid
+      rescue ArgumentError
+      end
+      ret
+    }
 
     # Bash Test Command rests: "N","t"
 
     def test(sub, *args, &block)
-      unless p = TestMap[sub]
-	raise NoMethodError, "undefined hyphen command -#{sub}"
+      sh = Reish.current_shell
+      if p = TestMap[sub]
+	return p.call(sh, *args, &block)
       end
-      p.call(*args, &block)
+      if /^-([^-].+)/ =~ sub
+	sub = $1
+	if p = TestMap[sub]
+	  return p.call(sh, *args, &block)
+	end
+      end
+      raise NoMethodError, "undefined hyphen command -#{sub}" 
     end
   end
 
