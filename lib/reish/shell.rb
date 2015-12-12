@@ -348,7 +348,9 @@ module Reish
 	  receiver.send(method, *args, &block)
 	end
       else
-	com = search_command(receiver, method, *args)
+	unless com = search_command(receiver, method, *args)
+	  raise NoMethodError, "undefined medhod `#{method}'"
+	end
 	com.reds = reds
 	com
       end
