@@ -90,7 +90,10 @@ module Reish
 	  when Enumerable
 	    Thread.start do
 	      begin
-		@receiver.each {|e| io.puts s.to_s}
+		@receiver.each {|e| io.print e.to_s}
+	      rescue
+		p $!
+		raise
 	      ensure
 		io.close_write
 	      end
@@ -100,7 +103,6 @@ module Reish
 	    io.close_write
 	  end
 	end
-
 	io.each &block
       end
     end
@@ -190,7 +192,7 @@ module Reish
 
     def inspect
       if Reish::INSPECT_LEBEL < 3
-	format("#<SystemCommand: @receiverr=%s, @command_path=%s, @args=%s, @exis_status=%s>", @receiver, @command_path, @args, @exit_status)
+	format("#<SystemCommand: @receiver=%s, @command_path=%s, @args=%s, @exis_status=%s>", @receiver, @command_path, @args, @exit_status)
       else
 	super
       end
@@ -328,7 +330,7 @@ module Reish
       when ">>", "&>>"
 	[source_fid, [@red, "a"]]
       when "<"
-	[red.source_fid, @red]
+	[source_fid, @red]
       end
     end
 
@@ -376,7 +378,11 @@ class Object
     Reish::Fail NotExistCurrentShell unless Reish::active_thread?
     Reish::current_shell.send_with_redirection(self, method, args, reds, &block)
   end
-    
+
+  def reish_shell_command_with_redirection(code, reds, bind)
+    Reish::Fail NotExistCurrentShell unless Reish::active_thread?
+    Reish::current_shell.shell_command_with_redirection(self, code, reds, bind)
+  end
 
   def reish_attach_redirection(*reds)
 

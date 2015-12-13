@@ -506,6 +506,12 @@ module Reish
       Node::SimpleCommand(com, [sub_com, *command.args], command.block).accept(self)
     end
 
+    def visit_redirector(command)
+      code = command.node.accept(self)
+      reds = command.reds.collect{|e| e.accept(self)}
+      "reish_shell_command_with_redirection(\'#{code}\', [#{reds.join(",")}], binding).reish_term"
+    end
+
     def visit_value(val)
       val.value
     end

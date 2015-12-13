@@ -686,6 +686,21 @@ module Reish
       def_accept
     end
 
+    class Redirector<Command
+      def_constructor
+
+      def initialize(node, reds)
+	@node = node
+	@node.pipeout = :RESULT
+	@reds = reds
+      end
+
+      attr_reader :node
+      attr_reader :reds
+
+      def_accept
+    end
+
     class Redirection<Node
       def_constructor
       

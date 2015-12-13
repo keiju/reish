@@ -356,6 +356,45 @@ module Reish
       end
     end
 
+    def shell_command_with_redirection(receiver, code, reds, bind)
+
+      input = nil
+      output = nil
+      reds.each do |r|
+	case r.id
+	when "<"
+	  input = r
+	when ">", ">>"
+	  output = r
+	when "&>", "&>>"
+	  output = r
+	else
+	  raise ArgumentError, "can't use redirection which specify source"
+	end
+      end
+
+      if input
+	case input.red
+	when String
+	  p input
+	  receiver = open_file(input.red)
+	else
+	  raise ArgumentError, "redirect target must be String"
+	end
+      end
+      if output
+	ret = nil
+	open_file(output.red, output.open_mode) do |io|
+	  ret = receiver.reish_eval(code, bind).each{|e|
+	    io.print e
+	  }
+	end
+	ret
+      else
+	receiver.reish_eval(code, bind)
+      end
+    end
+
     def expand_path(name, base = @exenv.pwd)
       File.expand_path(name, base)
     end

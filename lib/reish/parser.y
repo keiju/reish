@@ -174,6 +174,9 @@ class Reish::Parser
   command: simple_command
 #	| strict_command
 	| shell_command redirection_list
+	  {
+	        result = Node::Redirector(val[0], val[1])
+	  }
 #	| function_def
 
   strict_command: simple_strict_command
@@ -774,8 +777,15 @@ class Reish::Parser
 		result = val[0]
 	    }
 
-#redirection_list: redirection
-#	| redirection_list redirection
+  redirection_list: redirection
+          {
+	    result = [val[0]]
+          }
+	| redirection_list redirection
+	  {
+	    val[0].push val[1]
+	    result = val[0]
+	  }
 
   redirection:	'>' redirection_element
 	  {
