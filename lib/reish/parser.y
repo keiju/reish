@@ -418,15 +418,15 @@ class Reish::Parser
 	    {
 		result = nil
 	    }
-	| RESCUE command_element_list exc_var then compound_list opt_rescue
+	| RESCUE command_element_list exc_var then lex_beg compound_list opt_rescue
 	    {
-		result = Node::RescueCommand(val[1], val[2], val[4])
-		if val[5]
-		   result, t = val[5], result
+		result = Node::RescueCommand(val[1], val[2], val[5])
+		if val[6]
+		   result, t = val[6], result
 		   result = [result] unless result.kind_of?(Array)
 		   result.unshift t
 		else
-		   result = Node::RescueCommand(val[1], val[2], val[4])
+		   result = Node::RescueCommand(val[1], val[2], val[5])
 		end		  
 	    } 
   exc_var: 
@@ -455,18 +455,18 @@ class Reish::Parser
 		result = val[1]
 	    }
 
-  while_command: WHILE cond_push opt_nl logical_command do {@lex.indent_push(:WHILE)} cond_pop compound_list indent_pop END
+  while_command: WHILE cond_push opt_nl logical_command do {@lex.indent_push(:WHILE)} cond_pop lex_beg compound_list indent_pop END
 	    {
-	       result = Node::WhileCommand(val[3], val[7])
+	       result = Node::WhileCommand(val[3], val[8])
 	    }
 
   do: NL
 	| ';'
 	| DO_COND
 
-  until_command: UNTIL cond_push opt_nl logical_command do {@lex.indent_push(:UNTIL)} cond_pop compound_list indent_pop END
+  until_command: UNTIL cond_push opt_nl logical_command do {@lex.indent_push(:UNTIL)} cond_pop lex_beg compound_list indent_pop END
 	    {
-	       result = Node::UntilCommand(val[3], val[7])
+	       result = Node::UntilCommand(val[3], val[8])
 	    }
 
   if_command: if_head indent_pop END
@@ -482,21 +482,21 @@ class Reish::Parser
 		result = Node::IfCommand(val[0][0], val[0][1], val[1])
 	    }
 
-  if_head: IF opt_nl logical_command {@lex.indent_push(:IF)} then compound_list 
+  if_head: IF opt_nl logical_command {@lex.indent_push(:IF)} then lex_beg  compound_list 
 	    {
-		result = [val[2], val[5]]
+		result = [val[2], val[6]]
 	    }
-  elsif_clause:	ELSIF opt_nl logical_command then compound_list
+  elsif_clause:	ELSIF opt_nl logical_command then lex_beg compound_list
 	    {
-		result = Node::IfCommand(val[2], val[4])
+		result = Node::IfCommand(val[2], val[5])
 	    }
-	|	ELSIF opt_nl logical_coomand then compound_list ELSE lex_beg compound_list
+	|	ELSIF opt_nl logical_command then lex_beg compound_list ELSE lex_beg compound_list
 	    {
-		result = Node::IfCommand(val[2], val[4], val[6])
+		result = Node::IfCommand(val[2], val[5], val[8])
 	    }
-	|	ELSIF opt_nl logical_command then compound_list elif_clause
+	|	ELSIF opt_nl logical_command then lex_beg compound_list elsif_clause
 	    {
-		result = Node::IfCommand(val[2], val[4], val[6])
+		result = Node::IfCommand(val[2], val[5], val[6])
 	    }
 
   then: THEN

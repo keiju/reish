@@ -397,7 +397,7 @@ module Reish
       def_accept
     end
 
-    class RaieCommand<Command
+    class RaiseCommand<Command
       def_constructor
 
       def initialize(args)

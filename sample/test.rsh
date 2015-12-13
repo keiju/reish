@@ -101,4 +101,90 @@ begin
   ls -l
 end
 
+begin
+  ls
+  ls -l
+ensure
+  echo "ENSURE"
+end
+
+begin
+  ls
+  raise "raise"
+  ls -l
+rescue
+  echo "CATCH RAISE"
+ensure
+  echo "ENSURE"
+end
+
+
+begin
+  ls
+  raise "raise"
+  ls -l
+rescue $Interrupt
+  echo "CATCH RAISE1"
+
+rescue
+  echo "CATCH RAISE2"
+
+ensure
+  echo "ENSURE"
+end
+
+begin
+  ls
+  raise "raise"
+  ls -l
+rescue $Interrupt
+  echo "CATCH RAISE1"
+
+rescue
+  echo "CATCH RAISE2"
+
+else
+  echo "CATCH RAISE3"
+
+ensure
+  echo "ENSURE"
+end
+
+echo "IF"
+if -e /tmp
+  echo "TRUE"
+else
+  echo "FALSE"
+end
+
+if true
+  echo "IF1"
+elsif true
+  echo "IF2"
+end
+
+if true
+  echo "IF1"
+elsif true
+  echo "IF2"
+else
+  echo "IF3"
+end
+
+
+if true
+  echo "IF1"
+elsif true
+  echo "IF2"
+elsif true
+  echo "IF3"
+else
+  echo "IF4"
+end
+
+echo "WHILE"
+ary=%[1 2 3]
+while e = $ary.shift
+  echo $e
+end
 
