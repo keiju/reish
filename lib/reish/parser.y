@@ -507,9 +507,9 @@ class Reish::Parser
 		result = Node::IfCommand(val[2], val[6], val[5])
 	    }
 
-  for_command: FOR opt_nl for_arg opt_nl IN lex_arg simple_command_element do {@lex.indent_push(:FOR)} compound_list indent_pop END
+  for_command: FOR opt_nl for_arg opt_nl IN lex_arg simple_command_element do {@lex.indent_push(:FOR)} lex_beg compound_list indent_pop END
 	    {
-		result = Node::ForCommand(val[2], val[6], val[9])
+		result = Node::ForCommand(val[2], val[6], val[10])
             }
 
   for_arg: ID
@@ -742,16 +742,16 @@ class Reish::Parser
 	    {
 		result = val[1]
 	    }
-	| opt_nl compound_list1 NL opt_nl
+	| opt_nl compound_list1 NL lex_beg opt_nl
 	    {
 		result = val[1]
 	    } 
-	| opt_nl compound_list1 '&' opt_nl
+	| opt_nl compound_list1 '&' lex_beg  opt_nl
 	    {
 		val[1].last_command_to_async
 		result = val[1]
 	    } 
-	| opt_nl compound_list1 ';' opt_nl
+	| opt_nl compound_list1 ';'  lex_beg opt_nl
 	    {
 		result = val[1]
 	    } 
@@ -760,20 +760,20 @@ class Reish::Parser
 	    {
 	        result = Node::Sequence(val[0]) 
 	    }
-	| compound_list1 NL opt_nl logical_command
+	| compound_list1 NL lex_beg opt_nl logical_command
 	    { 
-		val[0].add_command(val[3])
+		val[0].add_command(val[4])
 		result = val[0]
 	    }
-	| compound_list1 "&" opt_nl logical_command
+	| compound_list1 "&" lex_beg opt_nl logical_command
 	    { 
 		val[0].last_command_to_async
-		val[0].add_command(val[3])
+		val[0].add_command(val[4])
 		result = val[0]
 	    }
-  	| compound_list1 ";" opt_nl logical_command 
+  	| compound_list1 ";" lex_beg opt_nl logical_command 
 	    { 
-		val[0].add_command(val[3])
+		val[0].add_command(val[4])
 		result = val[0]
 	    }
 
@@ -865,15 +865,12 @@ class Reish::Parser
   opt_nl_arg: lex_arg
       | lex_arg NL 
 
-  opt_terms: ';'
-      | NL
+  opt_terms: ';' lex_beg
+      | NL lex_beg
 
   opt_nl:  
-      | NL
+      | NL lex_beg
 	
-
-  nl_beg: NL 
-
   cond_push: {@lex.cond_push(true)}
   cond_pop: {@lex.cond_pop}
 

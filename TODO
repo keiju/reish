@@ -1,3 +1,5 @@
+* return/break/next/redo/retryの対応
+  rubyでは, 式中に上記のものを入れることができない.
 計算式文 $expr ... end $expr{...}, %e...
 &
 テスト環境

@@ -150,8 +150,15 @@ ensure
   echo "ENSURE"
 end
 
+echo "BREAK 非対応"
+echo "NEXT 非対応"
+echo "RETRY 非対応"
+echo "RETURN 非対応"
+echo "REDO 非対応"
+
 echo "IF"
 if -e /tmp
+  echo "TRUE"
   echo "TRUE"
 else
   echo "FALSE"
@@ -187,4 +194,52 @@ ary=%[1 2 3]
 while e = $ary.shift
   echo $e
 end
+
+echo "UNTIL"
+ary=%[1 2 3]
+until (e = $ary.shift).nil?
+  echo $e
+end
+
+echo "FOR"
+for e in %[1 2 3]
+  echo $e
+end
+
+echo "CASE"
+a = true
+case $a
+when true
+  echo "P1"
+end
+
+a = true
+case $a
+when false
+  echo "P1"
+when true
+  echo "P2"
+end
+
+a = true
+case $a
+when false
+  echo "P1"
+when false
+  echo "P2"
+else
+  echo "P3"
+end
+
+echo "FOR"
+for e in %[1 2 3]
+  echo $e
+end
+
+for e in %[1 2 3]
+  echo $e
+  echo $e
+end
+
+
 
