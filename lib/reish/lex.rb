@@ -686,7 +686,7 @@ module Reish
     def identify_id(io)
       token = ""
 
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;\(\)<>\[\{\}\]\`\$]/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;\(\)<>\[\{\}\]\`\$\"\']/ !~ ch
 	print ":", ch, ":" if Debug
 
 	if /[\/\-\+]/ =~ ch
