@@ -16,23 +16,29 @@ module Reish
   Token2TokenID = {}
   
   class Token
-    def initialize(io, seek, line_no, char_no, *opts)
-      case io
+    def initialize(lex, *opts)
+      case lex.io
       when File
-	@input_name = io.path
+	@input_name = lex.io.path
       else
 	@input_name = "(#{self.class.name})"
       end
 
-      @seek = seek
-      @line_no = line_no
-      @char_no = char_no
+      @lex = lex
+      @seek = lex.prev_seek
+      @line_no = lex.prev_line_no
+      @char_no = lex.prev_char_no
+      @space_seen = lex.space_seen
     end
 
-    attr_reader :io
-    attr_reader :seek
-    attr_reader :line_no
-    attr_reader :char_no
+    attr_reader :lex
+#    attr_reader :io
+#    attr_reader :seek
+#    attr_reader :line_no
+#    attr_reader :char_no
+    attr_reader :space_seen
+
+    alias space_seen? space_seen
 
     def token_id
       Token2TokenID[self.class]
@@ -40,7 +46,7 @@ module Reish
   end
 
   class RubyExpToken<Token
-    def initialize(io, seek, line_no, char_no, exp)
+    def initialize(lex, exp)
       super
       @exp = exp
     end
@@ -50,14 +56,14 @@ module Reish
   end
 
   class CommandToken<Token
-    def initialize(io, seek, line_no, char_no, name)
+    def initialize(lex, name)
       super
       @name = name
     end
   end
 
   class ValueToken<Token
-    def initialize(io, seek, line_no, char_no, val)
+    def initialize(lex, val)
       super
       @value = val
     end
@@ -208,7 +214,7 @@ module Reish
   end
 
   class ReservedWordToken<Token
-    def initialize(io, seek, line_no, char_no, tid)
+    def initialize(lex, tid)
       super
       @tid = tid
     end
@@ -227,7 +233,7 @@ module Reish
   end
 
   class SimpleToken<Token
-    def initialize(io, seek, line_no, char_no, name)
+    def initialize(lex, name)
       super
       @name = name
     end

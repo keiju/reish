@@ -39,16 +39,27 @@ module Reish
       def initialize(val)
 	super()
 	@value = val
+
+	@space_seen = @value.space_seen
+
       end
 
       attr_reader :value
+
+      attr_accessor :space_seen
+      alias space_seen? space_seen
+
     end
 
     class SingleNode<Node
       def initialize(token)
 	@token = token
+	@space_seen = @token.space_seen
       end
       attr_reader :token
+
+      attr_accessor :space_seen
+      alias space_seen? space_seen
     end
 
 
@@ -71,10 +82,15 @@ module Reish
 	@pipein = nil
 	@pipeout = nil
 	@have_redirection = nil
+
+	@space_seen = nil
       end
 
       attr_accessor :pipein
       attr_accessor :pipeout
+
+      attr_accessor :space_seen
+      alias space_seen? space_seen
     end
 
     class LogicalCommand<Node
@@ -84,11 +100,16 @@ module Reish
 	@first = com1
 	@second = com2
 	@connector = op
+
+	@space_seen = @first.space_seen
       end
 
       attr_reader :first
       attr_reader :second
       attr_reader :op
+
+      attr_accessor :space_seen
+      alias space_seen? space_seen
 
       def_accept
     end
@@ -131,6 +152,8 @@ module Reish
       def initialize(com)
 	super()
 	@commands = [com]
+
+	@space_seen = com.space_seen
       end
       attr_reader :commands
 
@@ -174,6 +197,8 @@ module Reish
 	rescue Exception
 	  #literalの時
 	end
+
+	@space_seen = @variable.space_seen
       end
 
       attr_reader :variable
@@ -194,6 +219,8 @@ module Reish
 	  @value.pipeout=:RESULT
 	rescue Exception
 	end
+
+	@space_seen = @variable.space_seen
       end
 
       attr_reader :variable
@@ -211,6 +238,8 @@ module Reish
 	@index = index
 
 	@variable.pipeout = :RESULT
+
+	@space_seen = @variable.space_seen
       end
 
       attr_reader :variable
@@ -524,6 +553,7 @@ module Reish
       def initialize(node)
 	super()
 	@nodes = node.nodes
+	@space_seen = @nodes.first.space_seen
       end
       
       attr_reader :nodes
@@ -547,7 +577,9 @@ module Reish
       def initialize(node)
 	super()
 	@nodes = node.nodes
-	nodes.each{|n| n.pipeout = :NONE}
+	@nodes.each{|n| n.pipeout = :NONE}
+
+	@space_seen = @nodes.first.space_seen
       end
       
       attr_reader :nodes
@@ -566,7 +598,11 @@ module Reish
       def initialize(com=nil)
 	super()
 	@nodes = []
-	@nodes.push com if com
+
+	if com
+	  @nodes.push com
+	  @space_seen = com.space_seen
+	end
       end
 
       def pipeout=(val)
@@ -576,6 +612,7 @@ module Reish
       end
 
       def add_command(com)
+	@space_seen = com.space_seen if @nodes.empty?
 	@nodes.push com
       end
 
@@ -611,6 +648,8 @@ module Reish
       
       def initialize(value)
 	@value = value
+
+	@space_seen = value.space_seen
       end
 
       attr_reader :value
@@ -629,12 +668,14 @@ module Reish
 
 	@have_redirection = nil
 
-	@args.each do |arg| 
+	@args.each_compose do |arg| 
 	  case arg
 	  when Group
 	    arg.pipeout = :RESULT
 	  end
 	end
+
+	@space_seen = name.space_seen
       end
 
       attr_reader :name
@@ -735,16 +776,21 @@ module Reish
       end
       def_accept
     end
-		     
+
     class Array<Node
       def_constructor
 
       def initialize(elements)
 	super()
 	@elements = elements
+
+	@space_seen = @elements.first.space_seen
       end
-      
+
       attr_reader :elements
+
+      attr_accessor :space_seen
+      alias space_seen? space_seen
 
       def_accept
     end
@@ -755,9 +801,14 @@ module Reish
       def initialize(elements)
 	super()
 	@elements = elements
+
+	@space_seen = @elements.first.first.space_seen
       end
       
       attr_reader :elements
+
+      attr_accessor :space_seen
+      alias space_seen? space_seen
 
       def_accept
     end
@@ -778,6 +829,97 @@ module Reish
     end
 
 
+    class CommandElementList<Node
+      include Enumerable
+
+      def_constructor
+      
+      def initialize(elements = nil)
+	super()
+	case elements
+	when nil
+	  @elements = []
+	when ::Array
+	  @elements = elements
+	  @space_seen = @elements.first.space_seen
+	else
+	  @elements = [elements]
+	  @space_seen = elements.space_seen
+	end
+
+	@size = nil
+      end
+
+      attr_reader :elements
+
+      attr_accessor :space_seen
+      alias space_seen? space_seen
+
+      def empty?
+	@elements.empty?
+      end
+
+      def size
+	@size if @size
+	
+	s = 0
+	each{s += 1}
+	@size = s
+      end
+
+      def each_compose(&block)
+	return if @elements.empty?
+	prev = []
+	@elements.each do |e|
+	  if !e.space_seen?
+	    prev.push e
+	  else
+	    if prev.size > 1
+	      block.call ComposedWord.new(prev)
+	    elsif prev.size == 1
+	      block.call prev[0]
+	    end
+	    prev = [e]
+	  end
+	end
+	if prev.size > 1
+	  block.call CompositeWord.new(prev)
+	else
+	  block.call prev[0]
+	end
+      end
+
+      alias each each_compose
+
+      def composed_words
+	each_compose.to_a
+      end
+
+      def push(elm)
+	@space_seen = elm.space_seen if @elements.empty?
+	@elements.push elm
+      end
+      
+      def_accept
+    end
+		
+    class CompositeWord<Node
+      def_constructor
+
+      def initialize(els)
+	super()
+	@elements = els
+      end
+      
+      attr_reader :elements
+
+#      def push(e)
+#	@elements.push e
+#      end
+
+      def_accept
+    end
+     
     class EOFNode<Node;end
     EOF = EOFNode.new
 

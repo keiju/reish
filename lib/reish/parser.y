@@ -104,6 +104,7 @@ class Reish::Parser
 	| BANG logical_command
             {
 		result = Node::BangCommand(val[1])
+		result.space_seen = val[0].space_seen
 	    }
       	| pipeline_command
 	| break_command
@@ -184,7 +185,7 @@ class Reish::Parser
 
   command_element_list: 
 	    {
-		result = []
+    		result = Node::CommandElementList.new
 	    } 
 	| command_element_list command_element
 	    {
@@ -212,7 +213,7 @@ class Reish::Parser
 
   simple_strict_command: simple_command_header opt_do_block
 	    {
-  	       result = Node::SimpleCommand(val[0], [], val[1])
+  	       result = Node::SimpleCommand(val[0], Node::CommandElementList.new, val[1])
 	    }
 	| simple_command_lparen
 
@@ -237,10 +238,11 @@ class Reish::Parser
   simple_command_element_list_p: opt_nl
   	    {
 		@lex.lex_state = Lex::EXPR_ARG
-		result = []
+		result = Node::CommandElementList.new
 	    }
 	| simple_command_element_list_p simple_command_element opt_nl
 	    {
+		result = val[0]
   		@lex.lex_state = Lex::EXPR_ARG
 	        result.push val[1]
 	    }
@@ -300,17 +302,18 @@ class Reish::Parser
 
   simple_command_element_list: 
 	    {
-	       result = []
+	       result = Node::CommandElementList.new
 	    }
 	| simple_command_element_list1
 
   simple_command_element_list1: simple_command_element
 	    {
-	       result = [val[0]]
+	       result = Node::CommandElementList.new(val[0])
 	    }
 	| simple_command_element_list1 simple_command_element
 	    {
-	       result.push val[1]
+	       result = val[0]
+      	       result.push val[1]
 	    }
 
   simple_command_element: command_element_base
@@ -407,6 +410,7 @@ class Reish::Parser
   begin_command: BEGIN {@lex.indent_push(:BEGIN)} body_list indent_pop END
 	    {
 		result = Node::BeginCommand(*val[2])
+		result.space_seen = val[0].space_seen
 	    }
 
   body_list: compound_list opt_rescue opt_else opt_ensure
@@ -592,12 +596,12 @@ class Reish::Parser
 
 #   trivial_command0: '$' simple_command_header =LOWER
 # 	    {         
-# 	       result = Node::SimpleCommand(val[1], [])
+# 	       result = Node::SimpleCommand(val[1], Node::CommandElementList.new)
 # 	       result.pipeout = :RESULT
 # 	    }
 # 	| '$' simple_command_header do_block
 # 	    {         
-# 	       result = Node::SimpleCommand(val[1], [], val[2])
+# 	       result = Node::SimpleCommand(val[1], Node::CommandElementList.new, val[2])
 # 	       result.pipeout = :RESULT
 # 	    }
 # 	| '$' simple_command_lparen

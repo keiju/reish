@@ -365,14 +365,11 @@ module Reish
     def visit_simple_command(command)
       case command.name
       when TestToken
-	tk = IDToken.new(nil, nil, nil, nil, "Reish::Test::test")
+p command
+	tk = IDToken.new(command.name.lex, "Reish::Test::test")
       
-	sub_com = StringToken.new(command.name.io,
-				  command.name.seek,
-				  command.name.line_no,
-				  command.name.char_no,
-				  command.name.value)
-	new_com = Node::SimpleCommand(tk, [sub_com, *command.args], command.block)
+	sub_com = StringToken.new(command.name.lex, command.name.value)
+	new_com = Node::SimpleCommand(tk, Node::CommandElementList.new([sub_com, *command.args]), command.block)
 	new_com.pipeout = command.pipeout
 	command = new_com
       when SpecialToken
@@ -528,6 +525,22 @@ module Reish
 #      "((defined? #{val.value}) ? #{val.value} : (raise NameError, \"undefined variable `#{val.value}' for #{self}\"))"
 #    end
 
+    def visit_composite_word(cword)
+      wc = false
+      str = cword.elements.collect{|e| 
+	case e
+	when WordToken
+	  e.accept(self)
+	when WildCardToken
+	  wc = true
+	  e.accept(self)
+	else
+	  '(' + e.accept(self) +').to_s'
+	end
+      }.join("+")
+      str = "("+str+").reish_result" if wc
+      str
+    end
 
     def visit_ruby_exp(exp)
       "("+exp.exp+")"

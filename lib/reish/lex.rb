@@ -211,6 +211,12 @@ module Reish
 
     end
 
+    attr_reader :io
+    attr_reader :prev_seek
+    attr_reader :prev_line_no
+    attr_reader :prev_char_no
+    attr_reader :space_seen
+
     attr_accessor :debug_lex_state
 
 #    attr_accessor :lex_state
@@ -321,12 +327,12 @@ module Reish
       begin
 	begin
 	  tk = @OP.match(@ruby_scanner)
-	  tk = EOFToken.new(@io, @prev_seek, @prev_line_no, @prev_char_no) unless tk
+	  tk = EOFToken.new(self) unless tk
 	  @space_seen = tk.kind_of?(SpaceToken)
 	  last_nl = (tk.token_id == :NL)
 	rescue SyntaxError
 	  raise if @exception_on_syntax_error
-	  tk = ErrorToken.new(@io, @prev_seek, @prev_line_no, @prev_char_no)
+	  tk = ErrorToken.new(self)
 	end
 
 #	puts "TOKEN: #{tk.inspect}"
@@ -347,21 +353,21 @@ module Reish
       @OP = IRB::SLex.new
 
       @OP.def_rules("\0", "\004", "\032") do |op, io|
-	EOFToken.new(io, @prev_seek, @prev_line_no, @prev_char_no)
+	EOFToken.new(self)
       end
 
       @OP.def_rules(" ", "\t", "\f", "\r", "\13") do |op, io|
       @space_seen = true
 	while io.getc =~ /[ \t\f\r\13]/; end
 	io.ungetc
-	SpaceToken.new(io, @prev_seek, @prev_line_no, @prev_char_no)
+	SpaceToken.new(self)
       end
 
       @OP.def_rule("\n") do
 	|op, io|
 	self.lex_state = EXPR_BEG
 	@continue = true
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :NL)
+	SimpleToken.new(self, :NL)
       end
 
       @OP.def_rule('\\') do
@@ -369,24 +375,23 @@ module Reish
 	if io.getc == "\n"
 	  @space_seen = true
 	  @continue = true
-	  SpaceToken.new(io, @prev_seek, @prev_line_no, @prev_char_no)
+	  SpaceToken.new(self)
 	else
 	  io.ungetc
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	  SimpleToken.new(self, op)
 	end
       end
 
       @OP.def_rules("=") do
       |op, io|
 	self.lex_state = EXPR_EQ_ARG
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "=")
+	ReservedWordToken.new(self, "=")
       end
 
       @OP.def_rule("=>") do
 	|op, io|
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :ASSOC)
+	SimpleToken.new(self, :ASSOC)
       end
-		   
 
       @OP.def_rules("'", '"') do
 	|op, io|
@@ -400,10 +405,10 @@ module Reish
 	  Token(op)
 	elsif @indent_stack.last == :BACK_QUOTE
 	  self.lex_state = EXPR_END
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :XSTRING_END)
+	  SimpleToken.new(self, :XSTRING_END)
 	else
 	  self.lex_state = EXPR_BEG
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :XSTRING_BEG)
+	  SimpleToken.new(self, :XSTRING_BEG)
 	end
       end
 
@@ -412,10 +417,10 @@ module Reish
 	cond_push(false)
 	if lex_state?(EXPR_ARG0) && !@space_seen
 	  self.lex_state = EXPR_ARG
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LPARLEN_ARG)
+	  SimpleToken.new(self, :LPARLEN_ARG)
 	else
 	  self.lex_state = EXPR_BEG
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	  SimpleToken.new(self, op)
 	end
       end
 
@@ -423,12 +428,12 @@ module Reish
  	|op, io|
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_A)
+	  SimpleToken.new(self,:LBLACK_A)
 	elsif @space_seen || lex_state?(EXPR_EQ_ARG)
 	  io.ungetc
 	  identify_wildcard(io)
 	else
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_I)
+	  SimpleToken.new(self,:LBLACK_I)
 	end
       end
 
@@ -437,10 +442,10 @@ module Reish
 
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_H)
+	  SimpleToken.new(self, :LBRACE_H)
 	elsif !@space_seen && lex_state?(EXPR_ARG0 | EXPR_ARG | EXPR_END)
 	  self.lex_state = EXPR_DO_BEG
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_I)
+	  SimpleToken.new(self, :LBRACE_I)
 	else
 	  io.ungetc
 	  identify_wildcard(io)
@@ -451,7 +456,7 @@ module Reish
 # 	|op, io|
 # 	cond_push(false)
 # 	self.lex_state = EXPR_BEG
-# 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+# 	SimpleToken.new(self, op)
 #       end
 
 
@@ -460,23 +465,23 @@ module Reish
 	|op, io|
 	cond_lexpop
 	self.lex_state = EXPR_END
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	SimpleToken.new(self, op)
       end
 
       @OP.def_rule("!") do
 	|op, io|
 	self.lex_state = EXPR_BEG
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :BANG)
+	ReservedWordToken.new(self, :BANG)
       end
 
       @OP.def_rule("|") do
 	|op, io|
 	if lex_state?(EXPR_BEG)
 	  self.lex_state = EXPR_ARG
-	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '|')
+	  SpecialToken.new(self, '|')
 	else # lex_state?(EXPR_DO_BEG)
 	  self.lex_state = EXPR_BEG
-	  ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '|')
+	  ReservedWordToken.new(self, '|')
 	end
       end
 
@@ -485,17 +490,17 @@ module Reish
 
 	if lex_state?(EXPR_END) || io.peek(0) =~ /\s/
 	  self.lex_state = EXPR_BEG
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	  SimpleToken.new(self,  op)
 	else
 	  self.lex_state = EXPR_FNAME
-	  ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :SYMBEG)
+	  ReservedWordToken.new(self, :SYMBEG)
 	end
       end
 
       @OP.def_rule("::") do
 	|op, io|
 	self.lex_state = EXPR_BEG
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :COLON2)
+	ReservedWordToken.new(self, :COLON2)
       end
 
       @OP.def_rule(".") do
@@ -503,25 +508,25 @@ module Reish
 
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :DOT_COMMAND)
+	  SimpleToken.new(self, :DOT_COMMAND)
 	elsif @space_seen
 	  io.ungetc
 	  identify_word(io)
 	else
 	  self.lex_state = EXPR_BEG
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, ".")
+	  SimpleToken.new(self, ".")
 	end
       end
 
       @OP.def_rule(";") do
 	|op, io|
 	self.lex_state = EXPR_BEG
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, ';')
+	SimpleToken.new(self, ';')
       end
 
 #      @OP.def_rule(",") do
 #	|op, io|
-#	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, ',')
+#	SimpleToken.new(self, ',')
 #      end
 
 
@@ -530,10 +535,10 @@ module Reish
 
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
-	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	  SpecialToken.new(self, op)
 	else
 	  self.lex_state = EXPR_BEG
-	  tk = SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, '&')
+	  tk = SimpleToken.new(self, '&')
 	end
       end
 
@@ -541,10 +546,10 @@ module Reish
 	|op, io|
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
-	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	  SpecialToken.new(self, op)
 	else
 	  self.lex_state = EXPR_BEG
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :AND_AND)
+	  SimpleToken.new(self, :AND_AND)
 	end
       end
 
@@ -552,10 +557,10 @@ module Reish
 	|op, io|
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
-	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	  SpecialToken.new(self, op)
 	else
 	  self.lex_state = EXPR_BEG
-	  SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :OR_OR)
+	  SimpleToken.new(self, :OR_OR)
 	end
       end
 
@@ -563,14 +568,14 @@ module Reish
  	|op, io|
  	cond_push(false)
  	self.lex_state = EXPR_ARG
- 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBLACK_A)
+ 	SimpleToken.new(self, :LBLACK_A)
       end
 
       @OP.def_rules("${", "%{") do
  	|op, io|
  	cond_push(false)
  	self.lex_state = EXPR_ARG
- 	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :LBRACE_H)
+ 	SimpleToken.new(self, :LBRACE_H)
       end
 
       @OP.def_rules("$/", "%/") do
@@ -608,24 +613,24 @@ module Reish
 	  |op, io|
 	  tid = Modifiers[mod]
 	  self.lex_state = TransState[tid]
-	  ReservedWordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, tid)
+	  ReservedWordToken.new(self, tid)
 	end
       end
 
       @OP.def_rule("$") do
 	|op, io|
 	self.lex_state = EXPR_BEG
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$")
+	SimpleToken.new(self, "$")
       end
 
       @OP.def_rules(*Redirections) do
 	|op, io|
 	if lex_state?(EXPR_BEG_ANY) && [">", "<", ">>", "<<"].include?(op)
 	  self.lex_state = EXPR_ARG
-	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	  SpecialToken.new(self, op)
 	else
 	  self.lex_state = EXPR_ARG
-	  ReservedWordToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, Redirection2ID[op])
+	  ReservedWordToken.new(self, Redirection2ID[op])
 	end
       end
 
@@ -634,7 +639,7 @@ module Reish
 
 	if /\s/ =~ io.peek(0)
 	  self.lex_state = EXPR_ARG
-	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	  SpecialToken.new(self, op)
 	else
 	  token = ""
 	  while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)\}\]]/ !~ ch
@@ -642,7 +647,7 @@ module Reish
 	  end
 	  io.ungetc
 	  self.lex_state = EXPR_ARG
-	  TestToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, token)
+	  TestToken.new(self, token)
 	end
       end
 
@@ -652,7 +657,7 @@ module Reish
 	@OP.def_rule(op, preproc) do
 	  |op, io|
 	  self.lex_state = EXPR_ARG
-	  SpecialToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, op)
+	  SpecialToken.new(self, op)
 	end
       end
 
@@ -680,7 +685,7 @@ module Reish
 	set_prompt &p
       end
       
-      RubyExpToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, exp)
+      RubyExpToken.new(self, exp)
     end
 
     def identify_id(io)
@@ -701,7 +706,7 @@ module Reish
 	identify_reserved_word(io, token, tid)
       else
 	self.lex_state = EXPR_ARG0
-	IDToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+	IDToken.new(self, token)
       end
     end
 
@@ -714,7 +719,7 @@ module Reish
       io.ungetc
 
       self.lex_state = EXPR_ARG0
-      PathToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+      PathToken.new(self, token)
     end
 
     def identify_word(io, token = "")
@@ -736,10 +741,10 @@ module Reish
 	  identify_reserved_word(io, token, tid)
 	else
 	  self.lex_state = EXPR_ARG
-	  IDToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+	  IDToken.new(self, token)
 	end
       else
-	WordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+	WordToken.new(self, token)
       end
     end
 
@@ -756,9 +761,9 @@ module Reish
 
       if PseudoVars.include?(tid)
 	self.lex_state = EXPR_END
-	PseudoVariableToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+	PseudoVariableToken.new(self, token)
       else
-	ReservedWordToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, tid)
+	ReservedWordToken.new(self, tid)
       end
     end
 
@@ -770,7 +775,7 @@ module Reish
       end
       io.ungetc
 
-      WildCardToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+      WildCardToken.new(self, token)
     end
 
     def identify_number(io, token = "")
@@ -803,12 +808,12 @@ module Reish
 	else
 	  if lex_state?(EXPR_BEG_ANY) && (/\s/ =~ ch || /[\|&;\(\)<>\{\[\}\]\.\:]/ =~ ch)
 	    self.lex_state = EXPR_END
-	    return IntegerToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+	    return IntegerToken.new(self, token)
 	  elsif  /\s/ !~ ch && /[\|&;\(\)<>\}\]]/ !~ ch
 	    return identify_word(io, token)
 	  else
 	    self.lex_state = EXPR_END
-	    return IntegerToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+	    return IntegerToken.new(self, token)
 	  end
 	end
 
@@ -839,7 +844,7 @@ module Reish
 	  token.concat ch
 	end
 	self.lex_state = EXPR_END
-	return IntegerToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+	return IntegerToken.new(self, token)
       end
 
       token_type = IntegerToken
@@ -888,17 +893,17 @@ module Reish
 	end
       end
       if !lex_state?(EXPR_BEG_ANY) && token_type==IntegerToken && /[<>]/ =~ io.peek(0)
-	return FidToken.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+	return FidToken.new(self, token)
       end
       self.lex_state = EXPR_END
-      token_type.new(io, @prev_seek, @prev_line_no ,@prev_char_no, token)
+      token_type.new(self, token)
     end
 
     def identify_string(op, io)
       @ltype = op
       begin
 	str = @ruby_scanner.identify_reish_string(op)
-	StringToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+	StringToken.new(self, str)
       ensure
 	self.lex_state = EXPR_END
 	@ltype = nil
@@ -909,7 +914,7 @@ module Reish
       @ltype = op
       begin
 	str = @ruby_scanner.identify_reish_string(op)
-	XStringToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+	XStringToken.new(self, str)
       ensure
 	self.lex_state = EXPR_END
 	@ltype = nil
@@ -920,7 +925,7 @@ module Reish
       @ltype = op
       begin
 	str = @ruby_scanner.identify_reish_string(op)
-	RegexpToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, str)
+	RegexpToken.new(self, str)
       ensure
 	self.lex_state = EXPR_END
 	@ltype = nil
@@ -946,7 +951,7 @@ module Reish
       raise NameError, "reserved word: #{token}" if PreservedWord[token]
 
       self.lex_state = EXPR_END
-      VariableToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, token)
+      VariableToken.new(self, token)
     end
 
     def identify_gvar(op, io)
@@ -954,19 +959,19 @@ module Reish
 
       case ch = io.getc
       when /[~_*$?!@\/\\;,=:<>".]/   #"
-	VariableToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$"+ch)
+	VariableToken.new(self, "$"+ch)
       when "-"
 	ch = io.getc
-	VariableToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$-"+ch)
+	VariableToken.new(self, "$-"+ch)
       when "&", "`", "'", "+"
-	VariableToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$"+ch)
+	VariableToken.new(self, "$"+ch)
       when /[1-9]/
 	token = ""
 	while ch = io.getc =~ /[0-9]/
 	  token.concat ch
 	end
 	io.ungetc
-	VariableToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, "$"+ch)
+	VariableToken.new(self, "$"+ch)
       when /\w/
 	io.ungetc
 	io.ungetc
