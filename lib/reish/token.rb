@@ -53,6 +53,13 @@ module Reish
     
     attr_reader :exp
 
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	"#<RubyExp: l=#{@line_no}, c=#{@char_no}, exp=#{@exp}>"
+      else
+	super
+      end
+    end
   end
 
   class CommandToken<Token
@@ -75,7 +82,7 @@ module Reish
 
     def inspect
       if Reish::INSPECT_LEBEL < 3
-	"#<#{inspect_tag}:#{@value.inspect}, l=#{@line_no}, c=#{@char_no}>"
+	"#<#{inspect_tag}:#{@value.inspect}: l=#{@line_no}, c=#{@char_no}>"
       else
 	super
       end
@@ -225,7 +232,7 @@ module Reish
 
     def inspect
       if Reish::INSPECT_LEBEL < 3
-	"#<Token:#{@tid}, l=#{@line_no}, c=#{@char_no}>"
+	"#<Token:#{@tid}: l=#{@line_no}, c=#{@char_no}>"
       else
 	super
       end
@@ -244,7 +251,7 @@ module Reish
 
     def inspect
       if Reish::INSPECT_LEBEL < 3
-	"#<Token:#{@name}, l=#{@line_no}, c=#{@char_no}>"
+	"#<Token:#{@name}: l=#{@line_no}, c=#{@char_no}>"
       else
 	super
       end
