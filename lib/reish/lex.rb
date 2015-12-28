@@ -772,7 +772,7 @@ p @space_seen
 
     def identify_wildcard(io, token = "")
       
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>]/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\"\']/ !~ ch
 	print ":", ch, ":" if Debug
 	token.concat ch
       end

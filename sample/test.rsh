@@ -281,3 +281,15 @@ echo foo-$ls()
 echo foo-$ls()bar
 echo foo-$ls(-l)
 echo foo-$ls(-l)bar
+
+echo "Composite Word+ワイルドカード"
+echo "foo"*
+echo "foo"*"bar"
+echo "foo"*"bar"*
+echo *"foo"
+echo *"foo"*
+echo *"foo"*"bar"
+
+
+
+

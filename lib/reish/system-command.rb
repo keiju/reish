@@ -253,6 +253,28 @@ module Reish
       @pattern = pat
     end
 
+    attr_reader :pattern
+
+    def +(other)
+      case other
+      when String
+	WildCard.new(@exenv, @pattern + other)
+      when WildCard
+	WildCard.new(@exenv, @pattern + other.pattern)
+      else
+	raise ArgumentError, "don't support this object's type(#{other})"
+      end
+    end
+
+    def right_assoc_plus(other)
+      case other
+      when String
+	WildCard.new(@exenv, other+@pattern)
+      else
+	raise ArgumentError, "don't support this object's type(#{other})"
+      end
+    end
+
     def ===(other)
       File.fnmatch?(@pattern, other)
     end
@@ -434,6 +456,18 @@ class Object
   def reish_eval(code, bind)
     Thread.current[:__REISH_SELF__] = self
     eval(%{Thread.current[:__REISH_SELF__].instance_eval %{#{code}}}, bind)
+  end
+end
+
+class String
+  alias plus_org +
+  
+  def +(other)
+    if other.class == Reish::WildCard
+      other.right_assoc_plus(self)
+    else
+      self.plus_org(other)
+    end
   end
 end
 
