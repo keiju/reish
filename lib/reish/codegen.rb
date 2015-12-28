@@ -365,7 +365,6 @@ module Reish
     def visit_simple_command(command)
       case command.name
       when TestToken
-p command
 	tk = IDToken.new(command.name.lex, "Reish::Test::test")
       
 	sub_com = StringToken.new(command.name.lex, command.name.value)

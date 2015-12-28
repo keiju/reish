@@ -241,5 +241,43 @@ for e in %[1 2 3]
   echo $e
 end
 
+echo "リダイレクション"
+ls -l > /tmp/reish-test
+cat < /tmp/reish-test
+cat < /tmp/reish-test > /tmp/reish-test2
+cat < /tmp/reish-test > /tmp/reish-test3
+cat < /tmp/reish-test >> /tmp/reish-test3
 
 
+echo "ワイルドカード"
+echo R*
+echo [a-z]*
+
+echo "Composite Word"
+echo foo(ls)
+echo foo(ls)bar
+echo foo(ls)bar(ls)
+echo (ls)foo
+echo (ls)foo(ls)
+echo (ls)foo(ls)bar
+
+echo foo"bar"
+echo foo"bar"baz
+echo foo"bar"baz"bax"
+
+echo "foo"bar
+echo "foo"bar"baz"
+echo "foo"bar"baz"bax
+
+echo foo`ls`
+echo foo`ls`bar
+echo foo`ls`bar`ls`
+echo `ls`foo
+echo `ls`foo`ls`
+echo `ls`foo`ls`bar
+
+echo foo-$ls
+echo foo-$ls()
+echo foo-$ls()bar
+echo foo-$ls(-l)
+echo foo-$ls(-l)bar

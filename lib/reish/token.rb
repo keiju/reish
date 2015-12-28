@@ -241,11 +241,43 @@ module Reish
     def token_id
       @name
     end
+
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	"#<Token:#{@name}, l=#{@line_no}, c=#{@char_no}>"
+      else
+	super
+      end
+    end
   end
 
-  class SpaceToken<Token; end
-  class EOFToken<Token; end
-  class ErrorToken<Token; end
+  class SpaceToken<Token
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	"#<SpaceToken:l=#{@line_no}, c=#{@char_no}>"
+      else
+	super
+      end
+    end
+  end
+  class EOFToken<Token
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	"#<EOFToken:l=#{@line_no}, c=#{@char_no}>"
+      else
+	super
+      end
+    end
+  end
+  class ErrorToken<Token
+    def inspect
+      if Reish::INSPECT_LEBEL < 3
+	"#<ErrorToken:l=#{@line_no}, c=#{@char_no}>"
+      else
+	super
+      end
+    end
+  end
 
   DirectlyTokenIDClasses = [
     RubyExpToken,

@@ -794,28 +794,34 @@ class Reish::Parser
   redirection:	'>' redirection_element
 	  {
 	    result = Node::Redirection(-1, ">", val[1])
+	    result.space_seen = val[0].space_seen
 	  }
 	| '<' redirection_element
 	  {
 	    result = Node::Redirection(-1, "<", val[1])
+	    result.space_seen = val[0].space_seen
 	  }
 	| FID '>' redirection_element
 	  {
 	    result = Node::Redirection(val[0], ">", val[2])
+	    result.space_seen = val[0].space_seen
 	  }
 	| FID '<' redirection_element
 	  {
 	    result = Node::Redirection(val[0], "<", val[2])
+	    result.space_seen = val[0].space_seen
 	  }
 	| REDIR_WORD '>' redirection_element
 	| REDIR_WORD '<' redirection_element
 	| GREATER_GREATER redirection_element
 	  {
 	    result = Node::Redirection(-1, ">>", val[1])
+	    result.space_seen = val[0].space_seen
 	  }
 	| FID GREATER_GREATER redirection_element
 	  {
 	    result = Node::Redirection(val[0], ">>", val[2])
+	    result.space_seen = val[0].space_seen
 	  }
 	| REDIR_WORD GREATER_GREATER redirection_element
 	| GREATER_BAR redirection_element
@@ -854,10 +860,12 @@ class Reish::Parser
 	| AND_GREATER redirection_element
 	  {
 	    result = Node::Redirection(-1, "&>", val[1])
+	    result.space_seen = val[0].space_seen
 	  }
 	| AND_GREATER_GREATER redirection_element
 	  {
 	    result = Node::Redirection(-1, "&>>", val[1])
+	    result.space_seen = val[0].space_seen
 	  }
 
   redirection_element: command_element_base

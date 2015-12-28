@@ -26,7 +26,6 @@ module Reish
       :EXPR_DOT,
       :EXPR_CLASS,
       :EXPR_EQ_ARG,
-      :EXPR_ARG0, 
    ]
     
     i = 1
@@ -35,7 +34,7 @@ module Reish
       i<<=1
     end
     EXPR_BEG_ANY= EXPR_BEG | EXPR_DO_BEG | EXPR_MID | EXPR_CLASS
-    EXPR_ARG_ANY= EXPR_ARG | EXPR_EQ_ARG | EXPR_ARG0
+    EXPR_ARG_ANY= EXPR_ARG | EXPR_EQ_ARG
 
     PreservedWord = {
       "class"	=> :CLASS, 
@@ -319,6 +318,7 @@ module Reish
     end
 
     def token
+      @pretoken = @token
       @prev_seek = @ruby_scanner.seek
       @prev_line_no = @ruby_scanner.line_no
       @prev_char_no = @ruby_scanner.char_no
@@ -326,22 +326,23 @@ module Reish
       last_nl = false
       begin
 	begin
-	  tk = @OP.match(@ruby_scanner)
-	  tk = EOFToken.new(self) unless tk
-	  @space_seen = tk.kind_of?(SpaceToken)
-	  last_nl = (tk.token_id == :NL)
+	  @token = @OP.match(@ruby_scanner)
+	  @token = EOFToken.new(self) unless @token
+	  @space_seen = @token.kind_of?(SpaceToken)
+	  last_nl = (@token.token_id == :NL)
 	rescue SyntaxError
 	  raise if @exception_on_syntax_error
-	  tk = ErrorToken.new(self)
+	  @token = ErrorToken.new(self)
 	end
 
-#	puts "TOKEN: #{tk.inspect}"
-      end while tk.kind_of?(SpaceToken) || nl_seen
+      end while @token.kind_of?(SpaceToken) || nl_seen
       nl_seen = last_nl
       @ruby_scanner.get_readed
-      tk
+#	puts "TOKEN: #{@token.inspect}"
+      @token
     end
 
+    attr_reader :preroken
     attr_reader :prev_line_no
 
     def racc_token
@@ -415,7 +416,9 @@ module Reish
       @OP.def_rule("(") do
 	|op, io|
 	cond_push(false)
-	if lex_state?(EXPR_ARG0) && !@space_seen
+p @pretoken
+p @space_seen
+	if !@space_seen && (IDToken === @pretoken || PathToken === @pretoken)
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(self, :LPARLEN_ARG)
 	else
@@ -443,7 +446,7 @@ module Reish
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(self, :LBRACE_H)
-	elsif !@space_seen && lex_state?(EXPR_ARG0 | EXPR_ARG | EXPR_END)
+	elsif !@space_seen && lex_state?(EXPR_ARG | EXPR_END)
 	  self.lex_state = EXPR_DO_BEG
 	  SimpleToken.new(self, :LBRACE_I)
 	else
@@ -705,7 +708,7 @@ module Reish
       if tid = PreservedWord[token]
 	identify_reserved_word(io, token, tid)
       else
-	self.lex_state = EXPR_ARG0
+	self.lex_state = EXPR_ARG
 	IDToken.new(self, token)
       end
     end
@@ -718,12 +721,12 @@ module Reish
       end
       io.ungetc
 
-      self.lex_state = EXPR_ARG0
+      self.lex_state = EXPR_ARG
       PathToken.new(self, token)
     end
 
     def identify_word(io, token = "")
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\}\]\`]/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\}\]\`\"\'\$]/ !~ ch
 	print ":", ch, ":" if Debug
 
 	break if ch == "=" && io.peek(0) == ">"

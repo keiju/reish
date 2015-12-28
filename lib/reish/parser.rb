@@ -13,7 +13,7 @@ require 'racc/parser.rb'
 module Reish
   class Parser < Racc::Parser
 
-module_eval(<<'...end parser.y/module_eval...', 'parser.y', 895)
+module_eval(<<'...end parser.y/module_eval...', 'parser.y', 903)
 
   def initialize(lex)
     @yydebug = true
@@ -2254,30 +2254,34 @@ module_eval(<<'.,.,', 'parser.y', 789)
 module_eval(<<'.,.,', 'parser.y', 795)
   def _reduce_185(val, _values, result)
     	    result = Node::Redirection(-1, ">", val[1])
+	    result.space_seen = val[0].space_seen
 	  
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 799)
+module_eval(<<'.,.,', 'parser.y', 800)
   def _reduce_186(val, _values, result)
     	    result = Node::Redirection(-1, "<", val[1])
+	    result.space_seen = val[0].space_seen
 	  
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 803)
+module_eval(<<'.,.,', 'parser.y', 805)
   def _reduce_187(val, _values, result)
     	    result = Node::Redirection(val[0], ">", val[2])
+	    result.space_seen = val[0].space_seen
 	  
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 807)
+module_eval(<<'.,.,', 'parser.y', 810)
   def _reduce_188(val, _values, result)
     	    result = Node::Redirection(val[0], "<", val[2])
+	    result.space_seen = val[0].space_seen
 	  
     result
   end
@@ -2287,17 +2291,19 @@ module_eval(<<'.,.,', 'parser.y', 807)
 
 # reduce 190 omitted
 
-module_eval(<<'.,.,', 'parser.y', 813)
+module_eval(<<'.,.,', 'parser.y', 817)
   def _reduce_191(val, _values, result)
     	    result = Node::Redirection(-1, ">>", val[1])
+	    result.space_seen = val[0].space_seen
 	  
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 817)
+module_eval(<<'.,.,', 'parser.y', 822)
   def _reduce_192(val, _values, result)
     	    result = Node::Redirection(val[0], ">>", val[2])
+	    result.space_seen = val[0].space_seen
 	  
     result
   end
@@ -2359,17 +2365,19 @@ module_eval(<<'.,.,', 'parser.y', 817)
 
 # reduce 220 omitted
 
-module_eval(<<'.,.,', 'parser.y', 855)
+module_eval(<<'.,.,', 'parser.y', 861)
   def _reduce_221(val, _values, result)
     	    result = Node::Redirection(-1, "&>", val[1])
+	    result.space_seen = val[0].space_seen
 	  
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 859)
+module_eval(<<'.,.,', 'parser.y', 866)
   def _reduce_222(val, _values, result)
     	    result = Node::Redirection(-1, "&>>", val[1])
+	    result.space_seen = val[0].space_seen
 	  
     result
   end
@@ -2395,42 +2403,42 @@ module_eval(<<'.,.,', 'parser.y', 859)
 
 # reduce 232 omitted
 
-module_eval(<<'.,.,', 'parser.y', 877)
+module_eval(<<'.,.,', 'parser.y', 885)
   def _reduce_233(val, _values, result)
     @lex.cond_push(true)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 878)
+module_eval(<<'.,.,', 'parser.y', 886)
   def _reduce_234(val, _values, result)
     @lex.cond_pop
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 880)
+module_eval(<<'.,.,', 'parser.y', 888)
   def _reduce_235(val, _values, result)
     @lex.lex_state = Lex::EXPR_BEG
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 881)
+module_eval(<<'.,.,', 'parser.y', 889)
   def _reduce_236(val, _values, result)
     @lex.lex_state = Lex::EXPR_ARG
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 882)
+module_eval(<<'.,.,', 'parser.y', 890)
   def _reduce_237(val, _values, result)
     @lex.lex_state = Lex::EXPR_END
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 884)
+module_eval(<<'.,.,', 'parser.y', 892)
   def _reduce_238(val, _values, result)
     @lex.indent_pop
     result

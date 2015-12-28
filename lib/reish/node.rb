@@ -750,12 +750,17 @@ module Reish
 	@id = id
 	@red = red
 	@over = over
+
+	@redirection
       end
 
       attr_reader :source
       attr_reader :id
       attr_reader :red
       attr_reader :over
+
+      attr_accessor :space_seen
+      alias space_seen? space_seen
 
       def_accept
     end
