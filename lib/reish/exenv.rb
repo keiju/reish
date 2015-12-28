@@ -38,8 +38,8 @@ module Reish
       init_bindmain(bind: bind, main: main)
 
       @pwd = Dir.pwd
-      @path = ENV["PATH"].split(":")
       @env = ENV
+      self.path = ENV["PATH"]
 
       @home = @env["HOME"]
       @hostname = nil
@@ -89,6 +89,8 @@ module Reish
 
     def chdir(path)
       @pwd = path
+      
+      rehash if @have_relative_path
     end
 
     attr_reader :env
@@ -136,9 +138,9 @@ module Reish
     def path=(path)
       case path
       when String
-	@system_path = path.split(":")
+	@path = path.split(":")
       when Array
-	@system_path = path
+	@path = path
       else
 	raise TypeError
       end
@@ -150,6 +152,8 @@ module Reish
       end
 
       @env["PATH"] = @path.join(":")
+
+      @have_relative_path = @path.find{|p| %r|^.\/| =~ p}
     end
 
 
