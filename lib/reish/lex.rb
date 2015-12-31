@@ -346,15 +346,25 @@ module Reish
     def lex_init
       @OP = IRB::SLex.new
 
-      @OP.def_rules("\0", "\004", "\032") do |op, io|
+      @OP.def_rules("\0", "\004", "\032") do 
+	|op, io|
 	EOFToken.new(io, @prev_seek, @prev_line_no, @prev_char_no)
       end
 
-      @OP.def_rules(" ", "\t", "\f", "\r", "\13") do |op, io|
-      @space_seen = true
+      @OP.def_rules(" ", "\t", "\f", "\r", "\13") do 
+	|op, io|
+	@space_seen = true
 	while io.getc =~ /[ \t\f\r\13]/; end
 	io.ungetc
 	SpaceToken.new(io, @prev_seek, @prev_line_no, @prev_char_no)
+      end
+
+      @OP.def_rule("#") do 
+	|op, io|
+	io.gets
+	self.lex_state = EXPR_BEG
+	@continue = true
+	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :NL)
       end
 
       @OP.def_rule("\n") do
