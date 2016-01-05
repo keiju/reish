@@ -1103,4 +1103,28 @@ class RubyLex
     end
   end
 
+  # patch for old irb
+  def getc
+    while @rests.empty?
+#      return nil unless buf_input
+      @rests.push nil unless buf_input
+    end
+    c = @rests.shift
+    if @here_header
+      @here_readed.push c
+    else
+      @readed.push c
+    end
+    @seek += 1
+    if c == "\n"
+      @line_no += 1 
+      @char_no = 0
+    else
+      @char_no += 1
+    end
+#print ":#{c}:"
+    c
+  end
+
+
 end
