@@ -189,7 +189,7 @@ module Reish
       super
       @lines = string.lines
       if /\n/ !~ @lines.last[-1] 
-	@lines.last.concat "\n"
+#	@lines.last.concat "\n"
       end
     end
 
