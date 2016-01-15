@@ -371,7 +371,7 @@ module Reish
 	io.gets
 	self.lex_state = EXPR_BEG
 	@continue = true
-	SimpleToken.new(io, @prev_seek, @prev_line_no, @prev_char_no, :NL)
+	SimpleToken.new(self, :NL)
       end
 
       @OP.def_rule("\n") do
