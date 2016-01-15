@@ -116,6 +116,8 @@ module Reish
     @CONF[:YYDEBUG] = false
     @CONF[:DEBUG_INPUT] = false
 
+    @CONF[:OPT_TEST_CMPL] = nil
+
     @CONF[:AT_EXIT] = []
     
     @CONF[:DEBUG_LEVEL] = 1
@@ -138,6 +140,8 @@ module Reish
       opt.on("--display-comp", "--display_comp"){@CONF[:DISPLAY_COMP]=true}
       opt.on("--debug-input", "--debug_input"){@CONF[:DEBUG_INPUT]=true}
       opt.on("--yydebug"){@CONF[:YYDEBUG] = true}
+
+      opt.on("--test-cmpl exp"){|v| @CONF[:OPT_TEST_CMPL] = v}
     end
     opt.parse!(ARGV)
   end

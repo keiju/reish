@@ -700,6 +700,7 @@ module Reish
 	  super
 	end
       end
+
       def_accept
     end
 

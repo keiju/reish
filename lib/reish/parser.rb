@@ -27,13 +27,21 @@ module_eval(<<'...end parser.y/module_eval...', 'parser.y', 903)
     @lex.racc_token
   end
 
-#   def on_error(token_id, token, value_stack)
-    
-#     puts "Reish: parse error: token line: #{token.line_no} char: #{token.char_no}"
-#     p value_stack
-#     raise
+  def next_roken_cmpl
+    @lex.racc_token_cmpl
+  end
 
-#   end
+    def on_error(token_id, token, value_stack)
+  
+      puts "Reish: parse error: token line: #{token.line_no} char: #{token.char_no}"
+      puts "TOKEN_ID: #{token_to_str(token_id)}"
+      puts "TOKEN: #{token.inspect}"
+      require "pp"
+      puts "VAULE_STACK: \n#{value_stack.pretty_inspect}"
+#      puts "_VAULES: \n#{self.pretty_inspect}"
+#      yyerrok
+      super
+    end
 
   def yyerror(token, msg)
     raise ParseError, msg

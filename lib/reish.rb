@@ -33,6 +33,23 @@ module Reish
     if @CONF[:OPT_C]
       im = StringInputMethod.new(@CONF[:OPT_C])
       sh = Shell.new(im)
+    elsif @CONF[:OPT_TEST_CMPL]
+      im = StringInputMethod.new(@CONF[:OPT_TEST_CMPL])
+      lex = Lex.new
+      parser = Parser.new(lex)
+      lex.set_input(im) do
+	if l = im.gets
+p l
+	  print l if @CONF[:VERBOSE]
+	else
+	  print "\n"
+	end
+	l
+      end
+      input_unit = parser.yyparse(lex, :racc_token_cmpl)
+      puts "INPUT: #{input_unit.inspect}"
+      exit
+
     elsif !ARGV.empty?
       f = ARGV.shift
       sh = Shell.new(f)

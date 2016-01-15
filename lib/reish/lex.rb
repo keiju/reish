@@ -317,6 +317,9 @@ module Reish
       @ruby_scanner.reset_input
     end
 
+    attr_reader :pretoken
+    attr_reader :prev_line_no
+
     def token
       @pretoken = @token
       @prev_seek = @ruby_scanner.seek
@@ -342,13 +345,51 @@ module Reish
       @token
     end
 
-    attr_reader :preroken
-    attr_reader :prev_line_no
+    def token_cmpl
+      @pretoken = @token
+      @prev_seek = @ruby_scanner.seek
+      @prev_line_no = @ruby_scanner.line_no
+      @prev_char_no = @ruby_scanner.char_no
+      nl_seen =false
+      last_nl = false
+      begin
+	begin
+	  @token = @OP.match(@ruby_scanner)
+	  @token = EOFToken.new(self) unless @token
+	  @space_seen = @token.kind_of?(SpaceToken)
+	  last_nl = (@token.token_id == :NL)
+	rescue SyntaxError
+	  raise if @exception_on_syntax_error
+	  @token= ErrorToken.new(self)
+	end
+
+      end while @token.kind_of?(SpaceToken) || nl_seen
+      nl_seen = last_nl
+      @ruby_scanner.get_readed
+	puts "TOKEN: #{@token.inspect}"
+      @token
+    end
 
     def racc_token
       tk = token
       [tk.token_id, tk]
     end
+
+    def racc_token_cmpl
+      begin
+	tk = token_cmpl
+	yield [tk.token_id, tk] 
+      end until EOFToken === tk
+    end
+
+#     def racc_token_cmpl
+#       prev = token_cmpl
+#       begin
+# 	tk = token_cmpl
+# 	yield [prev.token_id, prev] 
+# 	prev = tk
+#       end until EOFToken === tk
+#     end
 
     def lex_init
       @OP = IRB::SLex.new
