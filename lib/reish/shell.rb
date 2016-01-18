@@ -16,7 +16,7 @@ require "reish/system-command"
 
 require "reish/lex"
 require "reish/parser"
-require "reish/codegen"
+require "reish/code-generator"
 
 require "reish/input-method"
 require "irb/inspector"
