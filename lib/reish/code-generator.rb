@@ -104,15 +104,13 @@ module Reish
     end
 
     def visit_for_command(command)
-      vl = command.vars.collect{|v| v.accept(self)}.join(", ")
-      en = command.enum.accept(self)
-      sq = command.seq.accept(self)
-
-      code = "for #{vl} in #{en} do #{sq} end"
-      if command.pipein
-	"reish_eval(%{#{code}}, binding)"
-      else
-	code
+      super do |vl, en, sq|
+	code = "for #{vl.join(", ")} in #{en} do #{sq} end"
+	if command.pipein
+	  "reish_eval(%{#{code}}, binding)"
+	else
+	  code
+	end
       end
     end
 

@@ -97,6 +97,15 @@ module Reish
       yield c, n
     end
 
+    def visit_for_command(command)
+      vl = command.vars.collect{|v| v.accept(self)}
+      en = command.enum.accept(self)
+      sq = command.seq.accept(self)
+
+      yield vl, en, sq
+    end
+
+
     def visit_group(group)
       yield group.nodes.collect{|n| n.accept(self)}
     end
