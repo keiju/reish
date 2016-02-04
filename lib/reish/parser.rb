@@ -16,12 +16,14 @@ module Reish
 module_eval(<<'...end parser.y/module_eval...', 'parser.y', 903)
 
   def initialize(lex)
-    @yydebug = true
+    @yydebug = nil
+    @test_cmpl = nil
 
     @lex = lex
   end
 
   attr_accessor :yydebug
+  attr_accessor :test_cmpl
 
   def next_token
     @lex.racc_token
@@ -33,7 +35,7 @@ module_eval(<<'...end parser.y/module_eval...', 'parser.y', 903)
 
     def on_error(token_id, token, value_stack)
 
-      if @yydebug
+      if @yydebug || @test_cmpl
 	require "pp"
   
 	puts "Reish: parse error: token line: #{token.line_no} char: #{token.char_no}"
@@ -42,8 +44,11 @@ module_eval(<<'...end parser.y/module_eval...', 'parser.y', 903)
 	puts "VAULE_STACK: \n#{value_stack.pretty_inspect}"
 #      puts "_VAULES: \n#{self.pretty_inspect}"
 #      yyerrok
+
+	super unless @test_cmpl
+	@test_cmpl = value_stack
+	Reish::Fail ParserComplSupp
       end
-      super
     end
 
   def yyerror(token, msg)

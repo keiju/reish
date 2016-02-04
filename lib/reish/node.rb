@@ -553,7 +553,7 @@ module Reish
       def initialize(node)
 	super()
 	@nodes = node.nodes
-	@space_seen = @nodes.first.space_seen
+	@space_seen = !@nodes.empty? && @nodes.first.space_seen
       end
       
       attr_reader :nodes

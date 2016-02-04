@@ -344,7 +344,7 @@ module Reish
 #	puts "TOKEN: #{@token.inspect}"
       @token
     end
-
+    
     def token_cmpl
       @pretoken = @token
       @prev_seek = @ruby_scanner.seek
@@ -355,14 +355,18 @@ module Reish
       begin
 	begin
 	  @token = @OP.match(@ruby_scanner)
-	  @token = EOFToken.new(self) unless @token
-	  @space_seen = @token.kind_of?(SpaceToken)
+	  unless @token
+	    @token = EOFToken.new(self)
+	  else
+	    @space_seen = @token.kind_of?(SpaceToken)
+	  end
 	  last_nl = (@token.token_id == :NL)
 	rescue SyntaxError
 	  raise if @exception_on_syntax_error
 	  @token= ErrorToken.new(self)
 	end
 
+	puts "Tk: #{@token.inspect}"
       end while @token.kind_of?(SpaceToken) || nl_seen
       nl_seen = last_nl
       @ruby_scanner.get_readed

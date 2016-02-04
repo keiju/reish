@@ -20,4 +20,7 @@ module Reish
   def_exception :UndefinedPromptMode, 'プロンプトモード(%s)は定義されていません.'
   def_exception :NotExistCurrentShell, 'カレントシェルがありません.'
   def_exception :CommandNotFound, "コマンドが見つかりません(%s)"
+
+  def_exception :ParserComplSupp, "Parser completion support exception."
+
 end
