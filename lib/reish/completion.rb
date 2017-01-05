@@ -70,7 +70,7 @@ module Reish
 	  puts "IDENT CMPL: BEG"
 	elsif lex.lex_state?(Lex::EXPR_ARG)
 	  puts "IDENT CMPL: ARG"
-	elsif lex.lex_state?(Lex::EXPR_ARG)
+#	elsif lex.lex_state?(Lex::EXPR_ARG)
 	  
 	end
       end
