@@ -1,5 +1,13 @@
 * return/break/next/redo/retryの対応
-  rubyでは, 式中に上記のものを入れることができない.
+ #  rubyでは, 式中に上記のものを入れることができない.
+case expr に変更?
+単語の区切り方要検討
+ # foo =>baz
+ # foo baz=>
+PreservedWordH関係のパーズがおかしい
+ % end
+ とか
+DO/ENDの前に";"を必要にする方が良いか?
 計算式文 $expr ... end $expr{...}, %e...
 &
 テスト環境

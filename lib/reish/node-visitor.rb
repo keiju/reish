@@ -237,7 +237,7 @@ module Reish
 
     def visit_simple_command(command)
       name = command.name.accept(self)
-      args = command.args.collect{|e| e.accept(self)}
+      args =  command.args && command.args.collect{|e| e.accept(self)}
       blk = command.block && command.block.accept(self) 
       block_given? ? yield(name, args, blk) : [name, args, blk]
     end

@@ -26,6 +26,7 @@ module Reish
       :EXPR_DOT,
       :EXPR_CLASS,
       :EXPR_EQ_ARG,
+      :EXPR_INSTR  # for completion
    ]
     
     i = 1
@@ -267,14 +268,21 @@ module Reish
       @cond_stack.last
     end
 
+    def indent_current
+      @indent_stack.last
+    end
+
     def indent_push(tk)
       @indent += 1
       @indent_stack.push tk
+
+puts "INDNET_PUSH STACK: #{@indent_stack.inspect}"
     end
 
     def indent_pop
       @indent -= 1
       @indent_stack.pop
+puts "INDNET_POP STACK: #{@indent_stack.inspect}"
     end
 
     def set_input(io, p = nil, &block)
@@ -957,11 +965,16 @@ module Reish
 
     def identify_string(op, io)
       @ltype = op
+      st = EXPR_END
       begin
 	str = @ruby_scanner.identify_reish_string(op)
+	unless str
+	  str = @ruby_scanner.get_readed
+	  st = EXPR_INSTR
+	end
 	StringToken.new(self, str)
       ensure
-	self.lex_state = EXPR_END
+	self.lex_state = st
 	@ltype = nil
       end
     end

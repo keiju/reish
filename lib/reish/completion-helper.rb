@@ -274,12 +274,14 @@ module Reish
     def visit_simple_command(command)
       case command.name
       when TestToken
-	tk = IDToken.new(command.name.lex, "Reish::Test::test")
+# 	tk = IDToken.new(command.name.lex, "Reish::Test::test")
 	
-	sub_com = StringToken.new(command.name.lex, command.name.value)
-	new_com = Node::SimpleCommand(tk, Node::CommandElementList.new([sub_com, *command.args]), command.block)
-	new_com.pipeout = command.pipeout
-	command = new_com
+# 	sub_com = StringToken.new(command.name.lex, command.name.value)
+# 	new_com = Node::SimpleCommand(tk, Node::CommandElementList.new([sub_com, *command.args]), command.block)
+# 	new_com.pipeout = command.pipeout
+# 	command = new_com
+#puts "VISIT_SIMPLE_COMMAND: #{command.inspect}"
+
       when SpecialToken
 	return visit_special_command(command)
       end
@@ -290,7 +292,7 @@ module Reish
 
       find(command) do
 	super do |name, args, blk|
-	  name || args.inject(false){|r, e| r || e} || blk
+	  name || args && args.inject(false){|r, e| r || e} || blk
 	end
       end
     end

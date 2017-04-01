@@ -227,12 +227,24 @@ class Reish::Parser
 # 	    }
   simple_command_lparen: simple_command_lparen_header opt_do_block
 	    {
-	       result = Node::SimpleCommand(val[0][0], val[0][1], val[1])
+#  	       result = Node::SimpleCommand(val[0][0], val[0][1], val[1])
+	       result = val[0]
+	       result.block = val[1]
 	    }
 
-  simple_command_lparen_header: simple_command_header LPARLEN_ARG {@lex.indent_push(:LPAREN_ARG)} simple_command_element_list_p indent_pop ")" lex_end 
+  simple_command_lparen_header:  
+	simple_command_lparen_header0
+	simple_command_element_list_p indent_pop ")" lex_end 
 	    {
-	      result = [val[0], val[3]]
+	       result = val[0]
+	       result.set_args val[1]
+	    }
+
+  simple_command_lparen_header0: 
+	simple_command_header LPARLEN_ARG
+	    {
+	       @lex.indent_push(:LPAREN_ARG);
+      	       result = Node::SimpleCommand(val[0])
 	    }
 
   simple_command_element_list_p: opt_nl
@@ -932,7 +944,7 @@ end
 #      yyerrok
 
 	super unless @test_cmpl
-	@test_cmpl = value_stack
+	@test_cmpl = value_stack.dup
 	Reish::Fail ParserComplSupp
       end
     end

@@ -43,18 +43,20 @@ module Reish
       parsed = nil
       begin 
 	input_unit = [parser.yyparse(lex, :racc_token_cmpl)]
-	puts "PARSE COMLETION"
+	puts "PARSE COMPLETED"
 
 	parsed = true
 
       rescue ParserComplSupp
-	puts "PARSE IMCOMLETION"
+	puts "PARSE IMCOMLETED"
 	require "pp"
 	puts "TEST_CMPL:"
 	pp parser.test_cmpl
 
 	parsed = false
 	input_unit = parser.test_cmpl
+
+	puts "INDENT CURRENT: #{lex.indent_current.inspect}"
       end
 
       puts "INPUT UNIT:"
@@ -65,38 +67,146 @@ module Reish
       puts "LEX_STATE:"
       pp lex.lex_state_sym
 
-      if lex.space_seen
-	if lex.lex_state?(Lex::EXPR_BEG)
-	  puts "IDENT CMPL: BEG"
-	elsif lex.lex_state?(Lex::EXPR_ARG)
-	  puts "IDENT CMPL: ARG"
-#	elsif lex.lex_state?(Lex::EXPR_ARG)
-	  
-	end
-      end
-					  
-      
+#      if lex.lex_state?(Lex::EXPR_ARG) && lex.pretoken === ID && !lex.space_seen
+#	# ls
+#      elsif 
+
       puts "PATH:"
       path = find_path(input_unit, lex.pretoken)
       pp path
+      puts "PATH: END"
+
+      if lex.space_seen
+	if lex.lex_state?(Lex::EXPR_BEG | Lex::EXPR_DO_BEG)
+	  puts "IDENT CMPL: BEG"
+	  puts "CANDIDATE: ANY COMMAND"
+	elsif lex.lex_state?(Lex::EXPR_ARG | Lex::EXPR_END)
+	  puts "IDENT CMPL: ARG/END"
+	  
+	  receiver = find_argumentable_emlepment_in_path(lex.pretoken, path, input_unit)
+
+	  puts "CANDINATE: ARGUMENT OF: #{receiver.inspect}"
+	else
+	  # EXPR_MID | EXPR_ARG | EXPR_FNAME | 
+	  #   EXPR_DOT | EXPR_CLASS | EXPR_EQ_ARG
+
+	  puts "CANDINATE: ARGUMENT OF: UNKNOWN"
+	  puts "LEX STATE: #{lex.state_sym}"
+	end
+      else
+p lex.pretoken
+	case lex.pretoken
+	when SimpleToken
+	  case lex.pretoken.token_id
+	  when :NL, '\\', :ASSOC, :XSTRING_END, :XSTRING_BEG,
+	      :LPARLEN_ARG, "(", :LBLACK_A, :LBLACK_I, :LBRACE_H, :LBRACE_I,
+	      "]", ")", "}", ":", :DOT_COMMAND, ".", ';', :AND_AND, :OR_OR,
+	      :LBLACK_A, :LBRACE_H, "$"
+	    puts "CANDIDATE: ANY COMMAND"
+	  end
+	when SpecialToken
+	  case lex.pretoken.value
+	  when '|', "&", "&&", "||", "$", "-", "+", "/", "*", 
+	      ">=", "<=", "==", "<=>", "=~", "!~"
+	    puts "CANDIDATE: SPECIAL(#{lex.pretoken.value})"
+	  end
+	when ReservedWordToken
+	  case lex.pretoken.token_id
+	  when "=", :BANG, '|', :SYMBEG, :COLON2, 
+	      "$if", "$unless", "$while", "$until", "$rescue",
+	      *Lex::Redirection2ID.values, 
+	      *Lex::PseudoVars, 
+	      *Lex::PreservedWord.values
+	    puts "CANDIDATE: RESERVE(#{lex.pretoken.token_id})"
+	  end
+	when TestToken
+	  puts "CANDIDATE: TEST(#{lex.pretoken.value})"
+
+	when IDToken
+	  puts "CANDIDATE: ID(#{lex.pretoken.value})"
+	  
+	when WordToken
+	  receiver = find_argumentable_emlepment_in_path(lex.pretoken, path, input_unit)
+	  puts "CANDINATE: ARGUMENT: (#{lex.pretoken.value}) OF: #{receiver.inspect}"
+
+	when StringToken
+	  if lex.lex_state?(Lex::EXPR_INSTR)
+	    receiver = find_argumentable_emlepment_in_path(lex.pretoken, path, input_unit)
+	    puts "CANDINATE: ARGUMENT STR(#{lex.pretoken.inspect}) OF: #{receiver.inspect}"
+	  else
+	    receiver = find_argumentable_emlepment_in_path(lex.pretoken, path, input_unit)
+	    puts "CANDINATE: ANY ARGUMENT OF: #{receiver.inspect}"
+	  end
+	end
+      end
+    end
+
+    ARGUMENTABLE_ELEMENT = [
+      :IN,
+      #CASE,
+      :WHEN,
+      :BREAK,
+      :NEXT,
+      :RAISE,
+      :RETURN,
+      :YIELD,
+      :LBLACK_A,
+      :LBRACE_H,
+      :LPAREN_ARG,
+      :ID,
+      :PATH, 
+      :TEST, 
+      :SPECIAL,
+      Node::SimpleCommand
+    ]
+
+    def find_argumentable_emlepment_in_path(token, path, input_unit)
+      for p in path.reverse
+	case p
+	when *ARGUMENTABLE_ELEMENT
+puts "FAE PATH: #{p.inspect}"
+	  return p
+	end
+      end
+
+puts "FAE: search in INPUT_UNIT: #{input_unit.inspect}"
+
+      input_unit.reverse.each do |n|
+	case n
+	when *ARGUMENTABLE_ELEMENT
+puts "FAE IU: #{n.inspect}"
+	  return n
+	end
+      end
+      nil
     end
 
     def find_path(list, node)
-      list.reverse.collect do |tree|
-	next nil unless tree
+      path = []
+      list.reverse.each do |tree|
 
-	if tree.kind_of?(Token)
+	case tree
+	when nil
+	when Token
 	  if tree.equal?(node)
-	    next tree
-	  else
-	    next nil
+	    path.push tree
 	  end
+	when Node
+	  helper = CompletionHelper.new(node)
+	  tree.accept(helper)
+	  unless helper.path.empty?
+	    path = helper.path
+	  end
+	when Array
+	  p = find_path(tree, node)
+	  if p 
+	    path = p
+	  end
+	else
+	  raise "想定していないものです(#{tree.inspect})"
 	end
-	  
-	helper = CompletionHelper.new(node)
-	tree.accept(helper)
-	break helper.path unless helper.path.empty?
       end
+      path
     end
 
 

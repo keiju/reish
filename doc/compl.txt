@@ -1,0 +1,68 @@
+コンプレーションパターン
+
+# PARSE LEX_STATE LAST_TOKEN SPECE_SEEN
+* ls
+  C ARG ID NOSP
+* ls_
+  C ARG ID SP
+* ls_-l
+  C ARG WORD NOSP
+* ls_-l_
+  C ARG WORD SP
+* ls(
+  I ARG ( NOSP (INPUT UNIT ls "(")
+* ls(_
+  I ARG ( SP (INPUT UNIT ls "(")
+* ls(-
+  I ARG - NOSP (INPUT UNIT ls "(")
+* ls(-l
+  I ARG -l NOSP (INPUT UNIT ls "(" (EL WORD))
+* ls(-l_
+  I ARG -l SP (INPUT UNIT ls "(" (EL WORD))
+* ls(-l)
+  C END ) NOSP (IU ...)
+* ls|
+  I BEG | NOSP 
+* ls|_
+  I BEG | SP 
+* ls|c
+  C ARG ID NOSP
+* ls|cat_
+  C ARG ID SP
+* ls|cat_-
+  C ARG WORD SP
+* ls "
+  C END STR NOSP    # 下と区別つかないためidentiry_string要修正
+* ls ""
+  C END STR NOSP 
+* if
+  I BEG IF NOSP
+* if_
+  I BEG IF SP
+* if -f
+  I ARG -F NOSP (INPUT UNIT IF (PL -F))
+* if -f_
+  I ARG -F SP (INPUT UNIT IF (PL -F))
+
+
+--
+if spase_seen
+  # LAST TOKENの次が対象
+  case LEX_STATE
+  when BEG
+    # BEGになるものが候補
+  when ARG/END
+    # last argumentble_element のARGになる物が対象
+  end
+else #NOSP
+  case LAST_TOKEN
+  when TERM
+    # BEGになるものが候補
+  when STR
+    # 文字列が対象
+  else # WORD/ID
+    # last argumentble_element が対象
+  end
+end
+	
+
