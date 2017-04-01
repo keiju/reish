@@ -944,7 +944,7 @@ end
 #      yyerrok
 
 	super unless @test_cmpl
-	@test_cmpl = value_stack.dup
+	@test_cmpl = value_stack
 	Reish::Fail ParserComplSupp
       end
     end

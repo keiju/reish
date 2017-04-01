@@ -94,7 +94,6 @@ module Reish
 	  puts "LEX STATE: #{lex.state_sym}"
 	end
       else
-p lex.pretoken
 	case lex.pretoken
 	when SimpleToken
 	  case lex.pretoken.token_id
@@ -164,17 +163,17 @@ p lex.pretoken
       for p in path.reverse
 	case p
 	when *ARGUMENTABLE_ELEMENT
-puts "FAE PATH: #{p.inspect}"
+#puts "FAE PATH: #{p.inspect}"
 	  return p
 	end
       end
 
-puts "FAE: search in INPUT_UNIT: #{input_unit.inspect}"
+#puts "FAE: search in INPUT_UNIT: #{input_unit.inspect}"
 
       input_unit.reverse.each do |n|
 	case n
 	when *ARGUMENTABLE_ELEMENT
-puts "FAE IU: #{n.inspect}"
+#puts "FAE IU: #{n.inspect}"
 	  return n
 	end
       end
