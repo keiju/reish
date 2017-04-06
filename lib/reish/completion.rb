@@ -18,20 +18,20 @@ module Reish
 
   class Completor
 
-    def initialize(str)
-      @str = str
+    def initialize
+      @lex = Lex.new
+      @parser = Parser.new(@lex)
+
+      @lex.debug_lex_state=Reish::conf[:YYDEBUG]
+      @parser.yydebug = Reish::conf[:YYDEBUG]
+      @parser.test_cmpl = true
     end
 
-    def start
-      im = StringInputMethod.new(@str)
-      lex = Lex.new
-      parser = Parser.new(lex)
+    def candidate(str)
+      im = StringInputMethod.new(str)
 
-      lex.debug_lex_state=Reish::conf[:YYDEBUG]
-      parser.yydebug = Reish::conf[:YYDEBUG]
-      parser.test_cmpl = true
-
-      lex.set_input(im) do
+      @lex.initialize_input
+      @lex.set_input(im) do
 	if l = im.gets
 	  print l if Reish::conf[:VERBOSE]
 	else
@@ -42,7 +42,7 @@ module Reish
 
       parsed = nil
       begin 
-	input_unit = [parser.yyparse(lex, :racc_token_cmpl)]
+	input_unit = [@parser.yyparse(@lex, :racc_token_cmpl)]
 	puts "PARSE COMPLETED"
 
 	parsed = true
@@ -51,39 +51,39 @@ module Reish
 	puts "PARSE IMCOMLETED"
 	require "pp"
 	puts "TEST_CMPL:"
-	pp parser.test_cmpl
+	pp @parser.test_cmpl
 
 	parsed = false
-	input_unit = parser.test_cmpl
+	input_unit = @parser.test_cmpl
 
-	puts "INDENT CURRENT: #{lex.indent_current.inspect}"
+	puts "INDENT CURRENT: #{@lex.indent_current.inspect}"
       end
 
       puts "INPUT UNIT:"
       pp input_unit
-      puts "SPACE_SEEN: #{lex.space_seen}"
+      puts "SPACE_SEEN: #{@lex.space_seen}"
       puts "LAST_TOKEN:"
-      pp lex.pretoken
+      pp @lex.pretoken
       puts "LEX_STATE:"
-      pp lex.lex_state_sym
+      pp @lex.lex_state_sym
 
-#      if lex.lex_state?(Lex::EXPR_ARG) && lex.pretoken === ID && !lex.space_seen
+#      if @lex.lex_state?(Lex::EXPR_ARG) && @lex.pretoken === ID && !@lex.space_seen
 #	# ls
 #      elsif 
 
       puts "PATH:"
-      path = find_path(input_unit, lex.pretoken)
+      path = find_path(input_unit, @lex.pretoken)
       pp path
       puts "PATH: END"
 
-      if lex.space_seen
-	if lex.lex_state?(Lex::EXPR_BEG | Lex::EXPR_DO_BEG)
+      if @lex.space_seen
+	if @lex.lex_state?(Lex::EXPR_BEG | Lex::EXPR_DO_BEG)
 	  puts "IDENT CMPL: BEG"
 	  puts "CANDIDATE: ANY COMMAND"
-	elsif lex.lex_state?(Lex::EXPR_ARG | Lex::EXPR_END)
+	elsif @lex.lex_state?(Lex::EXPR_ARG | Lex::EXPR_END)
 	  puts "IDENT CMPL: ARG/END"
 	  
-	  receiver = find_argumentable_emlepment_in_path(lex.pretoken, path, input_unit)
+	  receiver = find_argumentable_emlepment_in_path(@lex.pretoken, path, input_unit)
 
 	  puts "CANDINATE: ARGUMENT OF: #{receiver.inspect}"
 	else
@@ -91,12 +91,12 @@ module Reish
 	  #   EXPR_DOT | EXPR_CLASS | EXPR_EQ_ARG
 
 	  puts "CANDINATE: ARGUMENT OF: UNKNOWN"
-	  puts "LEX STATE: #{lex.state_sym}"
+	  puts "LEX STATE: #{@lex.state_sym}"
 	end
       else
-	case lex.pretoken
+	case @lex.pretoken
 	when SimpleToken
-	  case lex.pretoken.token_id
+	  case @lex.pretoken.token_id
 	  when :NL, '\\', :ASSOC, :XSTRING_END, :XSTRING_BEG,
 	      :LPARLEN_ARG, "(", :LBLACK_A, :LBLACK_I, :LBRACE_H, :LBRACE_I,
 	      "]", ")", "}", ":", :DOT_COMMAND, ".", ';', :AND_AND, :OR_OR,
@@ -104,36 +104,36 @@ module Reish
 	    puts "CANDIDATE: ANY COMMAND"
 	  end
 	when SpecialToken
-	  case lex.pretoken.value
+	  case @lex.pretoken.value
 	  when '|', "&", "&&", "||", "$", "-", "+", "/", "*", 
 	      ">=", "<=", "==", "<=>", "=~", "!~"
-	    puts "CANDIDATE: SPECIAL(#{lex.pretoken.value})"
+	    puts "CANDIDATE: SPECIAL(#{@lex.pretoken.value})"
 	  end
 	when ReservedWordToken
-	  case lex.pretoken.token_id
+	  case @lex.pretoken.token_id
 	  when "=", :BANG, '|', :SYMBEG, :COLON2, 
 	      "$if", "$unless", "$while", "$until", "$rescue",
 	      *Lex::Redirection2ID.values, 
 	      *Lex::PseudoVars, 
 	      *Lex::PreservedWord.values
-	    puts "CANDIDATE: RESERVE(#{lex.pretoken.token_id})"
+	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})"
 	  end
 	when TestToken
-	  puts "CANDIDATE: TEST(#{lex.pretoken.value})"
+	  puts "CANDIDATE: TEST(#{@lex.pretoken.value})"
 
 	when IDToken
-	  puts "CANDIDATE: ID(#{lex.pretoken.value})"
+	  puts "CANDIDATE: ID(#{@lex.pretoken.value})"
 	  
 	when WordToken
-	  receiver = find_argumentable_emlepment_in_path(lex.pretoken, path, input_unit)
-	  puts "CANDINATE: ARGUMENT: (#{lex.pretoken.value}) OF: #{receiver.inspect}"
+	  receiver = find_argumentable_emlepment_in_path(@lex.pretoken, path, input_unit)
+	  puts "CANDINATE: ARGUMENT: (#{@lex.pretoken.value}) OF: #{receiver.inspect}"
 
 	when StringToken
-	  if lex.lex_state?(Lex::EXPR_INSTR)
-	    receiver = find_argumentable_emlepment_in_path(lex.pretoken, path, input_unit)
-	    puts "CANDINATE: ARGUMENT STR(#{lex.pretoken.inspect}) OF: #{receiver.inspect}"
+	  if @lex.lex_state?(Lex::EXPR_INSTR)
+	    receiver = find_argumentable_emlepment_in_path(@lex.pretoken, path, input_unit)
+	    puts "CANDINATE: ARGUMENT STR(#{@lex.pretoken.inspect}) OF: #{receiver.inspect}"
 	  else
-	    receiver = find_argumentable_emlepment_in_path(lex.pretoken, path, input_unit)
+	    receiver = find_argumentable_emlepment_in_path(@lex.pretoken, path, input_unit)
 	    puts "CANDINATE: ANY ARGUMENT OF: #{receiver.inspect}"
 	  end
 	end

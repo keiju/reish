@@ -35,8 +35,8 @@ module Reish
       im = StringInputMethod.new(@CONF[:OPT_C])
       sh = Shell.new(im)
     elsif @CONF[:OPT_TEST_CMPL]
-      compl = Completor.new(@CONF[:OPT_TEST_CMPL])
-      compl.start
+      compl = Completor.new
+      compl.candidate(@CONF[:OPT_TEST_CMPL])
       exit
     elsif !ARGV.empty?
       f = ARGV.shift
