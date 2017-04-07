@@ -207,8 +207,9 @@ module Reish
       @indent = 0
       @indent_stack = []
 
-      @debug_lex_state = false
+      @readed = ""
 
+      @debug_lex_state = false
     end
 
     attr_reader :io
@@ -216,6 +217,7 @@ module Reish
     attr_reader :prev_line_no
     attr_reader :prev_char_no
     attr_reader :space_seen
+    attr_reader :readed
 
     attr_accessor :debug_lex_state
 
@@ -285,6 +287,29 @@ puts "INDNET_PUSH STACK: #{@indent_stack.inspect}"
 puts "INDNET_POP STACK: #{@indent_stack.inspect}"
     end
 
+    def get_readed
+      readed = @ruby_scanner.get_readed
+      @readed.concat readed
+      readed
+    end
+
+    def append_readed(readed)
+      @readed.concat readed
+    end
+
+    def protect_readed
+      get_readed
+      s = yield
+      append_readed s
+      s
+    end
+
+    def reset_readed
+      e = @readed
+      @readed = ""
+      e
+    end
+
     def set_input(io, p = nil, &block)
       @io = io
       @ruby_scanner.set_input(io, p, &block)
@@ -348,7 +373,7 @@ puts "INDNET_POP STACK: #{@indent_stack.inspect}"
 
       end while @token.kind_of?(SpaceToken) || nl_seen
       nl_seen = last_nl
-      @ruby_scanner.get_readed
+      get_readed
 #	puts "TOKEN: #{@token.inspect}"
       @token
     end
@@ -377,7 +402,7 @@ puts "INDNET_POP STACK: #{@indent_stack.inspect}"
 	puts "Tk: #{@token.inspect}"
       end while @token.kind_of?(SpaceToken) || nl_seen
       nl_seen = last_nl
-      @ruby_scanner.get_readed
+      get_readed
 	puts "TOKEN: #{@token.inspect}"
       @token
     end
@@ -744,7 +769,7 @@ puts "INDNET_POP STACK: #{@indent_stack.inspect}"
 	set_prompt do |ltype, indent, continue, line_no|
 	  @io.prompt = "irb> "
 	end
-	exp = @ruby_scanner.identify_compstmt(close)
+	exp = protect_readed{@ruby_scanner.identify_compstmt(close)}
       ensure
 	set_prompt &p
       end
@@ -967,9 +992,9 @@ puts "INDNET_POP STACK: #{@indent_stack.inspect}"
       @ltype = op
       st = EXPR_END
       begin
-	str = @ruby_scanner.identify_reish_string(op)
+	str = protect_readed{@ruby_scanner.identify_reish_string(op)}
 	unless str
-	  str = @ruby_scanner.get_readed
+	  str = get_readed
 	  st = EXPR_INSTR
 	end
 	StringToken.new(self, str)
@@ -982,7 +1007,7 @@ puts "INDNET_POP STACK: #{@indent_stack.inspect}"
     def identify_xstring(op, io)
       @ltype = op
       begin
-	str = @ruby_scanner.identify_reish_string(op)
+	str = protect_readed{@ruby_scanner.identify_reish_string(op)}
 	XStringToken.new(self, str)
       ensure
 	self.lex_state = EXPR_END
@@ -993,7 +1018,7 @@ puts "INDNET_POP STACK: #{@indent_stack.inspect}"
     def identify_regexp(op, io)
       @ltype = op
       begin
-	str = @ruby_scanner.identify_reish_string(op)
+	str = protect_readed{@ruby_scanner.identify_reish_string(op)}
 	RegexpToken.new(self, str)
       ensure
 	self.lex_state = EXPR_END
@@ -1059,7 +1084,10 @@ class RubyLex
     
     @rests.clear
     @here_header.clear if @here_header
+
   end
+
+  attr_reader :prsing_exp
 
   def identify_compstmt(term)
     initialize_input
@@ -1166,6 +1194,7 @@ class RubyLex
       @quoted = reserve_quoted
     end
   end
+
 
   # patch for old irb
   def getc

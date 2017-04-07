@@ -119,7 +119,11 @@ module Reish
 	@current_input_unit = nil
 	begin
 	  @current_input_unit = @parser.do_parse
-	  p @current_input_unit if @exenv.debug_input
+	  input = @lex.reset_readed
+	  if @exenv.debug_input
+	    puts "input: #{input}"
+	    puts "input_unit: #{@current_input_unit}"
+	  end
 	rescue ParseError => exc
 	  puts exc.message
 	  @lex.reset_input
