@@ -1,4 +1,4 @@
-#
+1#
 #   reish/shell.rb - 
 #   	$Release Version: $
 #   	$Revision: 1.1 $
@@ -27,7 +27,7 @@ module Reish
   class Shell
     def initialize(input_method = nil)
 
-      @thread = Thread.current
+#      @thread = Thread.current
 
       @lex = Lex.new
       @parser = Parser.new(@lex)
@@ -42,8 +42,11 @@ module Reish
       @signal_status = :IN_IRB
     end
 
-    attr_reader :thread
+#    attr_reader :thread
     attr_reader :exenv
+
+    attr_reader :lex
+    attr_reader :completor
 
     def initialize_as_main_shell
       trap("SIGINT") do
@@ -58,6 +61,10 @@ module Reish
 	when nil
 	  if defined?(ReadlineInputMethod) && STDIN.tty?
 	    @io = ReadlineInputMethod.new
+	    if @exenv.completion?
+	      @completor = Completor.new(self) 
+	      @io.completor = @completor
+	    end
 	  else
 	    @io = StdioInputMethod.new
 	  end

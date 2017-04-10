@@ -34,6 +34,7 @@ module Reish
       @back_trace_limit = Reish.conf[:BACK_TRACE_LIMIT]
 
       @use_readline = Reish.conf[:USE_READLINE]
+      @completion = Reish.conf[:COMPLETION]
 
       init_bindmain(bind: bind, main: main)
 
@@ -76,6 +77,9 @@ module Reish
 
     attr_reader :use_readline
     alias use_readline? use_readline
+
+    attr_reader :completion
+    alias completion? completion
 
     attr_reader :pwd
 

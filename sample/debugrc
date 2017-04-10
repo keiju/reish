@@ -1,4 +1,5 @@
 
+Reish.conf[:COMPLETION] = true
 
 Reish.conf[:DISPLAY_COMP] = true
 Reish.conf[:DEBUG_INPUT] = true

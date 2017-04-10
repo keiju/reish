@@ -133,7 +133,12 @@ module Reish
 
         @stdin = IO.open(STDIN.to_i, :external_encoding => Reish.conf[:LOCALE].encoding, :internal_encoding => "-")
         @stdout = IO.open(STDOUT.to_i, 'w', :external_encoding => Reish.conf[:LOCALE].encoding, :internal_encoding => "-")
+
+	@completor = nil
+
       end
+
+      attr_accessor :completor
 
       # Reads the next line from this input method.
       #
@@ -141,6 +146,9 @@ module Reish
       def gets
         Readline.input = @stdin
         Readline.output = @stdout
+
+	Readline.completion_proc = @completor.completion_proc if @completor
+
         if l = readline(@prompt, false)
           HISTORY.push(l) if !l.empty?
           @line[@line_no += 1] = l + "\n"

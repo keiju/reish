@@ -18,14 +18,30 @@ module Reish
 
   class Completor
 
-    def initialize
+    def initialize(shell)
+      @shell = shell
+
       @lex = Lex.new
       @parser = Parser.new(@lex)
 
       @lex.debug_lex_state=Reish::conf[:YYDEBUG]
       @parser.yydebug = Reish::conf[:YYDEBUG]
       @parser.test_cmpl = true
+
+      @completion_proc = proc{|input|
+	puts "input: #{input}"
+    
+	expr = @shell.lex.readed
+	expr.concat Readline.line_buffer
+	
+	puts "input all: #{expr}"
+
+	candidate(expr)
+      }
+
     end
+
+    attr_reader :completion_proc
 
     def candidate(str)
       im = StringInputMethod.new(str)
@@ -208,7 +224,6 @@ module Reish
       path
     end
 
-
     ReservedWords = [
       "BEGIN", "END",
       "alias", "and", 
@@ -229,7 +244,7 @@ module Reish
       "yield",
     ]
       
-    CompletionProc = proc{ |input|
+    CompletionProc2 = proc{ |input|
       shell = Reish::current_shell
       
       puts "input: #{input}"
@@ -422,10 +437,11 @@ puts "E"
       end
     end
   end
+
 end
 
 if Readline.respond_to?("basic_word_break_characters=")
   Readline.basic_word_break_characters= " \t\n\"\\'`><=;|&{("
 end
 Readline.completion_append_character = nil
-Readline.completion_proc = Reish::Completor::CompletionProc
+#Readline.completion_proc = Reish::Completor::CompletionProc
