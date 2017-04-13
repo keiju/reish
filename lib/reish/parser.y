@@ -207,13 +207,20 @@ class Reish::Parser
 
   simple_command: simple_command_header simple_command_element_list1 opt_do_block
 	    {
-	       result = Node::SimpleCommand(val[0], val[1], val[2])
+#	       result = Node::SimpleCommand(val[0], val[1], val[2])
+	       result = val[0]
+	       result.set_args val[1]
+	       result.block = val[2]
 	    }
 #	| simple_strict_command
 
   simple_strict_command: simple_command_header opt_do_block
 	    {
-  	       result = Node::SimpleCommand(val[0], Node::CommandElementList.new, val[1])
+#  	       result = Node::SimpleCommand(val[0], Node::CommandElementList.new, val[1])
+	       result = val[0]
+	       result.set_args Node::CommandElementList.new
+	       result.block = val[1]
+
 	    }
 	| simple_command_lparen
 
@@ -244,7 +251,7 @@ class Reish::Parser
 	simple_command_header LPARLEN_ARG
 	    {
 	       @lex.indent_push(:LPAREN_ARG);
-      	       result = Node::SimpleCommand(val[0])
+      	       result = val[0]
 	    }
 
   simple_command_element_list_p: opt_nl
@@ -308,9 +315,21 @@ class Reish::Parser
 	    }
 
   simple_command_header: ID
+	    {
+      	       result = Node::SimpleCommand(val[0])
+	    }
 	| PATH
+	    {
+      	       result = Node::SimpleCommand(val[0])
+	    }
 	| TEST
+	    {
+      	       result = Node::SimpleCommand(val[0])
+	    }
 	| SPECIAL
+	    {
+      	       result = Node::SimpleCommand(val[0])
+	    }
 
   simple_command_element_list: 
 	    {
