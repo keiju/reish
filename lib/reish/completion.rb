@@ -12,7 +12,7 @@
 #
 require "pp"
 
-require "reish/completion-helper"
+require "reish/path-finder"
 
 module Reish
 
@@ -207,10 +207,10 @@ module Reish
 	    path.push tree
 	  end
 	when Node
-	  helper = CompletionHelper.new(node)
-	  tree.accept(helper)
-	  unless helper.path.empty?
-	    path = helper.path
+	  finder = PathFinder.new(node)
+	  tree.accept(finder)
+	  unless finder.path.empty?
+	    path = finder.path
 	  end
 	when Array
 	  p = find_path(tree, node)
