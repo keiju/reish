@@ -15,7 +15,7 @@ require "reish/node-visitor"
 
 module Reish
 
-  class CompletionHelper<NodeVisitor
+  class PathFinder<NodeVisitor
     def initialize(target)
       @target = target
       @path = []
