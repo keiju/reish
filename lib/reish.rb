@@ -35,7 +35,7 @@ module Reish
       im = StringInputMethod.new(@CONF[:OPT_C])
       sh = Shell.new(im)
     elsif @CONF[:OPT_TEST_CMPL]
-      compl = Completor.new
+      compl = Completor.new(Shell.new)
       compl.candidate(@CONF[:OPT_TEST_CMPL])
       exit
     elsif !ARGV.empty?
@@ -97,3 +97,4 @@ end
 class Object
   include Reish::OSSpace
 end
+

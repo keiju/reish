@@ -1,4 +1,4 @@
-1#
+#
 #   reish/shell.rb - 
 #   	$Release Version: $
 #   	$Revision: 1.1 $
@@ -319,6 +319,24 @@ module Reish
 
     def rehash
       @command_cache = COMMAND_CACHE_BASE.dup
+    end
+
+    def all_commands(prefix = "")
+      commands = []
+      for dir_name in @exenv.path
+	d = File.expand_path(dir_name, @exenv.pwd)
+	begin
+	  Dir::foreach(d) do |p|
+	    if File.executable?(p) && p.start_with?(prefix)
+	      commands.push p 
+	    end
+	  end
+	rescue Errno::ENOENT
+	end
+      end
+
+      commands.sort!.uniq!
+      commands
     end
 
     def send_with_redirection(receiver, method, args, reds, &block)

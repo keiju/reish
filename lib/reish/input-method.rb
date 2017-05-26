@@ -196,6 +196,7 @@ module Reish
     def initialize(string)
       super
       @lines = string.lines
+      @lines = [""] if @lines.empty?
       if /\n/ !~ @lines.last[-1] 
 #	@lines.last.concat "\n"
       end

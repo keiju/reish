@@ -39,11 +39,17 @@ module Reish
 	candidate(expr)
       }
 
+      Readline.completion_proc = @completion_proc
     end
 
     attr_reader :completion_proc
 
     def candidate(str)
+      if str == ""
+	puts "input: ''"
+	return candidate_any_commands 
+      end
+
       im = StringInputMethod.new(str)
 
       @lex.initialize_input
@@ -96,12 +102,19 @@ module Reish
 	if @lex.lex_state?(Lex::EXPR_BEG | Lex::EXPR_DO_BEG)
 	  puts "IDENT CMPL: BEG"
 	  puts "CANDIDATE: ANY COMMAND"
+
+	  candidate_any_commands
+
 	elsif @lex.lex_state?(Lex::EXPR_ARG | Lex::EXPR_END)
 	  puts "IDENT CMPL: ARG/END"
 	  
-	  receiver = find_argumentable_emlepment_in_path(@lex.pretoken, path, input_unit)
+	  command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
 
-	  puts "CANDINATE: ARGUMENT OF: #{receiver.inspect}"
+	  puts "CANDINATE: ARGUMENT OF: #{command.inspect}"
+	  
+	  candidate_arguments_of(receiver)
+
+
 	else
 	  # EXPR_MID | EXPR_ARG | EXPR_FNAME | 
 	  #   EXPR_DOT | EXPR_CLASS | EXPR_EQ_ARG
@@ -141,15 +154,15 @@ module Reish
 	  puts "CANDIDATE: ID(#{@lex.pretoken.value})"
 	  
 	when WordToken
-	  receiver = find_argumentable_emlepment_in_path(@lex.pretoken, path, input_unit)
+	  receiver = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
 	  puts "CANDINATE: ARGUMENT: (#{@lex.pretoken.value}) OF: #{receiver.inspect}"
 
 	when StringToken
 	  if @lex.lex_state?(Lex::EXPR_INSTR)
-	    receiver = find_argumentable_emlepment_in_path(@lex.pretoken, path, input_unit)
+	    receiver = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
 	    puts "CANDINATE: ARGUMENT STR(#{@lex.pretoken.inspect}) OF: #{receiver.inspect}"
 	  else
-	    receiver = find_argumentable_emlepment_in_path(@lex.pretoken, path, input_unit)
+	    receiver = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
 	    puts "CANDINATE: ANY ARGUMENT OF: #{receiver.inspect}"
 	  end
 	end
@@ -168,14 +181,14 @@ module Reish
       :LBLACK_A,
       :LBRACE_H,
       :LPAREN_ARG,
-      :ID,
-      :PATH, 
-      :TEST, 
-      :SPECIAL,
+#      :ID,
+#      :PATH, 
+#      :TEST, 
+#      :SPECIAL,
       Node::SimpleCommand
     ]
 
-    def find_argumentable_emlepment_in_path(token, path, input_unit)
+    def find_argumentable_element_in_path(token, path, input_unit)
       for p in path.reverse
 	case p
 	when *ARGUMENTABLE_ELEMENT
@@ -234,8 +247,7 @@ module Reish
       "false", "for", 
       "if", "in", 
       "module", 
-      "next", "nil", "not",
-      "or", 
+      "next", "nil",
       "redo", "rescue", "retry", "return",
       "self", "super",
       "then", "true",
@@ -243,6 +255,30 @@ module Reish
       "when", "while",
       "yield",
     ]
+
+    def candidate_any_commands
+      eval("methods | private_methods | local_variables | self.class.constants",
+	   @shell.exenv.binding).collect{|m| m.to_s} | 
+	@shell.all_commands
+    end
+
+    # top level command call
+    def candidate_argument_of(command)
+      case command
+      when Node::SimpleCommand
+
+	arg = CompCommandArg.new(@shell.exenv.main,
+				 command.name,
+				 command.args,
+				 nil,
+				 @shell.exenv.binding)
+	arg.candidates
+	
+      else # when :IN, :WHEN, :BREAK, :NEXT, :RAISE, :RETURN, :YIELD
+	raise "not implemented"
+      end
+    end
+
       
     CompletionProc2 = proc{ |input|
       shell = Reish::current_shell
@@ -444,4 +480,4 @@ if Readline.respond_to?("basic_word_break_characters=")
   Readline.basic_word_break_characters= " \t\n\"\\'`><=;|&{("
 end
 Readline.completion_append_character = nil
-#Readline.completion_proc = Reish::Completor::CompletionProc
+#Readline.completion_proc = Reish::Completor.new(Reish::current_shell).completion_proc
