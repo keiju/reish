@@ -13,6 +13,7 @@
 require "pp"
 
 require "reish/path-finder"
+require "reish/compspec"
 
 module Reish
 
@@ -112,7 +113,7 @@ module Reish
 
 	  puts "CANDINATE: ARGUMENT OF: #{command.inspect}"
 	  
-	  candidate_arguments_of(receiver)
+	  candidate_argument_of(command)
 
 
 	else
