@@ -132,6 +132,7 @@ module Reish
 	      "]", ")", "}", ":", :DOT_COMMAND, ".", ';', :AND_AND, :OR_OR,
 	      :LBLACK_A, :LBRACE_H, "$"
 	    puts "CANDIDATE: ANY COMMAND"
+	    candidate_any_commands
 	  end
 	when SpecialToken
 	  case @lex.pretoken.value
