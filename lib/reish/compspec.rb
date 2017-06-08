@@ -7,23 +7,27 @@ module Reish
   class CompSpec
 
     N2Spec = {}
-    K2Spec = {}
+    M2Spec = {}
 
     def CompSpec.def_command(name, spec)
       N2Spec[n] = spec
     end
 
     def CompSpec.def_method(klass, name, spec)
-      K2Spec[klass, name] = spec
+      M2Spec[[klass, name]] = spec
     end
 
     def CompSpec.spec(receiver, name)
       unless  /^\// =~ name
-	spec = K2Spec[[receiver.class, name]]
-	return spec if spec
+	for cls in receiver.class.ancestors
+	  spec = M2Spec[[cls, name]]
+	  if spec
+	    puts "Match CompSpec for #{cls}##{name} spec: #{spec.inspect}"
+	    return spec
+	  end
+	end
 	return RubyMethodCS if receiver.respond_to?(name)
       end
-
       spec = N2Spec[name]
       rerurn spec if spec
       DefaultSystemCommandCS
@@ -103,8 +107,15 @@ module Reish
     attr_reader :comp_arg
 
     def candidates
-      spec = Reish::CompSpec(@receiver, @name.value)
-p spec
+      case @name
+      when IDToken
+	n = @name.value
+      when SpecialToken
+	n = "Special#"+@name.value
+      else
+	raise "not implemented for token: #{@name.inspect}"
+      end
+      spec = Reish::CompSpec(@receiver, n)
       spec.arg_candidates(self)
     end
   end
@@ -120,5 +131,19 @@ p spec
   DefaultSystemCommandCS.arg_proc = DefaultSystemCommandCS.files_arg_proc
   DefaultSystemCommandCS.ret_proc = proc{|call| SystemCommand}
 
+  CompSpec.def_method Object, "Special#|", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#&", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#&&", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#||", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#-", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#+", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#/", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#*", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#>=", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#<=", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#==", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#<=>", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#=~", DefaultRubyMethodCS
+  CompSpec.def_method Object, "Special#!~", DefaultRubyMethodCS
 end
 

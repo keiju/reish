@@ -26,6 +26,12 @@ module Reish
     def find(node)
       @path.push node
       return node if @target.equal?(node)
+#       if block_given? && r = yield
+# 	@path
+#       else
+# 	@path.pop
+# 	nil
+#       end
       block_given? && yield || @path.pop && nil
 #       if block_given?
 # 	r = yield
@@ -324,7 +330,7 @@ module Reish
     def visit_special_command(command)
       find(command) do 
 	super do |op, args|
-	  args.inject(false){|r, e| r || e}
+	  op || args && args.inject(false){|r, e| r || e}
 	end
       end
     end

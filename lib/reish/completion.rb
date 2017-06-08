@@ -31,10 +31,7 @@ module Reish
 
       @completion_proc = proc{|input|
 	puts "input: #{input}"
-    
-	expr = @shell.lex.readed
-	expr.concat Readline.line_buffer
-	
+	expr = @shell.lex.readed + Readline.line_buffer
 	puts "input all: #{expr}"
 
 	candidate(expr)
@@ -117,6 +114,7 @@ module Reish
 
 
 	else
+	  # ここは来ない?
 	  # EXPR_MID | EXPR_ARG | EXPR_FNAME | 
 	  #   EXPR_DOT | EXPR_CLASS | EXPR_EQ_ARG
 
@@ -129,16 +127,23 @@ module Reish
 	  case @lex.pretoken.token_id
 	  when :NL, '\\', :ASSOC, :XSTRING_END, :XSTRING_BEG,
 	      :LPARLEN_ARG, "(", :LBLACK_A, :LBLACK_I, :LBRACE_H, :LBRACE_I,
-	      "]", ")", "}", ":", :DOT_COMMAND, ".", ';', :AND_AND, :OR_OR,
+	      "]", ")", "}", ":", :DOT_COMMAND, ".", ';', '&', :AND_AND, :OR_OR,
 	      :LBLACK_A, :LBRACE_H, "$"
 	    puts "CANDIDATE: ANY COMMAND"
 	    candidate_any_commands
+	  else
+	    # ここは来ないはず
+	    puts "CANDINATE: UNKNOWN"
+	    puts "LEX STATE: #{@lex.state_sym}"
+	    
 	  end
 	when SpecialToken
 	  case @lex.pretoken.value
 	  when '|', "&", "&&", "||", "$", "-", "+", "/", "*", 
 	      ">=", "<=", "==", "<=>", "=~", "!~"
 	    puts "CANDIDATE: SPECIAL(#{@lex.pretoken.value})"
+	    candidate_argument_of(path[-2])
+	    
 	  end
 	when ReservedWordToken
 	  case @lex.pretoken.token_id
@@ -276,8 +281,9 @@ module Reish
 				 @shell.exenv.binding)
 	arg.candidates
 	
+	
       else # when :IN, :WHEN, :BREAK, :NEXT, :RAISE, :RETURN, :YIELD
-	raise "not implemented"
+	raise "not implemented for command: #{command.inspect}"
       end
     end
 
