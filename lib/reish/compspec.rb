@@ -52,7 +52,7 @@ module Reish
       Object
     end
 
-    def objects(call, filer: nil)
+    def objects(call, filer=nil)
       []
     end
 
@@ -60,7 +60,9 @@ module Reish
       proc{|call| objects(call)}
     end
 
-    def files(call, filter: nil)
+    
+    # filter: nil 指定なし, true 
+    def files(call, filter=nil)
       exenv = eval("@exenv", call.bind)
       if exenv
 	pwd = exenv.pwd
@@ -70,8 +72,8 @@ module Reish
 
       arg = nil
       if filter
-	if filter == true && 
-	    arg = call.comp_arg
+	if filter == true
+	  arg = call.comp_arg
 	else
 	  arg = filter
 	end
@@ -88,8 +90,42 @@ module Reish
     def files_arg_proc
       proc{|call| files(call)}
     end
-  end
 
+    def commands(call, filter=nil)
+      exenv = eval("@exenv", call.bind)
+      shell = exenv.shell
+      filter shell.all_commands, call, filter
+    end
+
+    def commands_arg_proc
+      proc{|call| commands(call)}
+    end
+
+    def symbols(call, filter=nil)
+      filter Symbol.all_symbols.collect{|s| ":" + s.id2name}, call, filter
+    end
+
+    def symbols_arg_proc
+      proc{|call| symbols(call)}
+    end
+
+    def filter(candidates, call, filter=nil)
+      arg = nil
+      if filter
+	if filter == true
+	  arg = call.comp_arg
+	else
+	  arg = filter
+	end
+      end
+
+      if arg
+	candidates.select{|c| c[0..arg.size] == arg}
+      else
+	candidates
+      end
+    end
+  end
   
   class CompCommandArg
     def initialize(receiver, name, args, last_arg, bind)
@@ -112,6 +148,13 @@ module Reish
 	n = @name.value
       when SpecialToken
 	n = "Special#"+@name.value
+
+      when ReservedWordToken
+	n = "RESERVED#"+@name.token_id.to_s
+
+      when TestToken
+	n = "TEST#"+@name.token_id.to_s
+
       else
 	raise "not implemented for token: #{@name.inspect}"
       end
@@ -145,5 +188,41 @@ module Reish
   CompSpec.def_method Object, "Special#<=>", DefaultRubyMethodCS
   CompSpec.def_method Object, "Special#=~", DefaultRubyMethodCS
   CompSpec.def_method Object, "Special#!~", DefaultRubyMethodCS
+
+  CompSpec.def_method Object, "RESERVED#=", DefaultSystemCommandCS
+
+  command_arg_cs = CompSpec.new
+  command_arg_cs.arg_proc = command_arg_cs.commands_arg_proc
+  command_arg_cs.ret_proc = proc{|call| Object}
+  CompSpec.def_method Object, "RESERVED#BANG", command_arg_cs
+  CompSpec.def_method Object, "RESERVED#|", command_arg_cs
+
+  symbols_arg_cs = CompSpec.new
+  symbols_arg_cs.arg_proc = symbols_arg_cs.symbols_arg_proc
+  symbols_arg_cs.ret_proc = proc{|call| Object}
+  CompSpec.def_method Object, "RESERVED#SYMBEG", symbols_arg_cs
+
+  CompSpec.def_method Object, "RESERVED#COLON2", command_arg_cs
+
+  # 未実装 :MOD_IF, :MOD_UNLESS, :MOD_WHILE, :MOD_UNTIL,  :MOD_RESCUE
+
+  CompSpec.def_method Object, "RESERVED#>", DefaultSystemCommandCS
+  CompSpec.def_method Object, "RESERVED#<", DefaultSystemCommandCS
+  CompSpec.def_method Object, "RESERVED#GREATER_GREATER", DefaultSystemCommandCS
+  CompSpec.def_method Object, "RESERVED#GREATER_BAR", DefaultSystemCommandCS
+  CompSpec.def_method Object, "RESERVED#LESS_GREATER", DefaultSystemCommandCS
+  CompSpec.def_method Object, "RESERVED#LESS_LESS", DefaultSystemCommandCS
+  CompSpec.def_method Object, "RESERVED#LESS_LESS_MINUS", DefaultSystemCommandCS
+  CompSpec.def_method Object, "RESERVED#LESS_LESS_LESS", DefaultSystemCommandCS
+  CompSpec.def_method Object, "RESERVED#LESS_AND", DefaultSystemCommandCS
+  CompSpec.def_method Object, "RESERVED#GREATER_AND", DefaultSystemCommandCS
+  CompSpec.def_method Object, "RESERVED#AND_GREATER", DefaultSystemCommandCS
+  CompSpec.def_method Object, "RESERVED#AND_GREATER_GREATER", DefaultSystemCommandCS
+
+  (class<<Test; TestTestMap.keys; end).each do |sub|
+    CompSpec.def_method Object, "TEST#"+sub, DefaultSystemCommandCS
+  end
+  #例外: -owner? fn user 
+
 end
 

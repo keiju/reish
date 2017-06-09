@@ -101,7 +101,7 @@ module Reish
 	  puts "IDENT CMPL: BEG"
 	  puts "CANDIDATE: ANY COMMAND"
 
-	  candidate_any_commands
+	  candidate_commands
 
 	elsif @lex.lex_state?(Lex::EXPR_ARG | Lex::EXPR_END)
 	  puts "IDENT CMPL: ARG/END"
@@ -130,7 +130,7 @@ module Reish
 	      "]", ")", "}", ":", :DOT_COMMAND, ".", ';', '&', :AND_AND, :OR_OR,
 	      :LBLACK_A, :LBRACE_H, "$"
 	    puts "CANDIDATE: ANY COMMAND"
-	    candidate_any_commands
+	    candidate_commands
 	  else
 	    # ここは来ないはず
 	    puts "CANDINATE: UNKNOWN"
@@ -148,17 +148,36 @@ module Reish
 	when ReservedWordToken
 	  case @lex.pretoken.token_id
 	  when "=", :BANG, '|', :SYMBEG, :COLON2, 
-	      "$if", "$unless", "$while", "$until", "$rescue",
-	      *Lex::Redirection2ID.values, 
-	      *Lex::PseudoVars, 
-	      *Lex::PreservedWord.values
+	      *Lex::Redirection2ID.values
 	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})"
+	    CompCommandArg.new(nil, @lex.pretoken, [], nil, @shell.exenv.binding).candidates
+	   
+	  when :MOD_IF, :MOD_UNLESS, :MOD_WHILE, :MOD_UNTIL, :MOD_RESCUE,
+	      *Lex::PseudoVars, *Lex::PreservedWord.values
+	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})"
+
+	    # 未実装
+	    # これらは, 変数(一般コマンド?)としてコンプレーションする必要あり
+
+	  else
+	    # ここは来ないはず
+	    puts "CANDINATE: UNKNOWN"
+	    puts "LEX STATE: #{@lex.state_sym}"
 	  end
+
 	when TestToken
 	  puts "CANDIDATE: TEST(#{@lex.pretoken.value})"
+	  
+	  sub = @lex.pretoken.value
+	  (class<<Test; p TestMap.keys; TestMap.keys; end).grep(/^#{sub}/).collect{|sub| "-"+sub}
 
 	when IDToken
 	  puts "CANDIDATE: ID(#{@lex.pretoken.value})"
+	  candidate_commands(@lex.pretoken.value)
+
+	when PathToken
+	  puts "CANDIDATE: PATH(#{@lex.pretoken.value})"
+	  candidate_path(@lex.pretoken.value)
 	  
 	when WordToken
 	  receiver = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
@@ -263,10 +282,24 @@ module Reish
       "yield",
     ]
 
-    def candidate_any_commands
-      eval("methods | private_methods | local_variables | self.class.constants",
-	   @shell.exenv.binding).collect{|m| m.to_s} | 
-	@shell.all_commands
+    def candidate_commands(filter=nil)
+      candidates = eval("methods | private_methods | local_variables | self.class.constants", @shell.exenv.binding).collect{|m| m.to_s} | @shell.all_commands
+      if filter
+	candidates.grep(/^#{filter}/)
+      else
+	candidates
+      end
+    end
+
+    def candidate_path(path)
+
+      cmds = []
+      if /^\/[^\/]*$/ =~ path
+	cmds = @shell.all_commands.collect{|c| "/"+c}.select{|e| /^#{Regexp.quote(path)}/ =~ e}
+      end
+      
+      Dir[path+"*"].select{|p| File.executable?(p)} | cmds
+
     end
 
     # top level command call

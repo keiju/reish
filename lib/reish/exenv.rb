@@ -53,6 +53,7 @@ module Reish
       Reish.conf[:REISH_RC].call(self) if Reish.conf[:REISH_RC]
     end
 
+    attr_reader :shell
     attr_accessor :ap_name
     attr_accessor :src_path
 

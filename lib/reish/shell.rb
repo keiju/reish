@@ -327,9 +327,10 @@ module Reish
 	d = File.expand_path(dir_name, @exenv.pwd)
 	begin
 	  Dir::foreach(d) do |p|
-	    if File.executable?(p) && p.start_with?(prefix)
-	      commands.push p 
-	    end
+	    a = d+"/"+p
+	    st = File.stat(a)
+	    next unless st.file? && st.executable?
+	    commands.push p 
 	  end
 	rescue Errno::ENOENT
 	end
