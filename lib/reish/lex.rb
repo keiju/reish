@@ -300,7 +300,7 @@ puts "INDNET_POP STACK: #{@indent_stack.inspect}"
     def protect_readed
       get_readed
       s = yield
-      append_readed s
+      append_readed s if s
       s
     end
 

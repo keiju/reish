@@ -180,16 +180,24 @@ module Reish
 	  candidate_path(@lex.pretoken.value)
 	  
 	when WordToken
-	  receiver = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
-	  puts "CANDINATE: ARGUMENT: (#{@lex.pretoken.value}) OF: #{receiver.inspect}"
+	  command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
+	  puts "CANDINATE: ARGUMENT: (#{@lex.pretoken.value}) OF: #{command.inspect}"
+	  candidate_argument_of(command, @lex.pretoken)
 
 	when StringToken
 	  if @lex.lex_state?(Lex::EXPR_INSTR)
-	    receiver = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
-	    puts "CANDINATE: ARGUMENT STR(#{@lex.pretoken.inspect}) OF: #{receiver.inspect}"
+	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
+	    puts "CANDINATE: ARGUMENT STR(#{@lex.pretoken.inspect}) OF: #{command.inspect}"
+	    
+	    candidate_argument_of(command, @lex.pretoken)
+	    
 	  else
-	    receiver = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
-	    puts "CANDINATE: ANY ARGUMENT OF: #{receiver.inspect}"
+	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
+	    puts "CANDINATE: ANY ARGUMENT OF: #{command.inspect}"
+
+	    # ちゃんとできていない
+	    candidate_argument_of(command, @lex.pretoken)
+
 	  end
 	end
       end
@@ -303,14 +311,14 @@ module Reish
     end
 
     # top level command call
-    def candidate_argument_of(command)
+    def candidate_argument_of(command, last_arg = nil)
       case command
       when Node::SimpleCommand
 
 	arg = CompCommandArg.new(@shell.exenv.main,
 				 command.name,
 				 command.args,
-				 nil,
+				 last_arg,
 				 @shell.exenv.binding)
 	arg.candidates
 	

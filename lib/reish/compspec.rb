@@ -72,16 +72,14 @@ module Reish
 
       arg = nil
       if filter
-	if filter == true
-	  arg = call.comp_arg
-	else
-	  arg = filter
-	end
+	arg = filter
+      elsif call.last_arg
+	arg = call.last_arg.value
       end
 
       if arg
 	l = pwd.size
-	Dir["#{pwd}/#{arg}*" , File::FNM_DOTMATCH].collect{|e| e[1, l]= ""; e}
+	Dir.glob("#{pwd}/#{arg}*", File::FNM_DOTMATCH).collect{|e| e[0..l]= ""; e}
       else
 	Dir.entries(pwd).select{|e| /^\./ !~ e}
       end
@@ -113,7 +111,7 @@ module Reish
       arg = nil
       if filter
 	if filter == true
-	  arg = call.comp_arg
+	  arg = call.last_arg
 	else
 	  arg = filter
 	end
@@ -140,7 +138,7 @@ module Reish
     attr_reader :receiver
     attr_reader :compspec
     attr_reader :args
-    attr_reader :comp_arg
+    attr_reader :last_arg
 
     def candidates
       case @name
