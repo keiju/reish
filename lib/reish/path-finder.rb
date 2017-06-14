@@ -313,7 +313,8 @@ module Reish
 
     def visit_command_element_list(list)
       find(list) do
-	super do |args|
+	list.lparen && list.lparen.accept(self) || 
+	  super do |args|
 	  args.inject(false){|r, e| r || e}
 	end
       end

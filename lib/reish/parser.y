@@ -243,7 +243,9 @@ class Reish::Parser
 	simple_command_lparen_header0
 	simple_command_element_list_p indent_pop ")" lex_end 
 	    {
-	       result = val[0]
+#	       result = val[0]
+	       result = val[0][0]
+	       val[1].lparen = val[0][1]
 	       result.set_args val[1]
 	    }
 
@@ -251,7 +253,8 @@ class Reish::Parser
 	simple_command_header LPARLEN_ARG
 	    {
 	       @lex.indent_push(:LPAREN_ARG);
-      	       result = val[0]
+#      	       result = val[0]
+      	       result = val
 	    }
 
   simple_command_element_list_p: opt_nl

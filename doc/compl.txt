@@ -1,15 +1,15 @@
 コンプレーションパターン
 
 # PARSE LEX_STATE LAST_TOKEN SPECE_SEEN
-* ls
+o* ls
   C ARG ID NOSP
-* ls_
+o* ls_
   C ARG ID SP
-* ls_-l
+o* ls_-l
   C ARG WORD NOSP
-* ls_-l_
+o* ls_-l_
   C ARG WORD SP
-* ls(
+** ls(
   I ARG ( NOSP (INPUT UNIT ls "(")
 * ls(_
   I ARG ( SP (INPUT UNIT ls "(")

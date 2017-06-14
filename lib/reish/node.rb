@@ -867,12 +867,15 @@ module Reish
 	end
 
 	@size = nil
+	@lparen = nil
       end
 
       attr_reader :elements
 
       attr_accessor :space_seen
       alias space_seen? space_seen
+
+      attr_accessor :lparen
 
       def empty?
 	@elements.empty?

@@ -126,11 +126,17 @@ module Reish
 	when SimpleToken
 	  case @lex.pretoken.token_id
 	  when :NL, '\\', :ASSOC, :XSTRING_END, :XSTRING_BEG,
-	      :LPARLEN_ARG, "(", :LBLACK_A, :LBLACK_I, :LBRACE_H, :LBRACE_I,
+	      "(", :LBLACK_A, :LBLACK_I, :LBRACE_H, :LBRACE_I,
 	      "]", ")", "}", ":", :DOT_COMMAND, ".", ';', '&', :AND_AND, :OR_OR,
 	      :LBLACK_A, :LBRACE_H, "$"
 	    puts "CANDIDATE: ANY COMMAND"
 	    candidate_commands
+
+	  when :LPARLEN_ARG
+	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
+	    puts "CANDINATE: ARGUMENT OF: #{command.inspect}"
+	    candidate_argument_of(command)
+	      
 	  else
 	    # ここは来ないはず
 	    puts "CANDINATE: UNKNOWN"
@@ -197,8 +203,8 @@ module Reish
 
 	    # ちゃんとできていない
 	    candidate_argument_of(command, @lex.pretoken)
-
 	  end
+
 	end
       end
     end
@@ -233,7 +239,7 @@ module Reish
 
 #puts "FAE: search in INPUT_UNIT: #{input_unit.inspect}"
 
-      input_unit.reverse.each do |n|
+      input_unit.flatten.reverse.each do |n|
 	case n
 	when *ARGUMENTABLE_ELEMENT
 #puts "FAE IU: #{n.inspect}"
