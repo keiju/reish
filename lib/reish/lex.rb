@@ -278,13 +278,13 @@ module Reish
       @indent += 1
       @indent_stack.push tk
 
-puts "INDNET_PUSH STACK: #{@indent_stack.inspect}"
+#puts "INDNET_PUSH STACK: #{@indent_stack.inspect}"
     end
 
     def indent_pop
       @indent -= 1
       @indent_stack.pop
-puts "INDNET_POP STACK: #{@indent_stack.inspect}"
+#puts "INDNET_POP STACK: #{@indent_stack.inspect}"
     end
 
     def get_readed
@@ -399,11 +399,11 @@ puts "INDNET_POP STACK: #{@indent_stack.inspect}"
 	  @token= ErrorToken.new(self)
 	end
 
-	puts "Tk: #{@token.inspect}"
+#	puts "Tk: #{@token.inspect}"
       end while @token.kind_of?(SpaceToken) || nl_seen
       nl_seen = last_nl
       get_readed
-	puts "TOKEN: #{@token.inspect}"
+#	puts "TOKEN: #{@token.inspect}"
       @token
     end
 

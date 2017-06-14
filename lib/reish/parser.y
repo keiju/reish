@@ -937,13 +937,16 @@ end
 
   def initialize(lex)
     @yydebug = nil
-    @test_cmpl = nil
+    @cmpl_mode = nil
+
+    @debug_cmpl = nil
 
     @lex = lex
   end
 
   attr_accessor :yydebug
-  attr_accessor :test_cmpl
+  attr_accessor :cmpl_mode
+  attr_accessor :debug_cmpl
 
   def next_token
     @lex.racc_token
@@ -955,7 +958,7 @@ end
 
     def on_error(token_id, token, value_stack)
 
-      if @yydebug || @test_cmpl
+      if @yydebug || @debug_cmpl
 	require "pp"
   
 	puts "Reish: parse error: token line: #{token.line_no} char: #{token.char_no}"
@@ -965,10 +968,11 @@ end
 #      puts "_VAULES: \n#{self.pretty_inspect}"
 #      yyerrok
 
-	super unless @test_cmpl
-	@test_cmpl = value_stack
-	Reish::Fail ParserComplSupp
       end
+      super unless @cmpl_mode
+
+      @cmpl_mode = value_stack
+      Reish::Fail ParserComplSupp
     end
 
   def yyerror(token, msg)

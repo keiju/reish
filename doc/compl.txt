@@ -9,39 +9,39 @@ o* ls_-l
   C ARG WORD NOSP
 o* ls_-l_
   C ARG WORD SP
-** ls(
+o* ls(
   I ARG ( NOSP (INPUT UNIT ls "(")
-* ls(_
+o* ls(_
   I ARG ( SP (INPUT UNIT ls "(")
-* ls(-
+o* ls(-
   I ARG - NOSP (INPUT UNIT ls "(")
-* ls(-l
+o* ls(-l
   I ARG -l NOSP (INPUT UNIT ls "(" (EL WORD))
-* ls(-l_
+o* ls(-l_
   I ARG -l SP (INPUT UNIT ls "(" (EL WORD))
-* ls(-l)
+n* ls(-l)
   C END ) NOSP (IU ...)
-* ls|
+o* ls|
   I BEG | NOSP 
-* ls|_
+o* ls|_
   I BEG | SP 
-* ls|c
+o* ls|c
   C ARG ID NOSP
-* ls|cat_
+o* ls|cat_
   C ARG ID SP
-* ls|cat_-
+o* ls|cat_-
   C ARG WORD SP
-* ls "
+o* ls "
   C END STR NOSP    # 下と区別つかないためidentiry_string要修正
-* ls ""
+n* ls ""
   C END STR NOSP 
-* if
+o* if
   I BEG IF NOSP
-* if_
+o* if_
   I BEG IF SP
-* if -f
+o* if -f
   I ARG -F NOSP (INPUT UNIT IF (PL -F))
-* if -f_
+o* if -f_
   I ARG -F SP (INPUT UNIT IF (PL -F))
 
 
