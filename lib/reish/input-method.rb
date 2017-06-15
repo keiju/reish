@@ -1,6 +1,8 @@
 #
 #   irb/input-method.rb - input methods used irb
 #                         oroginal version is irb.
+#   	Copyright (C) 2014-2017 Keiju ISHITSUKA
+#				(Penta Advanced Labrabries, Co.,Ltd)
 #
 require 'reish/src_encoding'
 require 'reish/magic-file'

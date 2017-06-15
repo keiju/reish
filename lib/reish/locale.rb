@@ -1,6 +1,8 @@
 #
 #   irb/locale.rb - internationalization module
 #		    Original from irb.
+#   	Copyright (C) 2014-2017 Keiju ISHITSUKA
+#				(Penta Advanced Labrabries, Co.,Ltd)
 #
 #
 module Reish # :nodoc:

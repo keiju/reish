@@ -1,8 +1,6 @@
 #
 #   reish/parser.y - 
-#   	$Release Version: $
-#   	$Revision: 1.1 $
-#   	Copyright (C) 1996-2010 Keiju ISHITSUKA
+#   	Copyright (C) 2014-2017 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 # --

@@ -1,9 +1,6 @@
 #
 #   reish/node.rb - 
-#   	$Release Version: $
-#   	$Revision: 1.1 $
-#   	$Date: 1997/08/08 00:57:08 $
-#   	Copyright (C) 1996-2010 Keiju ISHITSUKA
+#   	Copyright (C) 2014-2010 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 # --
