@@ -11,6 +11,7 @@
 require "reish/locale"
 require "reish/init-reish"
 require "reish/shell"
+require "reish/completion"
 
 module Reish
 
@@ -30,6 +31,10 @@ module Reish
     if @CONF[:OPT_C]
       im = StringInputMethod.new(@CONF[:OPT_C])
       sh = Shell.new(im)
+    elsif @CONF[:OPT_TEST_CMPL]
+      compl = Completor.new(Shell.new)
+      compl.candidate(@CONF[:OPT_TEST_CMPL])
+      exit
     elsif !ARGV.empty?
       f = ARGV.shift
       sh = Shell.new(f)
@@ -89,3 +94,4 @@ end
 class Object
   include Reish::OSSpace
 end
+

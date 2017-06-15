@@ -205,13 +205,20 @@ class Reish::Parser
 
   simple_command: simple_command_header simple_command_element_list1 opt_do_block
 	    {
-	       result = Node::SimpleCommand(val[0], val[1], val[2])
+#	       result = Node::SimpleCommand(val[0], val[1], val[2])
+	       result = val[0]
+	       result.set_args val[1]
+	       result.block = val[2]
 	    }
 #	| simple_strict_command
 
   simple_strict_command: simple_command_header opt_do_block
 	    {
-  	       result = Node::SimpleCommand(val[0], Node::CommandElementList.new, val[1])
+#  	       result = Node::SimpleCommand(val[0], Node::CommandElementList.new, val[1])
+	       result = val[0]
+	       result.set_args Node::CommandElementList.new
+	       result.block = val[1]
+
 	    }
 	| simple_command_lparen
 
@@ -225,12 +232,27 @@ class Reish::Parser
 # 	    }
   simple_command_lparen: simple_command_lparen_header opt_do_block
 	    {
-	       result = Node::SimpleCommand(val[0][0], val[0][1], val[1])
+#  	       result = Node::SimpleCommand(val[0][0], val[0][1], val[1])
+	       result = val[0]
+	       result.block = val[1]
 	    }
 
-  simple_command_lparen_header: simple_command_header LPARLEN_ARG {@lex.indent_push(:LPAREN_ARG)} simple_command_element_list_p indent_pop ")" lex_end 
+  simple_command_lparen_header:  
+	simple_command_lparen_header0
+	simple_command_element_list_p indent_pop ")" lex_end 
 	    {
-	      result = [val[0], val[3]]
+#	       result = val[0]
+	       result = val[0][0]
+	       val[1].lparen = val[0][1]
+	       result.set_args val[1]
+	    }
+
+  simple_command_lparen_header0: 
+	simple_command_header LPARLEN_ARG
+	    {
+	       @lex.indent_push(:LPAREN_ARG);
+#      	       result = val[0]
+      	       result = val
 	    }
 
   simple_command_element_list_p: opt_nl
@@ -294,9 +316,21 @@ class Reish::Parser
 	    }
 
   simple_command_header: ID
+	    {
+      	       result = Node::SimpleCommand(val[0])
+	    }
 	| PATH
+	    {
+      	       result = Node::SimpleCommand(val[0])
+	    }
 	| TEST
+	    {
+      	       result = Node::SimpleCommand(val[0])
+	    }
 	| SPECIAL
+	    {
+      	       result = Node::SimpleCommand(val[0])
+	    }
 
   simple_command_element_list: 
 	    {
@@ -900,24 +934,44 @@ end
 ---- inner
 
   def initialize(lex)
-    @yydebug = true
+    @yydebug = nil
+    @cmpl_mode = nil
+
+    @debug_cmpl = nil
 
     @lex = lex
   end
 
   attr_accessor :yydebug
+  attr_accessor :cmpl_mode
+  attr_accessor :debug_cmpl
 
   def next_token
     @lex.racc_token
   end
 
-#   def on_error(token_id, token, value_stack)
-    
-#     puts "Reish: parse error: token line: #{token.line_no} char: #{token.char_no}"
-#     p value_stack
-#     raise
+  def next_roken_cmpl
+    @lex.racc_token_cmpl
+  end
 
-#   end
+    def on_error(token_id, token, value_stack)
+
+      if @yydebug || @debug_cmpl
+	require "pp"
+  
+	puts "Reish: parse error: token line: #{token.line_no} char: #{token.char_no}"
+	puts "TOKEN_ID: #{token_to_str(token_id)}"
+	puts "TOKEN: #{token.pretty_inspect}"
+	puts "VAULE_STACK: \n#{value_stack.pretty_inspect}"
+#      puts "_VAULES: \n#{self.pretty_inspect}"
+#      yyerrok
+
+      end
+      super unless @cmpl_mode
+
+      @cmpl_mode = value_stack
+      Reish::Fail ParserComplSupp
+    end
 
   def yyerror(token, msg)
     raise ParseError, msg

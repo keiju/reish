@@ -103,6 +103,8 @@ module Reish
     @CONF[:IGNORE_EOF] = false
     @CONF[:ECHO] = nil
 
+    @CONF[:COMPLETION] = false
+
     @CONF[:EVAL_HISTORY] = nil
     @CONF[:SAVE_HISTORY] = nil
 
@@ -112,6 +114,9 @@ module Reish
     @CONF[:DISPLAY_COMP] = false
     @CONF[:YYDEBUG] = false
     @CONF[:DEBUG_INPUT] = false
+
+    @CONF[:OPT_TEST_CMPL] = nil
+    @CONF[:DEBUG_CMPL] = false
 
     @CONF[:AT_EXIT] = []
     
@@ -135,6 +140,12 @@ module Reish
       opt.on("--display-comp", "--display_comp"){@CONF[:DISPLAY_COMP]=true}
       opt.on("--debug-input", "--debug_input"){@CONF[:DEBUG_INPUT]=true}
       opt.on("--yydebug"){@CONF[:YYDEBUG] = true}
+
+      opt.on("--test-cmpl exp"){|v| 
+	@CONF[:OPT_TEST_CMPL] = v; 
+	@CONF[:DEBUG_CMPL] = true
+      }
+      opt.on("--debug-cmpl", "--debug_cmpl"){@CONF[:DEBUG_CMPL]=true}
     end
     opt.parse!(ARGV)
   end

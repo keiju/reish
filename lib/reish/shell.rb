@@ -13,7 +13,7 @@ require "reish/system-command"
 
 require "reish/lex"
 require "reish/parser"
-require "reish/codegen"
+require "reish/code-generator"
 
 require "reish/input-method"
 require "irb/inspector"
@@ -24,7 +24,7 @@ module Reish
   class Shell
     def initialize(input_method = nil)
 
-      @thread = Thread.current
+#      @thread = Thread.current
 
       @lex = Lex.new
       @parser = Parser.new(@lex)
@@ -39,8 +39,11 @@ module Reish
       @signal_status = :IN_IRB
     end
 
-    attr_reader :thread
+#    attr_reader :thread
     attr_reader :exenv
+
+    attr_reader :lex
+    attr_reader :completor
 
     def initialize_as_main_shell
       trap("SIGINT") do
@@ -55,6 +58,10 @@ module Reish
 	when nil
 	  if defined?(ReadlineInputMethod) && STDIN.tty?
 	    @io = ReadlineInputMethod.new
+	    if @exenv.completion?
+	      @completor = Completor.new(self) 
+	      @io.completor = @completor
+	    end
 	  else
 	    @io = StdioInputMethod.new
 	  end
@@ -116,7 +123,11 @@ module Reish
 	@current_input_unit = nil
 	begin
 	  @current_input_unit = @parser.do_parse
-	  p @current_input_unit if @exenv.debug_input
+	  input = @lex.reset_readed
+	  if @exenv.debug_input
+	    puts "input: #{input}"
+	    puts "input_unit: #{@current_input_unit}"
+	  end
 	rescue ParseError => exc
 	  puts exc.message
 	  @lex.reset_input
@@ -305,6 +316,25 @@ module Reish
 
     def rehash
       @command_cache = COMMAND_CACHE_BASE.dup
+    end
+
+    def all_commands(prefix = "")
+      commands = []
+      for dir_name in @exenv.path
+	d = File.expand_path(dir_name, @exenv.pwd)
+	begin
+	  Dir::foreach(d) do |p|
+	    a = d+"/"+p
+	    st = File.stat(a)
+	    next unless st.file? && st.executable?
+	    commands.push p 
+	  end
+	rescue Errno::ENOENT
+	end
+      end
+
+      commands.sort!.uniq!
+      commands
     end
 
     def send_with_redirection(receiver, method, args, reds, &block)

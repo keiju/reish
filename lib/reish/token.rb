@@ -29,10 +29,10 @@ module Reish
     end
 
     attr_reader :lex
-#    attr_reader :io
-#    attr_reader :seek
-#    attr_reader :line_no
-#    attr_reader :char_no
+    attr_reader :io
+    attr_reader :seek
+    attr_reader :line_no
+    attr_reader :char_no
     attr_reader :space_seen
 
     alias space_seen? space_seen

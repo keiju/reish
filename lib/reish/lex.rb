@@ -25,6 +25,7 @@ module Reish
       :EXPR_DOT,
       :EXPR_CLASS,
       :EXPR_EQ_ARG,
+      :EXPR_INSTR  # for completion
    ]
     
     i = 1
@@ -205,8 +206,9 @@ module Reish
       @indent = 0
       @indent_stack = []
 
-      @debug_lex_state = false
+      @readed = ""
 
+      @debug_lex_state = false
     end
 
     attr_reader :io
@@ -214,6 +216,7 @@ module Reish
     attr_reader :prev_line_no
     attr_reader :prev_char_no
     attr_reader :space_seen
+    attr_reader :readed
 
     attr_accessor :debug_lex_state
 
@@ -266,14 +269,44 @@ module Reish
       @cond_stack.last
     end
 
+    def indent_current
+      @indent_stack.last
+    end
+
     def indent_push(tk)
       @indent += 1
       @indent_stack.push tk
+
+#puts "INDNET_PUSH STACK: #{@indent_stack.inspect}"
     end
 
     def indent_pop
       @indent -= 1
       @indent_stack.pop
+#puts "INDNET_POP STACK: #{@indent_stack.inspect}"
+    end
+
+    def get_readed
+      readed = @ruby_scanner.get_readed
+      @readed.concat readed
+      readed
+    end
+
+    def append_readed(readed)
+      @readed.concat readed
+    end
+
+    def protect_readed
+      get_readed
+      s = yield
+      append_readed s if s
+      s
+    end
+
+    def reset_readed
+      e = @readed
+      @readed = ""
+      e
     end
 
     def set_input(io, p = nil, &block)
@@ -316,6 +349,9 @@ module Reish
       @ruby_scanner.reset_input
     end
 
+    attr_reader :pretoken
+    attr_reader :prev_line_no
+
     def token
       @pretoken = @token
       @prev_seek = @ruby_scanner.seek
@@ -336,18 +372,60 @@ module Reish
 
       end while @token.kind_of?(SpaceToken) || nl_seen
       nl_seen = last_nl
-      @ruby_scanner.get_readed
+      get_readed
 #	puts "TOKEN: #{@token.inspect}"
       @token
     end
+    
+    def token_cmpl
+      @pretoken = @token
+      @prev_seek = @ruby_scanner.seek
+      @prev_line_no = @ruby_scanner.line_no
+      @prev_char_no = @ruby_scanner.char_no
+      nl_seen =false
+      last_nl = false
+      begin
+	begin
+	  @token = @OP.match(@ruby_scanner)
+	  unless @token
+	    @token = EOFToken.new(self)
+	  else
+	    @space_seen = @token.kind_of?(SpaceToken)
+	  end
+	  last_nl = (@token.token_id == :NL)
+	rescue SyntaxError
+	  raise if @exception_on_syntax_error
+	  @token= ErrorToken.new(self)
+	end
 
-    attr_reader :preroken
-    attr_reader :prev_line_no
+#	puts "Tk: #{@token.inspect}"
+      end while @token.kind_of?(SpaceToken) || nl_seen
+      nl_seen = last_nl
+      get_readed
+#	puts "TOKEN: #{@token.inspect}"
+      @token
+    end
 
     def racc_token
       tk = token
       [tk.token_id, tk]
     end
+
+    def racc_token_cmpl
+      begin
+	tk = token_cmpl
+	yield [tk.token_id, tk] 
+      end until EOFToken === tk
+    end
+
+#     def racc_token_cmpl
+#       prev = token_cmpl
+#       begin
+# 	tk = token_cmpl
+# 	yield [prev.token_id, prev] 
+# 	prev = tk
+#       end until EOFToken === tk
+#     end
 
     def lex_init
       @OP = IRB::SLex.new
@@ -690,7 +768,7 @@ module Reish
 	set_prompt do |ltype, indent, continue, line_no|
 	  @io.prompt = "irb> "
 	end
-	exp = @ruby_scanner.identify_compstmt(close)
+	exp = protect_readed{@ruby_scanner.identify_compstmt(close)}
       ensure
 	set_prompt &p
       end
@@ -911,11 +989,16 @@ module Reish
 
     def identify_string(op, io)
       @ltype = op
+      st = EXPR_END
       begin
-	str = @ruby_scanner.identify_reish_string(op)
+	str = protect_readed{@ruby_scanner.identify_reish_string(op)}
+	unless str
+	  str = get_readed
+	  st = EXPR_INSTR
+	end
 	StringToken.new(self, str)
       ensure
-	self.lex_state = EXPR_END
+	self.lex_state = st
 	@ltype = nil
       end
     end
@@ -923,7 +1006,7 @@ module Reish
     def identify_xstring(op, io)
       @ltype = op
       begin
-	str = @ruby_scanner.identify_reish_string(op)
+	str = protect_readed{@ruby_scanner.identify_reish_string(op)}
 	XStringToken.new(self, str)
       ensure
 	self.lex_state = EXPR_END
@@ -934,7 +1017,7 @@ module Reish
     def identify_regexp(op, io)
       @ltype = op
       begin
-	str = @ruby_scanner.identify_reish_string(op)
+	str = protect_readed{@ruby_scanner.identify_reish_string(op)}
 	RegexpToken.new(self, str)
       ensure
 	self.lex_state = EXPR_END
@@ -1000,7 +1083,10 @@ class RubyLex
     
     @rests.clear
     @here_header.clear if @here_header
+
   end
+
+  attr_reader :prsing_exp
 
   def identify_compstmt(term)
     initialize_input
@@ -1107,6 +1193,7 @@ class RubyLex
       @quoted = reserve_quoted
     end
   end
+
 
   # patch for old irb
   def getc

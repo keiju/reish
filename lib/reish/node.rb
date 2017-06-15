@@ -550,7 +550,7 @@ module Reish
       def initialize(node)
 	super()
 	@nodes = node.nodes
-	@space_seen = @nodes.first.space_seen
+	@space_seen = !@nodes.empty? && @nodes.first.space_seen
       end
       
       attr_reader :nodes
@@ -657,7 +657,7 @@ module Reish
     class SimpleCommand<Command
       def_constructor
 
-      def initialize(name, elements, b = nil)
+      def initialize(name, elements=nil, b = nil)
 	@name = name
 	@args = elements
 	@block = b
@@ -665,10 +665,12 @@ module Reish
 
 	@have_redirection = nil
 
-	@args.each_compose do |arg| 
-	  case arg
-	  when Group
-	    arg.pipeout = :RESULT
+	if @args 
+	  @args.each_compose do |arg| 
+	    case arg
+	    when Group
+	      arg.pipeout = :RESULT
+	    end
 	  end
 	end
 
@@ -677,11 +679,22 @@ module Reish
 
       attr_reader :name
       attr_reader :args
-      attr_reader :block
+      attr_accessor :block
+
+      def set_args(elements)
+	@args = elements
+
+	@args.each_compose do |arg| 
+	  case arg
+	  when Group
+	    arg.pipeout = :RESULT
+	  end
+	end
+      end
 
       def have_redirection?
 	if @have_redirection.nil?
-	  @have_redirection = @args.any?{|e| e.kind_of?(Redirection)}
+	  @have_redirection = @args && @args.any?{|e| e.kind_of?(Redirection)}
 	end
 	@have_redirection
       end
@@ -697,6 +710,7 @@ module Reish
 	  super
 	end
       end
+
       def_accept
     end
 
@@ -850,12 +864,15 @@ module Reish
 	end
 
 	@size = nil
+	@lparen = nil
       end
 
       attr_reader :elements
 
       attr_accessor :space_seen
       alias space_seen? space_seen
+
+      attr_accessor :lparen
 
       def empty?
 	@elements.empty?
@@ -877,7 +894,7 @@ module Reish
 	    prev.push e
 	  else
 	    if prev.size > 1
-	      block.call ComposedWord.new(prev)
+	      block.call CompositeWord.new(prev)
 	    elsif prev.size == 1
 	      block.call prev[0]
 	    end
