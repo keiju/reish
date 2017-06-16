@@ -26,7 +26,7 @@ module Reish
 	    return spec
 	  end
 	end
-	return RubyMethodCS if receiver.respond_to?(name)
+	return DefaultRubyMethodCS if receiver.respond_to?(name)
       end
       spec = N2Spec[name]
       rerurn spec if spec
