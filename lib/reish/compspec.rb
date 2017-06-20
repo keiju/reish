@@ -10,7 +10,7 @@ module Reish
     M2Spec = {}
 
     def CompSpec.def_command(name, spec)
-      N2Spec[n] = spec
+      N2Spec[name] = spec
     end
 
     def CompSpec.def_method(klass, name, spec)
@@ -29,7 +29,7 @@ module Reish
 	return DefaultRubyMethodCS if receiver.respond_to?(name)
       end
       spec = N2Spec[name]
-      rerurn spec if spec
+      return spec if spec
       DefaultSystemCommandCS
     end
 
@@ -70,11 +70,12 @@ module Reish
 	pwd = Dir.pwd
       end
 
-      arg = nil
       if filter
 	arg = filter
       elsif call.last_arg
 	arg = call.last_arg.value
+      else
+	arg = nil
       end
 
       if arg
@@ -87,6 +88,13 @@ module Reish
     
     def files_arg_proc
       proc{|call| files(call)}
+    end
+
+    def options(call, filter=nil, sopt = "", lopts = [])
+      opts = sopt.split(//).collect{|c| "-" + c}
+      opts.concat lopts
+
+      filter(opts, call, filter)
     end
 
     def commands(call, filter=nil)
@@ -108,17 +116,17 @@ module Reish
     end
 
     def filter(candidates, call, filter=nil)
-      arg = nil
+
       if filter
-	if filter == true
-	  arg = call.last_arg
-	else
-	  arg = filter
-	end
+	arg = filter
+      elsif call.last_arg
+	arg = call.last_arg.value
+      else 
+	arg = nil
       end
 
       if arg
-	candidates.select{|c| c[0..arg.size] == arg}
+	candidates.select{|c| c[0..arg.size-1] == arg}
       else
 	candidates
       end
@@ -221,6 +229,24 @@ module Reish
     CompSpec.def_method Object, "TEST#"+sub, DefaultSystemCommandCS
   end
   #例外: -owner? fn user 
+
+  # ls補完のサンプル
+  cs_ls = CompSpec.new
+  cs_ls.arg_proc = proc{|call|
+    if call.last_arg
+      case call.last_arg.value
+      when /^-/
+	cs_ls.options(call, nil, "aAbBcCdDfFgGgGikILmnNopqQrRsStTuUvwxXZ1", 
+		      ["--all", "--almost-all", "--author", "--escape", "--block-size", "--ignore-backups", "--color", "--directory", "--dired", "--classify", "--file-type", "--format=WORD", "--full-time", "--group-directories-first", "--no-group", "--human-readable", "--dereference-command-line", "--dereference-command-line-symlink-to-dir", "--hide", "--indicator-style", "--inode", "--ignore", "--kibibytes", "--dereference", "--numeric-uid-gid", "--literal", "--indicator-style", "--hide-control-chars", "--show-control-chars", "--quote-name", "--quoting-style", "--reverse", "--recursive", "--size", "--sort", "--time", "--time-style", "--tabsize", "--width", "--context", "--help", "--version"])
+      else
+	cs_ls.files(call)
+      end
+    else
+      cs_ls.files(call)
+    end
+  }
+
+  CompSpec.def_command "ls", cs_ls
 
 end
 
