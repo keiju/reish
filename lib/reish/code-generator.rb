@@ -252,7 +252,7 @@ module Reish
 
     def visit_async_command(command)
       super do |s|
-	"Reish::JobStart{#{s}}"
+	"Reish.JobStart{#{s}}"
       end
     end
 
