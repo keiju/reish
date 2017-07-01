@@ -97,8 +97,8 @@ module Reish
     @CONF[:PROMPT] = PromptSet[:STANDARD]
 
     @CONF[:USE_READLINE] = false unless defined?(ReadlineInputMethod)
-    @CONF[:DISPLY_MODE] = true
 
+    @CONF[:DISPLY_MODE] = true
     @CONF[:IGNORE_SIGINT] = true
     @CONF[:IGNORE_EOF] = false
     @CONF[:ECHO] = nil
@@ -111,6 +111,9 @@ module Reish
     @CONF[:BACK_TRACE_LIMIT] = 16
     @CONF[:VERBOSE] = nil
 
+    @CONF[:AT_EXIT] = []
+
+    # debuging configurations
     @CONF[:DISPLAY_COMP] = false
     @CONF[:YYDEBUG] = false
     @CONF[:DEBUG_INPUT] = false
@@ -118,9 +121,15 @@ module Reish
     @CONF[:OPT_TEST_CMPL] = nil
     @CONF[:DEBUG_CMPL] = false
 
-    @CONF[:AT_EXIT] = []
-    
     @CONF[:DEBUG_LEVEL] = 1
+
+    # Reish components
+    if defined?(ReadlineInputMethod)
+      @COMP[:INPUT_METHOD][:TTY] = ReadlineInputMethod
+    else
+      @COMP[:INPUT_METHOD][:TTY] = StdioInputMethod
+    end
+    @COMP[:COMPLETOR] = Completor
   end
 
   def Reish.init_error

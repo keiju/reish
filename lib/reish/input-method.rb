@@ -14,9 +14,12 @@ module Reish
     # Creates a new input method object
     def initialize(file = STDIN_FILE_NAME)
       @file_name = file
+      @completable = false
     end
     # The file name of this input method, usually given during initialization.
     attr_reader :file_name
+    
+    def completable?; @completable; end
 
     # The irb prompt associated with this input method
     attr_accessor :prompt
@@ -133,11 +136,13 @@ module Reish
         @line = []
         @eof = false
 
+	@completable = true
+
         @stdin = IO.open(STDIN.to_i, :external_encoding => Reish.conf[:LOCALE].encoding, :internal_encoding => "-")
         @stdout = IO.open(STDOUT.to_i, 'w', :external_encoding => Reish.conf[:LOCALE].encoding, :internal_encoding => "-")
 
 	@completor = nil
-
+        Readline.completion_proc = nil
       end
 
       attr_accessor :completor
