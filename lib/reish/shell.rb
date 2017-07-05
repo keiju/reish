@@ -24,7 +24,7 @@ module Reish
   class Shell
     def initialize(input_method = nil)
 
-#      @thread = Thread.current
+      @thread = Thread.current
 
       @io = nil
 
@@ -231,7 +231,7 @@ module Reish
 
     def reish_abort(irb, exception = Abort)
       if defined? Thread
-	thread.raise exception, "abort then interrupt!!"
+	@thread.raise exception, "abort then interrupt!!"
       else
 	raise exception, "abort then interrupt!!"
       end
