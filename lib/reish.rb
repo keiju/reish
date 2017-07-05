@@ -20,8 +20,15 @@ module Reish
   class Abort < Exception;end
 
   @CONF={}
+  @COMP = {}
+  @COMP[:INPUT_METHOD] = {}
+
   def Reish.conf
     @CONF
+  end
+
+  def Reish.comp
+    @COMP
   end
 
   def Reish::start(ap_path = nil)
@@ -32,7 +39,7 @@ module Reish
       im = StringInputMethod.new(@CONF[:OPT_C])
       sh = Shell.new(im)
     elsif @CONF[:OPT_TEST_CMPL]
-      compl = Completor.new(Shell.new)
+      compl = @COMP[:COMPLETOR].new(Shell.new)
       compl.candidate(@CONF[:OPT_TEST_CMPL])
       exit
     elsif !ARGV.empty?

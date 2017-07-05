@@ -26,6 +26,8 @@ module Reish
 
 #      @thread = Thread.current
 
+      @io = nil
+
       @lex = Lex.new
       @parser = Parser.new(@lex)
       @codegen = CodeGenerator.new
@@ -37,6 +39,8 @@ module Reish
       @command_cache = COMMAND_CACHE_BASE.dup
 
       @signal_status = :IN_IRB
+
+      @current_input_unit = nil
     end
 
 #    attr_reader :thread
@@ -56,23 +60,15 @@ module Reish
       when nil
 	case @exenv.use_readline?
 	when nil
-	  if defined?(ReadlineInputMethod) && STDIN.tty?
-	    @io = ReadlineInputMethod.new
-	    if @exenv.completion?
-	      @completor = Completor.new(self) 
-	      @io.completor = @completor
-	    end
+	  if STDIN.tty?
+	    @io = Reish::comp[:INPUT_METHOD][:TTY].new
 	  else
 	    @io = StdioInputMethod.new
 	  end
 	when false
 	  @io = StdioInputMethod.new
 	when true
-	  if defined?(ReadlineInputMethod)
-	    @io = ReadlineInputMethod.new
-	  else
-	    @io = StdioInputMethod.new
-	  end
+	  @io = @exenv.tty_input_method.new
 	end
       when String
 	@io = FileInputMethod.new(input_method)
@@ -80,6 +76,10 @@ module Reish
 	@exenv.src_path = input_method
       else
 	@io = input_method
+      end
+      if @io.completable? && @exenv.completion? 
+	@completor = Reish::comp[:COMPLETOR].new(self) 
+	@io.completor = @completor
       end
     end
 
