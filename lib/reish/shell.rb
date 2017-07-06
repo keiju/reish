@@ -24,7 +24,7 @@ module Reish
   class Shell
     def initialize(input_method = nil)
 
-      @thread = Thread.current
+#      @thread = Thread.current
 
       @io = nil
 
@@ -41,6 +41,8 @@ module Reish
       @signal_status = :IN_IRB
 
       @current_input_unit = nil
+
+      @foreground_job = nil
     end
 
 #    attr_reader :thread
@@ -145,21 +147,26 @@ module Reish
 	end
 	exp = @current_input_unit.accept(@codegen)
 	puts "<= #{exp}" if @exenv.display_comp
-	exc = nil
-	begin
-	  val = nil
-	  signal_status(:IN_EVAL) do
-	    activate_command_search do 
-	      val = eval(exp, @exenv.binding, @exenv.src_path, @lex.prev_line_no)
+
+	@foreground_job = Thread.start do
+	  exc = nil
+	  begin
+	    val = nil
+	    signal_status(:IN_EVAL) do
+	      activate_command_search do 
+		val = eval(exp, @exenv.binding, @exenv.src_path, @lex.prev_line_no)
+	      end
 	    end
+	    display val
+	  rescue Interrupt => exc
+	  rescue SystemExit, SignalException
+	    raise
+	  rescue Exception => exc
 	  end
-	  display val
-	rescue Interrupt => exc
-	rescue SystemExit, SignalException
-	  raise
-	rescue Exception => exc
+	  handle_exception(exc, exp) if exc
+	  val
 	end
-	handle_exception(exc, exp) if exc
+	@foreground_job.join
       end
     end
 
@@ -231,7 +238,7 @@ module Reish
 
     def reish_abort(irb, exception = Abort)
       if defined? Thread
-	@thread.raise exception, "abort then interrupt!!"
+	@foreground_job.raise exception, "abort then interrupt!!"
       else
 	raise exception, "abort then interrupt!!"
       end
