@@ -38,11 +38,16 @@ module Reish
       # name => path
       @command_cache = COMMAND_CACHE_BASE.dup
 
+      @signal_status_mx = Mutex.new
       @signal_status = :IN_IRB
 
       @current_input_unit = nil
 
+#      @foreground_job_mx = Mutex.new
+#      @foreground_job_cv = ConditionVariable.new
+#      @foreground_job_value = nil
       @foreground_job = nil
+      @foreground_job_queue = Queue.new
     end
 
 #    attr_reader :thread
@@ -54,6 +59,10 @@ module Reish
     def initialize_as_main_shell
       trap("SIGINT") do
 	signal_handle
+      end
+
+      trap("SIGTSTP") do
+	signal_handle(:TSTP)
       end
     end
 
@@ -148,10 +157,13 @@ module Reish
 	exp = @current_input_unit.accept(@codegen)
 	puts "<= #{exp}" if @exenv.display_comp
 
+#	@foreground_job_stat = nil
 	@foreground_job = Thread.start do
+	  @foreground_job.abort_on_exception = true
+#	  @foreground_job_mx.synchronize do
 	  exc = nil
+	  val = nil
 	  begin
-	    val = nil
 	    signal_status(:IN_EVAL) do
 	      activate_command_search do 
 		val = eval(exp, @exenv.binding, @exenv.src_path, @lex.prev_line_no)
@@ -164,9 +176,27 @@ module Reish
 	  rescue Exception => exc
 	  end
 	  handle_exception(exc, exp) if exc
+#	    @foreground_job_stat = true
+#	    @foreground_job_cv.signal
+	  @foreground_job_queue.push true
 	  val
+#	  end
 	end
-	@foreground_job.join
+# 	@foreground_job_mx.synchronize do
+# 	  while !@foreground_job_stat
+# 	    @foreground_job_cv.wait(@foreground_job_mx)
+# 	  end
+
+	case s = @foreground_job_queue.pop
+	when true
+	  @foreground_job.value
+	when :TSTP
+	  puts "enter background job and suspend systemcommand"
+	else
+	  p s
+	end
+	@foreground_job = nil
+# 	end
       end
     end
 
@@ -199,24 +229,38 @@ module Reish
       puts "generated code: #{exp}" if exp
     end
 
-    def signal_handle
-      unless @exenv.ignore_sigint?
-	print "\nabort!!\n" if verbose?
-	exit
-      end
+    def signal_handle(signal = :INT)
+      case signal
+      when :INT
+	unless @exenv.ignore_sigint?
+	  print "\nabort!!\n" if verbose?
+	  exit
+	end
 
-      case @signal_status
-      when :IN_INPUT
-	print "^C\n"
-	raise Interrupt
-      when :IN_EVAL
-	reish_abort(self)
-      when :IN_LOAD
-	reish_abort(self, LoadAbort)
-      when :IN_IRB
-	# ignore
-      else
-	# ignore other cases as well
+	case @signal_status
+	when :IN_INPUT
+	  print "^C\n"
+	  raise Interrupt
+	when :IN_EVAL
+	  reish_abort(self)
+	when :IN_LOAD
+	  reish_abort(self, LoadAbort)
+	when :IN_IRB
+	  # ignore
+	else
+	  # ignore other cases as well
+	end
+      when :TSTP
+	case @signal_status
+	when :IN_EVAL
+	  print "^Z"
+	  reish_tstp(self)
+	when :IN_INPUT, :IN_EVAL, IN_LOAD, IN_IRB
+	  # ignore
+	else
+	  # ignore other cases as well
+	end
+
       end
     end
 
@@ -241,6 +285,13 @@ module Reish
 	@foreground_job.raise exception, "abort then interrupt!!"
       else
 	raise exception, "abort then interrupt!!"
+      end
+    end
+
+    def reish_tstp(shell)
+      Thread.start do
+	puts "catch TSTP"
+	@foreground_job_queue.push :TSTP
       end
     end
 
