@@ -14,6 +14,7 @@ require "reish/system-command"
 require "reish/lex"
 require "reish/parser"
 require "reish/code-generator"
+require "reish/job"
 
 require "reish/input-method"
 require "irb/inspector"
@@ -32,6 +33,8 @@ module Reish
       @parser = Parser.new(@lex)
       @codegen = CodeGenerator.new
 
+      @job_controller = JobController.new(self)
+
       @exenv = Exenv.new(self, Reish.conf)
       initialize_input_method(input_method)
 
@@ -43,17 +46,14 @@ module Reish
 
       @current_input_unit = nil
 
-#      @foreground_job_mx = Mutex.new
-#      @foreground_job_cv = ConditionVariable.new
-#      @foreground_job_value = nil
-      @foreground_job = nil
-      @foreground_job_queue = Queue.new
     end
 
 #    attr_reader :thread
     attr_reader :exenv
 
     attr_reader :lex
+    attr_reader :job_controller
+
     attr_reader :completor
 
     def initialize_as_main_shell
@@ -157,10 +157,7 @@ module Reish
 	exp = @current_input_unit.accept(@codegen)
 	puts "<= #{exp}" if @exenv.display_comp
 
-#	@foreground_job_stat = nil
-	@foreground_job = Thread.start do
-	  @foreground_job.abort_on_exception = true
-#	  @foreground_job_mx.synchronize do
+	@job_controller.start_foreground_job do
 	  exc = nil
 	  val = nil
 	  begin
@@ -176,27 +173,7 @@ module Reish
 	  rescue Exception => exc
 	  end
 	  handle_exception(exc, exp) if exc
-#	    @foreground_job_stat = true
-#	    @foreground_job_cv.signal
-	  @foreground_job_queue.push true
-	  val
-#	  end
 	end
-# 	@foreground_job_mx.synchronize do
-# 	  while !@foreground_job_stat
-# 	    @foreground_job_cv.wait(@foreground_job_mx)
-# 	  end
-
-	case s = @foreground_job_queue.pop
-	when true
-	  @foreground_job.value
-	when :TSTP
-	  puts "enter background job and suspend systemcommand"
-	else
-	  p s
-	end
-	@foreground_job = nil
-# 	end
       end
     end
 
@@ -281,17 +258,14 @@ module Reish
     end
 
     def reish_abort(irb, exception = Abort)
-      if defined? Thread
-	@foreground_job.raise exception, "abort then interrupt!!"
-      else
-	raise exception, "abort then interrupt!!"
-      end
+      @job_controller.raise_foreground_job  exception, "abort then interrupt!!"
     end
 
     def reish_tstp(shell)
-      Thread.start do
+      th = Thread.start do
+	th.abort_on_exception = true
 	puts "catch TSTP"
-	@foreground_job_queue.push :TSTP
+	@job_controller.suspend_foreground_job
       end
     end
 

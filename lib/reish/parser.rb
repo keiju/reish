@@ -13,7 +13,7 @@ require 'racc/parser.rb'
 module Reish
   class Parser < Racc::Parser
 
-module_eval(<<'...end parser.y/module_eval...', 'parser.y', 937)
+module_eval(<<'...end parser.y/module_eval...', 'parser.y', 935)
 
   def initialize(lex)
     @yydebug = nil
@@ -1122,7 +1122,7 @@ Racc_debug_parser = false
 
 # reduce 0 omitted
 
-module_eval(<<'.,.,', 'parser.y', 32)
+module_eval(<<'.,.,', 'parser.y', 30)
   def _reduce_1(val, _values, result)
     		@lex.continue = false
 		_values.push Node::InputUnit(val[0], val[1])
@@ -1132,7 +1132,7 @@ module_eval(<<'.,.,', 'parser.y', 32)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 38)
+module_eval(<<'.,.,', 'parser.y', 36)
   def _reduce_2(val, _values, result)
     		@lex.continue = false
 		_values.push Node::NOP
@@ -1142,7 +1142,7 @@ module_eval(<<'.,.,', 'parser.y', 38)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 44)
+module_eval(<<'.,.,', 'parser.y', 42)
   def _reduce_3(val, _values, result)
                     _values.push Node::EOF
 		yyaccept
@@ -1153,24 +1153,24 @@ module_eval(<<'.,.,', 'parser.y', 44)
 
 # reduce 4 omitted
 
-module_eval(<<'.,.,', 'parser.y', 51)
+module_eval(<<'.,.,', 'parser.y', 49)
   def _reduce_5(val, _values, result)
     		result.last_command_to_async
-		result.pipeout = :STATUS
+		result.pipeout = :RESULT
 	    
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 56)
+module_eval(<<'.,.,', 'parser.y', 54)
   def _reduce_6(val, _values, result)
-    		result.pipeout = :STATUS
+    		result.pipeout = :RESULT
 	    
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 61)
+module_eval(<<'.,.,', 'parser.y', 59)
   def _reduce_7(val, _values, result)
     		result = Node::Sequence(val[0])
             
@@ -1178,7 +1178,7 @@ module_eval(<<'.,.,', 'parser.y', 61)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 65)
+module_eval(<<'.,.,', 'parser.y', 63)
   def _reduce_8(val, _values, result)
     		val[0].last_command_to_async
 		val[0].add_command(val[2])
@@ -1188,7 +1188,7 @@ module_eval(<<'.,.,', 'parser.y', 65)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 71)
+module_eval(<<'.,.,', 'parser.y', 69)
   def _reduce_9(val, _values, result)
     		val[0].add_command(val[2])
 		result = val[0]
@@ -1197,7 +1197,7 @@ module_eval(<<'.,.,', 'parser.y', 71)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 77)
+module_eval(<<'.,.,', 'parser.y', 75)
   def _reduce_10(val, _values, result)
     		result = Node::LogicalCommandAA(val[0], val[3])
 	    
@@ -1205,7 +1205,7 @@ module_eval(<<'.,.,', 'parser.y', 77)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 81)
+module_eval(<<'.,.,', 'parser.y', 79)
   def _reduce_11(val, _values, result)
     		result = Node::LogicalCommandOO(val[0], val[3])
 	    
@@ -1213,7 +1213,7 @@ module_eval(<<'.,.,', 'parser.y', 81)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 85)
+module_eval(<<'.,.,', 'parser.y', 83)
   def _reduce_12(val, _values, result)
     		result = Node::ModIfCommand(val[0], val[3])
 	    
@@ -1221,7 +1221,7 @@ module_eval(<<'.,.,', 'parser.y', 85)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 89)
+module_eval(<<'.,.,', 'parser.y', 87)
   def _reduce_13(val, _values, result)
     		result = Node::ModUnlessCommand(val[0], val[3])
 	    
@@ -1229,7 +1229,7 @@ module_eval(<<'.,.,', 'parser.y', 89)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 93)
+module_eval(<<'.,.,', 'parser.y', 91)
   def _reduce_14(val, _values, result)
     		result = Node::ModWhileCommand(val[0], val[3])
 	    
@@ -1237,7 +1237,7 @@ module_eval(<<'.,.,', 'parser.y', 93)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 97)
+module_eval(<<'.,.,', 'parser.y', 95)
   def _reduce_15(val, _values, result)
     		result = Node::ModUntilCommand(val[0], val[3])
 	    
@@ -1245,7 +1245,7 @@ module_eval(<<'.,.,', 'parser.y', 97)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 101)
+module_eval(<<'.,.,', 'parser.y', 99)
   def _reduce_16(val, _values, result)
     		result = Node::ModRescueCommand(val[0], val[2])
 	    
@@ -1253,7 +1253,7 @@ module_eval(<<'.,.,', 'parser.y', 101)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 105)
+module_eval(<<'.,.,', 'parser.y', 103)
   def _reduce_17(val, _values, result)
     		result = Node::BangCommand(val[1])
 		result.space_seen = val[0].space_seen
@@ -1282,7 +1282,7 @@ module_eval(<<'.,.,', 'parser.y', 105)
 
 # reduce 27 omitted
 
-module_eval(<<'.,.,', 'parser.y', 122)
+module_eval(<<'.,.,', 'parser.y', 120)
   def _reduce_28(val, _values, result)
     	       result = val[0]
   	       result.pipe_command(:BAR, val[3])
@@ -1291,7 +1291,7 @@ module_eval(<<'.,.,', 'parser.y', 122)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 132)
+module_eval(<<'.,.,', 'parser.y', 130)
   def _reduce_29(val, _values, result)
     	       result = val[0]
   	       result.pipe_command(:BAR_AND, val[3])
@@ -1302,7 +1302,7 @@ module_eval(<<'.,.,', 'parser.y', 132)
 
 # reduce 30 omitted
 
-module_eval(<<'.,.,', 'parser.y', 145)
+module_eval(<<'.,.,', 'parser.y', 143)
   def _reduce_31(val, _values, result)
     		result = Node::PipelineCommand(val[0])
             
@@ -1314,7 +1314,7 @@ module_eval(<<'.,.,', 'parser.y', 145)
 
 # reduce 33 omitted
 
-module_eval(<<'.,.,', 'parser.y', 152)
+module_eval(<<'.,.,', 'parser.y', 150)
   def _reduce_34(val, _values, result)
     	       result = val[0]
   	       result.pipe_command(:DOT, val[3])
@@ -1323,7 +1323,7 @@ module_eval(<<'.,.,', 'parser.y', 152)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 162)
+module_eval(<<'.,.,', 'parser.y', 160)
   def _reduce_35(val, _values, result)
     	       result = val[0]
   	       result.pipe_command(:COLON2, val[3])
@@ -1332,7 +1332,7 @@ module_eval(<<'.,.,', 'parser.y', 162)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 167)
+module_eval(<<'.,.,', 'parser.y', 165)
   def _reduce_36(val, _values, result)
     		result = Node::PipelineCommand(val[0])
 	    
@@ -1340,7 +1340,7 @@ module_eval(<<'.,.,', 'parser.y', 167)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 171)
+module_eval(<<'.,.,', 'parser.y', 169)
   def _reduce_37(val, _values, result)
     		result = Node::PipelineCommand(val[0])
 	    
@@ -1350,7 +1350,7 @@ module_eval(<<'.,.,', 'parser.y', 171)
 
 # reduce 38 omitted
 
-module_eval(<<'.,.,', 'parser.y', 178)
+module_eval(<<'.,.,', 'parser.y', 176)
   def _reduce_39(val, _values, result)
     	        result = Node::Redirector(val[0], val[1])
 	  
@@ -1362,7 +1362,7 @@ module_eval(<<'.,.,', 'parser.y', 178)
 
 # reduce 41 omitted
 
-module_eval(<<'.,.,', 'parser.y', 187)
+module_eval(<<'.,.,', 'parser.y', 185)
   def _reduce_42(val, _values, result)
         		result = Node::CommandElementList.new
 	    
@@ -1370,7 +1370,7 @@ module_eval(<<'.,.,', 'parser.y', 187)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 191)
+module_eval(<<'.,.,', 'parser.y', 189)
   def _reduce_43(val, _values, result)
     		result.push val[1]
 	    
@@ -1380,7 +1380,7 @@ module_eval(<<'.,.,', 'parser.y', 191)
 
 # reduce 44 omitted
 
-module_eval(<<'.,.,', 'parser.y', 198)
+module_eval(<<'.,.,', 'parser.y', 196)
   def _reduce_45(val, _values, result)
     	        yyerror val[0], "syntax error: wildcasd #{val[0].inspect} can't use this place."
 	    
@@ -1398,7 +1398,7 @@ module_eval(<<'.,.,', 'parser.y', 198)
 
 # reduce 50 omitted
 
-module_eval(<<'.,.,', 'parser.y', 209)
+module_eval(<<'.,.,', 'parser.y', 207)
   def _reduce_51(val, _values, result)
     #	       result = Node::SimpleCommand(val[0], val[1], val[2])
 	       result = val[0]
@@ -1409,7 +1409,7 @@ module_eval(<<'.,.,', 'parser.y', 209)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 218)
+module_eval(<<'.,.,', 'parser.y', 216)
   def _reduce_52(val, _values, result)
     #  	       result = Node::SimpleCommand(val[0], Node::CommandElementList.new, val[1])
 	       result = val[0]
@@ -1423,7 +1423,7 @@ module_eval(<<'.,.,', 'parser.y', 218)
 
 # reduce 53 omitted
 
-module_eval(<<'.,.,', 'parser.y', 236)
+module_eval(<<'.,.,', 'parser.y', 234)
   def _reduce_54(val, _values, result)
     #  	       result = Node::SimpleCommand(val[0][0], val[0][1], val[1])
 	       result = val[0]
@@ -1433,7 +1433,7 @@ module_eval(<<'.,.,', 'parser.y', 236)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 245)
+module_eval(<<'.,.,', 'parser.y', 243)
   def _reduce_55(val, _values, result)
     #	       result = val[0]
 	       result = val[0][0]
@@ -1444,7 +1444,7 @@ module_eval(<<'.,.,', 'parser.y', 245)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 254)
+module_eval(<<'.,.,', 'parser.y', 252)
   def _reduce_56(val, _values, result)
     	       @lex.indent_push(:LPAREN_ARG);
 #      	       result = val[0]
@@ -1454,7 +1454,7 @@ module_eval(<<'.,.,', 'parser.y', 254)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 261)
+module_eval(<<'.,.,', 'parser.y', 259)
   def _reduce_57(val, _values, result)
     		@lex.lex_state = Lex::EXPR_ARG
 		result = Node::CommandElementList.new
@@ -1463,7 +1463,7 @@ module_eval(<<'.,.,', 'parser.y', 261)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 266)
+module_eval(<<'.,.,', 'parser.y', 264)
   def _reduce_58(val, _values, result)
     		result = val[0]
   		@lex.lex_state = Lex::EXPR_ARG
@@ -1473,7 +1473,7 @@ module_eval(<<'.,.,', 'parser.y', 266)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 278)
+module_eval(<<'.,.,', 'parser.y', 276)
   def _reduce_59(val, _values, result)
     		result = nil
 	    
@@ -1483,14 +1483,14 @@ module_eval(<<'.,.,', 'parser.y', 278)
 
 # reduce 60 omitted
 
-module_eval(<<'.,.,', 'parser.y', 282)
+module_eval(<<'.,.,', 'parser.y', 280)
   def _reduce_61(val, _values, result)
     @lex.indent_push(:DO)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 284)
+module_eval(<<'.,.,', 'parser.y', 282)
   def _reduce_62(val, _values, result)
     	      if val[2]
 		result = Node::DoBlock(val[3], val[2])
@@ -1502,14 +1502,14 @@ module_eval(<<'.,.,', 'parser.y', 284)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 290)
+module_eval(<<'.,.,', 'parser.y', 288)
   def _reduce_63(val, _values, result)
     @lex.indent_push(:LBRACE_I)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 292)
+module_eval(<<'.,.,', 'parser.y', 290)
   def _reduce_64(val, _values, result)
     	      if val[2]
 		result = Node::DoBlock(val[3], val[2])
@@ -1521,7 +1521,7 @@ module_eval(<<'.,.,', 'parser.y', 292)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 301)
+module_eval(<<'.,.,', 'parser.y', 299)
   def _reduce_65(val, _values, result)
     	      result = nil
 	    
@@ -1529,7 +1529,7 @@ module_eval(<<'.,.,', 'parser.y', 301)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 305)
+module_eval(<<'.,.,', 'parser.y', 303)
   def _reduce_66(val, _values, result)
     	      result = val[1]
 	    
@@ -1537,7 +1537,7 @@ module_eval(<<'.,.,', 'parser.y', 305)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 310)
+module_eval(<<'.,.,', 'parser.y', 308)
   def _reduce_67(val, _values, result)
     	       @lex.lex_state = Lex::EXPR_DO_BEG
 	       result = []
@@ -1546,7 +1546,7 @@ module_eval(<<'.,.,', 'parser.y', 310)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 315)
+module_eval(<<'.,.,', 'parser.y', 313)
   def _reduce_68(val, _values, result)
     	      result = val[0]
 	      result.push val[2]
@@ -1555,7 +1555,7 @@ module_eval(<<'.,.,', 'parser.y', 315)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 321)
+module_eval(<<'.,.,', 'parser.y', 319)
   def _reduce_69(val, _values, result)
           	       result = Node::SimpleCommand(val[0])
 	    
@@ -1563,7 +1563,7 @@ module_eval(<<'.,.,', 'parser.y', 321)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 325)
+module_eval(<<'.,.,', 'parser.y', 323)
   def _reduce_70(val, _values, result)
           	       result = Node::SimpleCommand(val[0])
 	    
@@ -1571,7 +1571,7 @@ module_eval(<<'.,.,', 'parser.y', 325)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 329)
+module_eval(<<'.,.,', 'parser.y', 327)
   def _reduce_71(val, _values, result)
           	       result = Node::SimpleCommand(val[0])
 	    
@@ -1579,7 +1579,7 @@ module_eval(<<'.,.,', 'parser.y', 329)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 333)
+module_eval(<<'.,.,', 'parser.y', 331)
   def _reduce_72(val, _values, result)
           	       result = Node::SimpleCommand(val[0])
 	    
@@ -1587,7 +1587,7 @@ module_eval(<<'.,.,', 'parser.y', 333)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 338)
+module_eval(<<'.,.,', 'parser.y', 336)
   def _reduce_73(val, _values, result)
     	       result = Node::CommandElementList.new
 	    
@@ -1597,7 +1597,7 @@ module_eval(<<'.,.,', 'parser.y', 338)
 
 # reduce 74 omitted
 
-module_eval(<<'.,.,', 'parser.y', 344)
+module_eval(<<'.,.,', 'parser.y', 342)
   def _reduce_75(val, _values, result)
     	       result = Node::CommandElementList.new(val[0])
 	    
@@ -1605,7 +1605,7 @@ module_eval(<<'.,.,', 'parser.y', 344)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 348)
+module_eval(<<'.,.,', 'parser.y', 346)
   def _reduce_76(val, _values, result)
     	       result = val[0]
       	       result.push val[1]
@@ -1640,7 +1640,7 @@ module_eval(<<'.,.,', 'parser.y', 348)
 
 # reduce 89 omitted
 
-module_eval(<<'.,.,', 'parser.y', 375)
+module_eval(<<'.,.,', 'parser.y', 373)
   def _reduce_90(val, _values, result)
     	      result = Node::LiteralCommand(val[0])  
     	    
@@ -1668,7 +1668,7 @@ module_eval(<<'.,.,', 'parser.y', 375)
 
 # reduce 100 omitted
 
-module_eval(<<'.,.,', 'parser.y', 391)
+module_eval(<<'.,.,', 'parser.y', 389)
   def _reduce_101(val, _values, result)
     	      result = Node::Symbol(val[2])
 	    
@@ -1682,7 +1682,7 @@ module_eval(<<'.,.,', 'parser.y', 391)
 
 # reduce 104 omitted
 
-module_eval(<<'.,.,', 'parser.y', 400)
+module_eval(<<'.,.,', 'parser.y', 398)
   def _reduce_105(val, _values, result)
                    case val[0].commands.last
 	       when Node::SimpleCommand
@@ -1698,7 +1698,7 @@ module_eval(<<'.,.,', 'parser.y', 400)
 
 # reduce 106 omitted
 
-module_eval(<<'.,.,', 'parser.y', 419)
+module_eval(<<'.,.,', 'parser.y', 417)
   def _reduce_107(val, _values, result)
     		result = Node::IndexRefCommand(*val[0])
 	    
@@ -1706,7 +1706,7 @@ module_eval(<<'.,.,', 'parser.y', 419)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 424)
+module_eval(<<'.,.,', 'parser.y', 422)
   def _reduce_108(val, _values, result)
     		result = [val[0], val[3]]
 	    
@@ -1716,14 +1716,14 @@ module_eval(<<'.,.,', 'parser.y', 424)
 
 # reduce 109 omitted
 
-module_eval(<<'.,.,', 'parser.y', 443)
+module_eval(<<'.,.,', 'parser.y', 441)
   def _reduce_110(val, _values, result)
     @lex.indent_push(:BEGIN)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 445)
+module_eval(<<'.,.,', 'parser.y', 443)
   def _reduce_111(val, _values, result)
     		result = Node::BeginCommand(*val[2])
 		result.space_seen = val[0].space_seen
@@ -1732,7 +1732,7 @@ module_eval(<<'.,.,', 'parser.y', 445)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 451)
+module_eval(<<'.,.,', 'parser.y', 449)
   def _reduce_112(val, _values, result)
     		result = val
 	    
@@ -1740,7 +1740,7 @@ module_eval(<<'.,.,', 'parser.y', 451)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 456)
+module_eval(<<'.,.,', 'parser.y', 454)
   def _reduce_113(val, _values, result)
     		result = nil
 	    
@@ -1748,7 +1748,7 @@ module_eval(<<'.,.,', 'parser.y', 456)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 460)
+module_eval(<<'.,.,', 'parser.y', 458)
   def _reduce_114(val, _values, result)
     		result = Node::RescueCommand(val[1], val[2], val[5])
 		if val[6]
@@ -1763,7 +1763,7 @@ module_eval(<<'.,.,', 'parser.y', 460)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 471)
+module_eval(<<'.,.,', 'parser.y', 469)
   def _reduce_115(val, _values, result)
     		result = nil
 	    
@@ -1771,7 +1771,7 @@ module_eval(<<'.,.,', 'parser.y', 471)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 475)
+module_eval(<<'.,.,', 'parser.y', 473)
   def _reduce_116(val, _values, result)
     		result = val[3]
 	    
@@ -1779,7 +1779,7 @@ module_eval(<<'.,.,', 'parser.y', 475)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 479)
+module_eval(<<'.,.,', 'parser.y', 477)
   def _reduce_117(val, _values, result)
     		result = nil
 	    
@@ -1787,7 +1787,7 @@ module_eval(<<'.,.,', 'parser.y', 479)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 484)
+module_eval(<<'.,.,', 'parser.y', 482)
   def _reduce_118(val, _values, result)
     		result = val[1]
 	    
@@ -1795,7 +1795,7 @@ module_eval(<<'.,.,', 'parser.y', 484)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 488)
+module_eval(<<'.,.,', 'parser.y', 486)
   def _reduce_119(val, _values, result)
     		result = nil
 	    
@@ -1803,7 +1803,7 @@ module_eval(<<'.,.,', 'parser.y', 488)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 492)
+module_eval(<<'.,.,', 'parser.y', 490)
   def _reduce_120(val, _values, result)
     		result = val[1]
 	    
@@ -1811,14 +1811,14 @@ module_eval(<<'.,.,', 'parser.y', 492)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 495)
+module_eval(<<'.,.,', 'parser.y', 493)
   def _reduce_121(val, _values, result)
     @lex.indent_push(:WHILE)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 497)
+module_eval(<<'.,.,', 'parser.y', 495)
   def _reduce_122(val, _values, result)
     	       result = Node::WhileCommand(val[3], val[8])
 	    
@@ -1832,14 +1832,14 @@ module_eval(<<'.,.,', 'parser.y', 497)
 
 # reduce 125 omitted
 
-module_eval(<<'.,.,', 'parser.y', 504)
+module_eval(<<'.,.,', 'parser.y', 502)
   def _reduce_126(val, _values, result)
     @lex.indent_push(:UNTIL)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 506)
+module_eval(<<'.,.,', 'parser.y', 504)
   def _reduce_127(val, _values, result)
     	       result = Node::UntilCommand(val[3], val[8])
 	    
@@ -1847,7 +1847,7 @@ module_eval(<<'.,.,', 'parser.y', 506)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 511)
+module_eval(<<'.,.,', 'parser.y', 509)
   def _reduce_128(val, _values, result)
     		result = Node::IfCommand(val[0][0], val[0][1])
 	    
@@ -1855,7 +1855,7 @@ module_eval(<<'.,.,', 'parser.y', 511)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 515)
+module_eval(<<'.,.,', 'parser.y', 513)
   def _reduce_129(val, _values, result)
     		result = Node::IfCommand(val[0][0], val[0][1], val[3])
 	    
@@ -1863,7 +1863,7 @@ module_eval(<<'.,.,', 'parser.y', 515)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 519)
+module_eval(<<'.,.,', 'parser.y', 517)
   def _reduce_130(val, _values, result)
     		result = Node::IfCommand(val[0][0], val[0][1], val[1])
 	    
@@ -1871,14 +1871,14 @@ module_eval(<<'.,.,', 'parser.y', 519)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 522)
+module_eval(<<'.,.,', 'parser.y', 520)
   def _reduce_131(val, _values, result)
     @lex.indent_push(:IF)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 524)
+module_eval(<<'.,.,', 'parser.y', 522)
   def _reduce_132(val, _values, result)
     		result = [val[2], val[6]]
 	    
@@ -1886,7 +1886,7 @@ module_eval(<<'.,.,', 'parser.y', 524)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 528)
+module_eval(<<'.,.,', 'parser.y', 526)
   def _reduce_133(val, _values, result)
     		result = Node::IfCommand(val[2], val[5])
 	    
@@ -1894,7 +1894,7 @@ module_eval(<<'.,.,', 'parser.y', 528)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 532)
+module_eval(<<'.,.,', 'parser.y', 530)
   def _reduce_134(val, _values, result)
     		result = Node::IfCommand(val[2], val[5], val[8])
 	    
@@ -1902,7 +1902,7 @@ module_eval(<<'.,.,', 'parser.y', 532)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 536)
+module_eval(<<'.,.,', 'parser.y', 534)
   def _reduce_135(val, _values, result)
     		result = Node::IfCommand(val[2], val[5], val[6])
 	    
@@ -1914,14 +1914,14 @@ module_eval(<<'.,.,', 'parser.y', 536)
 
 # reduce 137 omitted
 
-module_eval(<<'.,.,', 'parser.y', 542)
+module_eval(<<'.,.,', 'parser.y', 540)
   def _reduce_138(val, _values, result)
     @lex.indent_push(:UNLESS)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 544)
+module_eval(<<'.,.,', 'parser.y', 542)
   def _reduce_139(val, _values, result)
     		result = Node::IfCommand(val[2], val[6], val[5])
 	    
@@ -1929,14 +1929,14 @@ module_eval(<<'.,.,', 'parser.y', 544)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 547)
+module_eval(<<'.,.,', 'parser.y', 545)
   def _reduce_140(val, _values, result)
     @lex.indent_push(:FOR)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 549)
+module_eval(<<'.,.,', 'parser.y', 547)
   def _reduce_141(val, _values, result)
     		result = Node::ForCommand(val[2], val[6], val[10])
             
@@ -1944,7 +1944,7 @@ module_eval(<<'.,.,', 'parser.y', 549)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 554)
+module_eval(<<'.,.,', 'parser.y', 552)
   def _reduce_142(val, _values, result)
     	       @lex.lex_state = Lex::EXPR_BEG
 	       result = [val[0]]
@@ -1953,7 +1953,7 @@ module_eval(<<'.,.,', 'parser.y', 554)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 559)
+module_eval(<<'.,.,', 'parser.y', 557)
   def _reduce_143(val, _values, result)
     	      result = val[0]
 	      result.push val[2]
@@ -1962,14 +1962,14 @@ module_eval(<<'.,.,', 'parser.y', 559)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 563)
+module_eval(<<'.,.,', 'parser.y', 561)
   def _reduce_144(val, _values, result)
     @lex.indent_push(:CASE)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 565)
+module_eval(<<'.,.,', 'parser.y', 563)
   def _reduce_145(val, _values, result)
     		result = Node::CaseCommand(val[1], val[4])
 	    
@@ -1977,7 +1977,7 @@ module_eval(<<'.,.,', 'parser.y', 565)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 570)
+module_eval(<<'.,.,', 'parser.y', 568)
   def _reduce_146(val, _values, result)
     		case val[4]
 		when Array
@@ -1997,7 +1997,7 @@ module_eval(<<'.,.,', 'parser.y', 570)
 
 # reduce 148 omitted
 
-module_eval(<<'.,.,', 'parser.y', 585)
+module_eval(<<'.,.,', 'parser.y', 583)
   def _reduce_149(val, _values, result)
     		result = Node::BreakCommand(val[1])
 	    
@@ -2005,7 +2005,7 @@ module_eval(<<'.,.,', 'parser.y', 585)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 590)
+module_eval(<<'.,.,', 'parser.y', 588)
   def _reduce_150(val, _values, result)
     		result = Node::NextCommand(val[1])
 	    
@@ -2013,7 +2013,7 @@ module_eval(<<'.,.,', 'parser.y', 590)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 595)
+module_eval(<<'.,.,', 'parser.y', 593)
   def _reduce_151(val, _values, result)
     		result = Node::RedoCommand()
 	    
@@ -2021,7 +2021,7 @@ module_eval(<<'.,.,', 'parser.y', 595)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 600)
+module_eval(<<'.,.,', 'parser.y', 598)
   def _reduce_152(val, _values, result)
     		result = Node::RetryCommand()
 	    
@@ -2029,7 +2029,7 @@ module_eval(<<'.,.,', 'parser.y', 600)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 605)
+module_eval(<<'.,.,', 'parser.y', 603)
   def _reduce_153(val, _values, result)
     		result = Node::RaiseCommand(val[1])
 	    
@@ -2037,7 +2037,7 @@ module_eval(<<'.,.,', 'parser.y', 605)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 610)
+module_eval(<<'.,.,', 'parser.y', 608)
   def _reduce_154(val, _values, result)
     		result = Node::ReturnCommand(val[1])
 	    
@@ -2045,7 +2045,7 @@ module_eval(<<'.,.,', 'parser.y', 610)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 615)
+module_eval(<<'.,.,', 'parser.y', 613)
   def _reduce_155(val, _values, result)
     		result = Node::YieldCommand(val[1])
 	    
@@ -2053,14 +2053,14 @@ module_eval(<<'.,.,', 'parser.y', 615)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 618)
+module_eval(<<'.,.,', 'parser.y', 616)
   def _reduce_156(val, _values, result)
     @lex.indent_push(:LPAREN_G); @lex.lex_state = Lex::EXPR_BEG
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 621)
+module_eval(<<'.,.,', 'parser.y', 619)
   def _reduce_157(val, _values, result)
     	        result = Node::Group(val[2])
 	    
@@ -2068,14 +2068,14 @@ module_eval(<<'.,.,', 'parser.y', 621)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 624)
+module_eval(<<'.,.,', 'parser.y', 622)
   def _reduce_158(val, _values, result)
     @lex.indent_push(:BACK_QUOTE)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 626)
+module_eval(<<'.,.,', 'parser.y', 624)
   def _reduce_159(val, _values, result)
     	        result = Node::XString(val[2])
 	    
@@ -2083,7 +2083,7 @@ module_eval(<<'.,.,', 'parser.y', 626)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 666)
+module_eval(<<'.,.,', 'parser.y', 664)
   def _reduce_160(val, _values, result)
     		result = val[2]
 	    
@@ -2091,7 +2091,7 @@ module_eval(<<'.,.,', 'parser.y', 666)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 671)
+module_eval(<<'.,.,', 'parser.y', 669)
   def _reduce_161(val, _values, result)
      	       result.pipeout = :RESULT
  	    
@@ -2099,7 +2099,7 @@ module_eval(<<'.,.,', 'parser.y', 671)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 724)
+module_eval(<<'.,.,', 'parser.y', 722)
   def _reduce_162(val, _values, result)
     		result = Node::RubyExp(val[0])
 	    
@@ -2107,14 +2107,14 @@ module_eval(<<'.,.,', 'parser.y', 724)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 727)
+module_eval(<<'.,.,', 'parser.y', 725)
   def _reduce_163(val, _values, result)
     @lex.indent_push(:LBLACK_A)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 729)
+module_eval(<<'.,.,', 'parser.y', 727)
   def _reduce_164(val, _values, result)
     		result = Node::Array(val[2])
 	    
@@ -2122,7 +2122,7 @@ module_eval(<<'.,.,', 'parser.y', 729)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 734)
+module_eval(<<'.,.,', 'parser.y', 732)
   def _reduce_165(val, _values, result)
     		@lex.lex_state = Lex::EXPR_ARG
 		result = []
@@ -2131,7 +2131,7 @@ module_eval(<<'.,.,', 'parser.y', 734)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 739)
+module_eval(<<'.,.,', 'parser.y', 737)
   def _reduce_166(val, _values, result)
       		@lex.lex_state = Lex::EXPR_ARG
 	        result.push val[1]
@@ -2140,7 +2140,7 @@ module_eval(<<'.,.,', 'parser.y', 739)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 744)
+module_eval(<<'.,.,', 'parser.y', 742)
   def _reduce_167(val, _values, result)
       		@lex.lex_state = Lex::EXPR_ARG
 	        result.push val[1]
@@ -2149,14 +2149,14 @@ module_eval(<<'.,.,', 'parser.y', 744)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 748)
+module_eval(<<'.,.,', 'parser.y', 746)
   def _reduce_168(val, _values, result)
     @lex.indent_push(:LBRACE_H)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 750)
+module_eval(<<'.,.,', 'parser.y', 748)
   def _reduce_169(val, _values, result)
     		result = Node::Hash(val[2])
 	    
@@ -2164,7 +2164,7 @@ module_eval(<<'.,.,', 'parser.y', 750)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 755)
+module_eval(<<'.,.,', 'parser.y', 753)
   def _reduce_170(val, _values, result)
     		@lex.lex_state = Lex::EXPR_ARG
 	        result = []
@@ -2173,7 +2173,7 @@ module_eval(<<'.,.,', 'parser.y', 755)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 760)
+module_eval(<<'.,.,', 'parser.y', 758)
   def _reduce_171(val, _values, result)
     	        @lex.lex_state = Lex::EXPR_ARG
 	        result.push val[1]
@@ -2182,7 +2182,7 @@ module_eval(<<'.,.,', 'parser.y', 760)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 765)
+module_eval(<<'.,.,', 'parser.y', 763)
   def _reduce_172(val, _values, result)
     	        @lex.lex_state = Lex::EXPR_ARG
 		result = [val[0], val[5]]
@@ -2191,7 +2191,7 @@ module_eval(<<'.,.,', 'parser.y', 765)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 770)
+module_eval(<<'.,.,', 'parser.y', 768)
   def _reduce_173(val, _values, result)
     	        @lex.lex_state = Lex::EXPR_ARG
 		result = [val[0], val[3]]
@@ -2200,7 +2200,7 @@ module_eval(<<'.,.,', 'parser.y', 770)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 776)
+module_eval(<<'.,.,', 'parser.y', 774)
   def _reduce_174(val, _values, result)
     		result = Node::Sequence()
 	    
@@ -2208,7 +2208,7 @@ module_eval(<<'.,.,', 'parser.y', 776)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 780)
+module_eval(<<'.,.,', 'parser.y', 778)
   def _reduce_175(val, _values, result)
     		result = val[1]
 	    
@@ -2216,7 +2216,7 @@ module_eval(<<'.,.,', 'parser.y', 780)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 784)
+module_eval(<<'.,.,', 'parser.y', 782)
   def _reduce_176(val, _values, result)
     		result = val[1]
 	    
@@ -2224,7 +2224,7 @@ module_eval(<<'.,.,', 'parser.y', 784)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 788)
+module_eval(<<'.,.,', 'parser.y', 786)
   def _reduce_177(val, _values, result)
     		val[1].last_command_to_async
 		result = val[1]
@@ -2233,7 +2233,7 @@ module_eval(<<'.,.,', 'parser.y', 788)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 793)
+module_eval(<<'.,.,', 'parser.y', 791)
   def _reduce_178(val, _values, result)
     		result = val[1]
 	    
@@ -2241,7 +2241,7 @@ module_eval(<<'.,.,', 'parser.y', 793)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 798)
+module_eval(<<'.,.,', 'parser.y', 796)
   def _reduce_179(val, _values, result)
     	        result = Node::Sequence(val[0]) 
 	    
@@ -2249,7 +2249,7 @@ module_eval(<<'.,.,', 'parser.y', 798)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 802)
+module_eval(<<'.,.,', 'parser.y', 800)
   def _reduce_180(val, _values, result)
     		val[0].add_command(val[4])
 		result = val[0]
@@ -2258,7 +2258,7 @@ module_eval(<<'.,.,', 'parser.y', 802)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 807)
+module_eval(<<'.,.,', 'parser.y', 805)
   def _reduce_181(val, _values, result)
     		val[0].last_command_to_async
 		val[0].add_command(val[4])
@@ -2268,7 +2268,7 @@ module_eval(<<'.,.,', 'parser.y', 807)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 813)
+module_eval(<<'.,.,', 'parser.y', 811)
   def _reduce_182(val, _values, result)
     		val[0].add_command(val[4])
 		result = val[0]
@@ -2277,7 +2277,7 @@ module_eval(<<'.,.,', 'parser.y', 813)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 819)
+module_eval(<<'.,.,', 'parser.y', 817)
   def _reduce_183(val, _values, result)
     	    result = [val[0]]
           
@@ -2285,7 +2285,7 @@ module_eval(<<'.,.,', 'parser.y', 819)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 823)
+module_eval(<<'.,.,', 'parser.y', 821)
   def _reduce_184(val, _values, result)
     	    val[0].push val[1]
 	    result = val[0]
@@ -2294,7 +2294,7 @@ module_eval(<<'.,.,', 'parser.y', 823)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 829)
+module_eval(<<'.,.,', 'parser.y', 827)
   def _reduce_185(val, _values, result)
     	    result = Node::Redirection(-1, ">", val[1])
 	    result.space_seen = val[0].space_seen
@@ -2303,7 +2303,7 @@ module_eval(<<'.,.,', 'parser.y', 829)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 834)
+module_eval(<<'.,.,', 'parser.y', 832)
   def _reduce_186(val, _values, result)
     	    result = Node::Redirection(-1, "<", val[1])
 	    result.space_seen = val[0].space_seen
@@ -2312,7 +2312,7 @@ module_eval(<<'.,.,', 'parser.y', 834)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 839)
+module_eval(<<'.,.,', 'parser.y', 837)
   def _reduce_187(val, _values, result)
     	    result = Node::Redirection(val[0], ">", val[2])
 	    result.space_seen = val[0].space_seen
@@ -2321,7 +2321,7 @@ module_eval(<<'.,.,', 'parser.y', 839)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 844)
+module_eval(<<'.,.,', 'parser.y', 842)
   def _reduce_188(val, _values, result)
     	    result = Node::Redirection(val[0], "<", val[2])
 	    result.space_seen = val[0].space_seen
@@ -2334,7 +2334,7 @@ module_eval(<<'.,.,', 'parser.y', 844)
 
 # reduce 190 omitted
 
-module_eval(<<'.,.,', 'parser.y', 851)
+module_eval(<<'.,.,', 'parser.y', 849)
   def _reduce_191(val, _values, result)
     	    result = Node::Redirection(-1, ">>", val[1])
 	    result.space_seen = val[0].space_seen
@@ -2343,7 +2343,7 @@ module_eval(<<'.,.,', 'parser.y', 851)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 856)
+module_eval(<<'.,.,', 'parser.y', 854)
   def _reduce_192(val, _values, result)
     	    result = Node::Redirection(val[0], ">>", val[2])
 	    result.space_seen = val[0].space_seen
@@ -2408,7 +2408,7 @@ module_eval(<<'.,.,', 'parser.y', 856)
 
 # reduce 220 omitted
 
-module_eval(<<'.,.,', 'parser.y', 895)
+module_eval(<<'.,.,', 'parser.y', 893)
   def _reduce_221(val, _values, result)
     	    result = Node::Redirection(-1, "&>", val[1])
 	    result.space_seen = val[0].space_seen
@@ -2417,7 +2417,7 @@ module_eval(<<'.,.,', 'parser.y', 895)
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 900)
+module_eval(<<'.,.,', 'parser.y', 898)
   def _reduce_222(val, _values, result)
     	    result = Node::Redirection(-1, "&>>", val[1])
 	    result.space_seen = val[0].space_seen
@@ -2446,42 +2446,42 @@ module_eval(<<'.,.,', 'parser.y', 900)
 
 # reduce 232 omitted
 
-module_eval(<<'.,.,', 'parser.y', 919)
+module_eval(<<'.,.,', 'parser.y', 917)
   def _reduce_233(val, _values, result)
     @lex.cond_push(true)
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 920)
+module_eval(<<'.,.,', 'parser.y', 918)
   def _reduce_234(val, _values, result)
     @lex.cond_pop
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 922)
+module_eval(<<'.,.,', 'parser.y', 920)
   def _reduce_235(val, _values, result)
     @lex.lex_state = Lex::EXPR_BEG
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 923)
+module_eval(<<'.,.,', 'parser.y', 921)
   def _reduce_236(val, _values, result)
     @lex.lex_state = Lex::EXPR_ARG
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 924)
+module_eval(<<'.,.,', 'parser.y', 922)
   def _reduce_237(val, _values, result)
     @lex.lex_state = Lex::EXPR_END
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'parser.y', 926)
+module_eval(<<'.,.,', 'parser.y', 924)
   def _reduce_238(val, _values, result)
     @lex.indent_pop
     result

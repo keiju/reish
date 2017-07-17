@@ -95,6 +95,14 @@ module Reish
       rehash if @have_relative_path
     end
 
+    def jobs
+      @shell.job_controller.jobs
+    end
+    
+    def fg(opt=nil)
+      @shell.job_controller.fg opt
+    end
+
     attr_reader :env
 
     #
