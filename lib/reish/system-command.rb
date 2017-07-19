@@ -12,12 +12,32 @@ module Reish
   def Reish.SystemCommand(exenv, receiver, path, *args)
     case receiver
     when Reish::Main
-      SystemCommand.new(exenv, receiver, path, *args)
+      c = SystemCommand.new(exenv, receiver, path, *args)
     when SystemCommand
-      CompSystemCommand.new(exenv, receiver, path, *args)
+      c = CompSystemCommand.new(exenv, receiver, path, *args)
     else
-      SystemCommand.new(exenv, receiver, path, *args)
+      c = SystemCommand.new(exenv, receiver, path, *args)
     end
+    Lazize.lazize(c)
+  end
+
+  module Lazize
+    def self.lazize(c)
+      l = c.lazy
+      l.extend self
+      l.instance_eval{@source = c}
+      l
+    end
+    
+    def reish_term
+      @source.reish_term
+    end
+    alias term reish_term
+
+    def reish_result
+      @source.reish_result
+    end
+    alias result reish_result
   end
     
   class SystemCommand
@@ -379,7 +399,24 @@ end
 
 
 class Object
-  def reish_term; self; end
+  def reish_term
+    case self
+    when Array
+#      puts collect{|e| e.to_s}.sort
+	each{|e| puts e.to_s}
+    when Enumerable
+      if STDOUT.tty?
+	each{|e| puts e.to_s}
+      else
+	each{|e| puts e.to_s}
+      end
+    else
+      puts self.to_s
+    end
+    self
+  end
+
+
   def reish_stat; self; end
   def reish_result; self; end
 

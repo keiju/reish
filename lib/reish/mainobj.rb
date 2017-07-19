@@ -19,7 +19,7 @@ module Reish
 
     include Enumerable
     include OSSpace
-    include BuiltIn
+#    include BuiltIn
 
     def initialize(exenv)
       @exenv = exenv
