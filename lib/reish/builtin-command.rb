@@ -106,6 +106,70 @@ module Reish
       Reish.Fail CommandNotFound, name unless com
       com
     end
+
   end
+
+  def self.def_command(name, klass)
+    BuiltIn.module_eval %{
+      def #{name}(*opts)
+	begin
+	  return super unless Reish::active_thread?
+	rescue NoMethodError
+	  raise NameError, "undefined local variable or method `#{name}' for \#{self}"
+	end
+	#{klass}.new(self, *opts)
+      end
+    }
+  end
+
+  class BuiltInCommand
+    include Enumerable
+
+    def initialize(receiver, *opt)
+      @receiver = receiver
+    end
+  end
+
+  class SampleLS<BuiltInCommand
+    def initialize(receiver, path = nil)
+      super
+
+      path = Reish.current_shell.exenv.pwd unless path
+      @path = path
+    end
+
+    def each(&block)
+      for f in Dir.entries(@path)
+	block.call f
+      end
+    end
+
+    def reish_term
+      each do |f|
+	puts f
+      end
+    end
+  end
+
+  class SampleGrep<BuiltInCommand
+    def initialize(receiver, reg)
+      super
+
+      @regex = reg
+    end
+
+    def each(&block)
+      @receiver.each do |e|
+	block.call e if @regex =~ e
+      end
+    end
+  end
+
+  def_command :sample_ls, SampleLS
+  def_command :sample_grep, SampleGrep
+end
+
+class Object
+  include ::Reish::BuiltIn
 end
 

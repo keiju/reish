@@ -402,7 +402,8 @@ class Object
   def reish_term
     case self
     when Array
-      puts collect{|e| e.to_s}.sort
+#      puts collect{|e| e.to_s}.sort
+	each{|e| puts e.to_s}
     when Enumerable
       if STDOUT.tty?
 	each{|e| puts e.to_s}
