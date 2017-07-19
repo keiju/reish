@@ -399,7 +399,23 @@ end
 
 
 class Object
-  def reish_term; self; end
+  def reish_term
+    case self
+    when Array
+      puts collect{|e| e.to_s}.sort
+    when Enumerable
+      if STDOUT.tty?
+	each{|e| puts e.to_s}
+      else
+	each{|e| puts e.to_s}
+      end
+    else
+      puts self.to_s
+    end
+    self
+  end
+
+
   def reish_stat; self; end
   def reish_result; self; end
 
