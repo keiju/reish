@@ -1,3 +1,7 @@
+* new stream feature
+  pipelineでEnumerator::Lazyを使いたい
+  mainobjでのstdinを実現
+  termのstdout処理
 * return/break/next/redo/retryの対応
   #  rubyでは, 式中に上記のものを入れることができない.
 * case expr に変更?
