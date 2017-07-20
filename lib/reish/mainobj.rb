@@ -31,9 +31,6 @@ module Reish
       STDIN.each &block
     end
 
-    def_delegator :@exenv, :chdir
-    def_delegator :@exenv, :chdir, :cd
-
     def_delegator :@exenv, :rehash
 
     def_delegator :@exenv, :display_mode
