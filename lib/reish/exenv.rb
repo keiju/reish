@@ -90,9 +90,13 @@ module Reish
     end
 
     def chdir(path)
-      @pwd = path
-      
+      p = File.expand_path(path, @pwd)
+      unless File.directory?(p)
+	raise Errno::ENOENT, path
+      end
+      @pwd = p
       rehash if @have_relative_path
+      @pwd
     end
 
     def jobs
