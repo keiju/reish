@@ -25,14 +25,10 @@ module Reish
       @jobs = []
     end
 
+    attr_reader :jobs
+
     def shrink_jobs
       until @jobs.empty? || @jobs.last; @jobs.pop; end
-    end
-
-    def jobs
-      i = -1
-      puts @jobs.collect{|j| i+=1; sprintf("%d %s\n", i, j)}
-      #@jobs
     end
 
     def fg(id=nil)
