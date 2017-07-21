@@ -257,7 +257,7 @@ module Reish
   end
 
   def Reish::WildCard(wc)
-    exenv = Thread.current[:__REISH_CURRENT_SHELL__].exenv
+    exenv = Reish::current_shell.exenv
     WildCard::new(exenv, wc)
   end
 

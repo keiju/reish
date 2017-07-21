@@ -9,7 +9,7 @@ module Reish
   class JobController
 
     def self::start_background_job(script=nil, &block)
-      sh = Thread.current[:__REISH_CURRENT_SHELL__]
+      sh = Reish::current_shell
       sh.job_controller.start_background_job(script) do
 	sh.activate_command_search do
 	  block.call

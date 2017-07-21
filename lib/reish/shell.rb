@@ -324,25 +324,25 @@ module Reish
     end
 
     def activate_command_search(&block)
-      sh = Thread.current[:__REISH_CURRENT_SHELL__]
-      Thread.current[:__REISH_CURRENT_SHELL__] = self
+      sh = Reish::current_shell
+      Reish::current_shell = self
       begin
 	block.call self
       ensure
-	Thread.current[:__REISH_CURRENT_SHELL__] = sh
+	Reish::current_shell = sh
       end
     end
 
     def inactivate_command_search(&block)
-      sh = Thread.current[:__REISH_CURRENT_SHELL__]
+      sh = Reish::current_shell
       return ifnoactive.call if !sh && ifnoactive
 
       back = sh
-      Thread.current[:__REISH_CURRENT_SHELL__] = nil
+      Reish::current_shell = nil
       begin
 	block.call sh
       ensure
-	Thread.current[:__REISH_CURRENT_SHELL__] = back
+	Reish::current_shell = back
       end
     end
 

@@ -62,6 +62,10 @@ module Reish
     Thread.current[:__REISH_CURRENT_SHELL__]
   end
 
+  def Reish::current_shell=(sh)
+    Thread.current[:__REISH_CURRENT_SHELL__] = sh
+  end
+
   def Reish::inactivate_command_search(ifnoactive: nil, &block)
     sh = Thread.current[:__REISH_CURRENT_SHELL__]
     return ifnoactive.call if !sh && ifnoactive
