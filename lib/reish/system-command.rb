@@ -128,7 +128,7 @@ module Reish
 	io_popen("w") do |io|
 	  case receiver 
 	  when Enumerable
-	    @receiver.each{|e| io.print e.to_s}
+	    @receiver.each{|e| io.puts e.to_s}
 	  else
 	    io.write @receiver.to_s
 	  end
