@@ -163,7 +163,7 @@ module Reish
 	jobs = sh.job_controller.jobs
 	if STDOUT.tty?
 	  jobs.each_with_index do |job, idx|
-	    puts "#{idx} #{job}" if job
+	    puts "#{idx} #{job} " if job
 	  end
 	  nil
 	else

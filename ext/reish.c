@@ -6,6 +6,9 @@
 
 VALUE rb_mReish;
 
+static ID id_to_i;
+
+
 static VALUE
 reish_tcgetpgrp(VALUE obj, VALUE io)
 {
@@ -41,15 +44,34 @@ reish_tcsetpgrp(VALUE obj, VALUE io, VALUE pid)
   return io;
 }
 
+#define PST2INT(st) NUM2INT(pst_to_i(st))
+
+static VALUE
+reish_wifscontinued(VALUE obj, VALUE st)
+{
+  int status = NUM2INT(rb_funcall(st, id_to_i, 0));
+
+  if (WIFCONTINUED(status))
+    return Qtrue;
+  else
+    return Qfalse;
+}
+
 
 void
 Init_reish()
 {
+
+  id_to_i = rb_intern("to_i");
+  
   rb_mReish = rb_define_module("Reish");
+
+  rb_define_const(rb_mReish, "WCONTINUED", INT2FIX(WCONTINUED));
 
   rb_define_module_function(rb_mReish, "tcgetpgrp", reish_tcgetpgrp, 1);
   rb_define_module_function(rb_mReish, "tcsetpgrp", reish_tcsetpgrp, 2);
 
+  rb_define_module_function(rb_mReish, "wifscontined?", reish_wifscontinued, 1);
 }
 
 

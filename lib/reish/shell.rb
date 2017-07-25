@@ -56,16 +56,6 @@ module Reish
 
     attr_reader :completor
 
-    def initialize_as_main_shell
-      trap("SIGINT") do
-	signal_handle
-      end
-
-      trap("SIGTSTP") do
-	signal_handle(:TSTP)
-      end
-    end
-
     def initialize_input_method(input_method)
       case input_method
       when nil
@@ -467,6 +457,29 @@ module Reish
       @parser.yydebug = val
       @lex.debug_lex_state=val
     end
+  end
 
+  class MainShell < Shell
+
+    def initialize
+      super
+
+      @process_monitor = ProcessMonitor.new
+      @process_monitor.start_monitor
+
+      trap(:SIGINT) do
+	signal_handle
+      end
+
+      trap(:SIGTSTP) do
+	signal_handle(:TSTP)
+      end
+
+      trap(:SIGCHLD) do
+	@process_monitor.accept_sigchild
+      end
+    end
+
+    attr_reader :process_monitor
   end
 end

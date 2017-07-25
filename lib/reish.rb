@@ -37,19 +37,18 @@ module Reish
 
     if @CONF[:OPT_C]
       im = StringInputMethod.new(@CONF[:OPT_C])
-      sh = Shell.new(im)
+      sh = MainShell.new(im)
     elsif @CONF[:OPT_TEST_CMPL]
       compl = @COMP[:COMPLETOR].new(Shell.new)
       compl.candidate(@CONF[:OPT_TEST_CMPL])
       exit
     elsif !ARGV.empty?
       f = ARGV.shift
-      sh = Shell.new(f)
+      sh = MainShell.new(f)
     else
-      sh = Shell.new
+      sh = MainShell.new
     end
     const_set(:MAIN_SHELL, sh)
-    sh.initialize_as_main_shell
 
     sh.start
   end

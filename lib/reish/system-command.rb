@@ -52,16 +52,37 @@ module Reish
 
       @reds = nil
 
+      @pid = nil
+      @pstat = nil
       @exit_status = nil
+
+      @wait_mx = Mutex.new
+      @wait_cv = ConditionVariable.new
     end
 
     attr_reader :receiver
     attr_accessor :reds
 
+    attr_accessor :pid
+    attr_reader :pstat
+
+    def pstat=(stat)
+      @wait_mx.synchronize do
+	@pstat = stat
+	@wait_cv.broadcast
+      end
+    end
+
+    def pstat_finish?
+      @pstat == :EXIT || @pstat == :TERM
+    end
+
     def io_popen(mode, &block)
-      IO.popen([@exenv.env, 
-		 @command_path, 
-		 *command_opts], mode, spawn_options, &block)
+      JobController.current_job.popen_process(self, 
+					      [@exenv.env, 
+						@command_path, 
+						*command_opts], mode, spawn_options, 
+					      &block)
     end
 
     def command_opts(ary = @args)
@@ -86,11 +107,11 @@ module Reish
     end
 
     def io_spawn
-      pid = Process.spawn(@exenv.env, 
-			  @command_path, 
-			  *command_opts,
-			  spawn_options)
-      pid
+      JobController.current_job.spawn_process(self, 
+					      @exenv.env, 
+					      @command_path, 
+					      *command_opts,
+					      spawn_options)
     end
 
     def each(&block)
@@ -136,13 +157,14 @@ module Reish
 	  @exit_status = $?
 	end
       else
-	pid = io_spawn
-	begin
-	  pid2, stat = Process.waitpid2(pid)
-	  @exit_status = stat
-	rescue Errno::ECHILD
-	  puts "#{command_path} not stated"
-	end
+	io_spawn
+# 	begin
+# 	  sleep 100
+# 	  pid2, stat = Process.waitpid2(pid)
+# 	  @exit_status = stat
+# 	rescue Errno::ECHILD
+# 	  puts "#{command_path} not stated"
+# 	end
       end
 
       @exit_status
@@ -206,6 +228,14 @@ module Reish
       opts
     end
 
+    def wait
+      @wait_mx.synchronize do
+	until pstat_finish?
+	  @wait_cv.wait(@wait_mx)
+	end
+      end
+    end
+
     def inspect
       if Reish::INSPECT_LEBEL < 3
 	format("#<SystemCommand: @receiver=%s, @command_path=%s, @args=%s, @exis_status=%s>", @receiver, @command_path, @args, @exit_status)
@@ -227,11 +257,19 @@ module Reish
     end
 
     def io_popen(open_mode, &block)
-      IO.popen(@exenv.env, to_script, open_mode, spawn_options, &block)
+      JobController.current_job.popen_process(self,
+					      @exenv.env, 
+					      to_script, 
+					      open_mode, 
+					      spawn_options, 
+					      &block)
     end
 
     def io_spawn
-      Process.spawn(@exenv.env, to_script, spawn_options)
+      JobController.current_job..spawn_process(self,
+					       @exenv.env, 
+					       to_script, 
+					       spawn_options)
     end
 
     def to_script
