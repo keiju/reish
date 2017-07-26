@@ -147,7 +147,7 @@ module Reish
 	exp = @current_input_unit.accept(@codegen)
 	puts "<= #{exp}" if @exenv.display_comp
 
-	@job_controller.start_foreground_job do
+	@job_controller.start_foreground_job(exp) do
 	  exc = nil
 	  val = nil
 	  begin

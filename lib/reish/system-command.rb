@@ -15,6 +15,8 @@ module Reish
       c = SystemCommand.new(exenv, receiver, path, *args)
     when SystemCommand
       c = CompSystemCommand.new(exenv, receiver, path, *args)
+    when Lazize
+      c = CompSystemCommand.new(exenv, receiver.source, path, *args)
     else
       c = SystemCommand.new(exenv, receiver, path, *args)
     end
@@ -28,6 +30,8 @@ module Reish
       l.instance_eval{@source = c}
       l
     end
+
+    attr_reader :source
     
     def reish_term
       @source.reish_term
@@ -38,6 +42,10 @@ module Reish
       @source.reish_result
     end
     alias result reish_result
+
+    def info
+      "Lazy(#{@source.info})"
+    end
   end
     
   class SystemCommand
@@ -53,7 +61,7 @@ module Reish
       @reds = nil
 
       @pid = nil
-      @pstat = nil
+      @pstat = :NULL
       @exit_status = nil
 
       @wait_mx = Mutex.new
@@ -236,6 +244,10 @@ module Reish
       end
     end
 
+    def info
+      "#{File.basename(@command_path)}[#{@pid}](#{@pstat.id2name})"
+    end
+
     def inspect
       if Reish::INSPECT_LEBEL < 3
 	format("#<SystemCommand: @receiver=%s, @command_path=%s, @args=%s, @exis_status=%s>", @receiver, @command_path, @args, @exit_status)
@@ -266,7 +278,7 @@ module Reish
     end
 
     def io_spawn
-      JobController.current_job..spawn_process(self,
+      JobController.current_job.spawn_process(self,
 					       @exenv.env, 
 					       to_script, 
 					       spawn_options)
@@ -275,6 +287,10 @@ module Reish
     def to_script
       @receiver_script + "|" +
 	@command_path + " " + command_opts.join(" ")
+    end
+
+    def info
+      "#{to_script}[#{pid}](#{@pstat.id2name})"
     end
   end
 

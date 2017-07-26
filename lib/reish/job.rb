@@ -54,8 +54,9 @@ module Reish
 #
 #    end
 
-    def start_foreground_job(&block)
+    def start_foreground_job(script=nil, &block)
       job = Job.new(@shell)
+      job.source = script
       @foreground_job = job
       @foreground_job.start do
 	begin
@@ -68,7 +69,7 @@ module Reish
 
     def start_background_job(script=nil, &block)
       job = Job.new(@shell)
-      job.script = script
+      job.source = script
       @jobs.push job
       job.start(false) do
 	begin
@@ -156,6 +157,7 @@ module Reish
       begin
 	com.pid = pid
 	add_process(com)
+	com.pstat = :RUN
 
 
 	com.wait
@@ -238,6 +240,8 @@ module Reish
     def initialize(shell)
       @shell = shell
 
+      @source = nil
+
       @processes = []
 
       @thread = nil
@@ -247,7 +251,7 @@ module Reish
 
       @script = nil
     end
-    attr_accessor :script
+    attr_accessor :source
 
     def start(sync = true, &block)
       @stat = nil
@@ -308,12 +312,30 @@ module Reish
 
     def popen_process(com, *opts, &block)
       @processes.push com
-      ProcessMonitor.Monitor.popen_process(com, *opts, &block)
+      begin
+	ProcessMonitor.Monitor.popen_process(com, *opts, &block)
+      ensure
+	@processes.delete(com)
+      end
     end
 
     def spawn_process(com, *opts)
       @processes.push com
-      ProcessMonitor.Monitor.spawn_process(com, *opts)
+      begin
+	ProcessMonitor.Monitor.spawn_process(com, *opts)
+      ensure
+	@processes.delete(com)
+      end
+    end
+
+    def info
+      "<#{@source} step=#{@processes.collect{|com| com.info}.join(" ")}>"
+    end
+
+    def inspect
+      return super if Reish::INSPECT_LEBEL >= 3
+      
+      "#<Job: @processes=[#{@processes.collect{|com| com.inspect}.join(", ")}]>"
     end
   end
 end
