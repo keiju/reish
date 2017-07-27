@@ -107,6 +107,10 @@ module Reish
       @shell.job_controller.fg opt
     end
 
+    def bg(opt=nil)
+      @shell.job_controller.bg opt
+    end
+
     attr_reader :env
 
     #

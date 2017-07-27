@@ -89,7 +89,9 @@ module Reish
       JobController.current_job.popen_process(self, 
 					      [@exenv.env, 
 						@command_path, 
-						*command_opts], mode, spawn_options, 
+						*command_opts], 
+					      mode, 
+					      spawn_options, 
 					      &block)
     end
 

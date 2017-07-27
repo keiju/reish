@@ -35,6 +35,7 @@ module Reish
 
 #    def_delegator :@exenv, :jobs
     def_delegator :@exenv, :fg
+    def_delegator :@exenv, :bg
 
     def_delegator :@exenv, :display_mode
     def_delegator :@exenv, :display_mode=

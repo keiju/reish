@@ -464,6 +464,14 @@ module Reish
     def initialize
       super
 
+      @backup_tcpgrp = nil
+      if STDIN.tty?
+	@backup_tcpgrp = Reish::tcgetpgrp(STDIN)
+	puts "Backup TCPGRP: #{@backup_tcpgrp}"
+	@tcpgrp = Process.pid
+	Reish::tcsetpgrp(STDIN, @tcpgrp)
+      end
+
       @process_monitor = ProcessMonitor.new
       @process_monitor.start_monitor
 
@@ -474,6 +482,9 @@ module Reish
       trap(:SIGTSTP) do
 	signal_handle(:TSTP)
       end
+
+#      trap(:TTIN, :IGNORE)
+      trap(:TTOU, :IGNORE)
 
       trap(:SIGCHLD) do
 	@process_monitor.accept_sigchild

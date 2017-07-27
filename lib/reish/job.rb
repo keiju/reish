@@ -50,9 +50,11 @@ module Reish
       job.to_foreground
     end
 
-#    def bg(id=nil)
-#
-#    end
+    def bg(id=nil)
+      id = @jobs.size-1 unless id
+      job = @jobs[id]
+      job.to_background
+    end
 
     def start_foreground_job(script=nil, &block)
       job = Job.new(@shell)
@@ -127,7 +129,7 @@ module Reish
 	@processes.delete(com)
       end
     end
-
+p
     def set_process_stat(pid, stat)
       com = @processes[pid]
       unless com
@@ -152,13 +154,14 @@ module Reish
       end
     end
 
-    def spawn_process(com, *opts)
+    def spawn_process(com, *opts, &block)
       pid = Process.spawn(*opts)
       begin
 	com.pid = pid
 	add_process(com)
 	com.pstat = :RUN
-
+	
+	block.call
 
 	com.wait
       ensure
@@ -200,6 +203,10 @@ module Reish
 		case stat.stopsig
 		when 20
 		  set_process_stat(pid, :TSTP)
+		  
+		  Reish.tcsetpgrp(STDOUT, Process.pid)
+		  MAIN_SHELL.reish_tstp(MAIN_SHELL)
+		  
 		when 21
 		  set_process_stat(pid, :TTIN)
 		when 22
@@ -248,12 +255,12 @@ module Reish
       @stat = nil
       @mx = Mutex.new
       @cv = ConditionVariable.new
-
-      @script = nil
     end
     attr_accessor :source
 
-    def start(sync = true, &block)
+    def start(fg = true, &block)
+      @foreground = fg
+
       @stat = nil
       @thread = Thread.start {
 #	Thread.abort_on_exception = true
@@ -266,7 +273,7 @@ module Reish
 	v
       }
 
-      if sync
+      if @foreground
 	wait
       else
 	# do nothing
@@ -275,7 +282,24 @@ module Reish
 
     def to_foreground
       @stat = nil
+      for com in @processes do
+	if com.pstat == :TSTP
+	  Reish.tcsetpgrp(STDOUT, com.pid)
+	  Process.kill(:CONT, com.pid)
+	end
+      end
+
       wait
+    end
+
+    def to_background
+      if @stat == :TSTP
+	for com in @processes do
+	  if com.pstat == :TSTP
+	    Process.kill(:CONT, com.pid)
+	  end
+	end
+      end
     end
 
     def wait
@@ -313,17 +337,26 @@ module Reish
     def popen_process(com, *opts, &block)
       @processes.push com
       begin
-	ProcessMonitor.Monitor.popen_process(com, *opts, &block)
+	opts[-1][:pgroup] = true
+	ProcessMonitor.Monitor.popen_process(com, *opts) do |io|
+	  Reish.tcsetpgrp(STDOUT, io.pid) if @foreground
+	  block.call io
+	end
       ensure
+	Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
 	@processes.delete(com)
       end
     end
 
-    def spawn_process(com, *opts)
+    def spawn_process(com, *opts, &block)
       @processes.push com
       begin
-	ProcessMonitor.Monitor.spawn_process(com, *opts)
+	opts[-1][:pgroup] = true
+	ProcessMonitor.Monitor.spawn_process(com, *opts) do
+	  Reish.tcsetpgrp(STDOUT, com.pid) if @foreground
+	end
       ensure
+	Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
 	@processes.delete(com)
       end
     end
