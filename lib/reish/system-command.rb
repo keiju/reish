@@ -68,32 +68,15 @@ module Reish
       @wait_cv = ConditionVariable.new
     end
 
+    attr_reader :exenv
     attr_reader :receiver
+    attr_reader :command_path
     attr_accessor :reds
 
-    attr_accessor :pid
-    attr_reader :pstat
-
-    def pstat=(stat)
-      @wait_mx.synchronize do
-	@pstat = stat
-	@wait_cv.broadcast
-      end
+    def exection_class
+      CommandExecution
     end
 
-    def pstat_finish?
-      @pstat == :EXIT || @pstat == :TERM
-    end
-
-    def io_popen(mode, &block)
-      JobController.current_job.popen_process(self, 
-					      [@exenv.env, 
-						@command_path, 
-						*command_opts], 
-					      mode, 
-					      spawn_options, 
-					      &block)
-    end
 
     def command_opts(ary = @args)
       opts = []
@@ -116,14 +99,6 @@ module Reish
       opts
     end
 
-    def io_spawn
-      JobController.current_job.spawn_process(self, 
-					      @exenv.env, 
-					      @command_path, 
-					      *command_opts,
-					      spawn_options)
-    end
-
     def each(&block)
       if receive?
 	mode = "r+"
@@ -131,7 +106,8 @@ module Reish
 	mode = "r"
       end
 
-      io_popen(mode) do |io|
+      exec = exection_class.new(self)
+      exec.popen(mod) do |io|
 	if receive?
 	  case receiver
 	  when Enumerable
@@ -155,8 +131,9 @@ module Reish
     end
 
     def term
+      exec = exection_class.new(self)
       if receive?
-	io_popen("w") do |io|
+	exec.popen("w") do |io|
 	  case receiver 
 	  when Enumerable
 	    @receiver.each{|e| io.puts e.to_s}
@@ -167,14 +144,7 @@ module Reish
 	  @exit_status = $?
 	end
       else
-	io_spawn
-# 	begin
-# 	  sleep 100
-# 	  pid2, stat = Process.waitpid2(pid)
-# 	  @exit_status = stat
-# 	rescue Errno::ECHILD
-# 	  puts "#{command_path} not stated"
-# 	end
+	exec.spawn
       end
 
       @exit_status
@@ -238,14 +208,6 @@ module Reish
       opts
     end
 
-    def wait
-      @wait_mx.synchronize do
-	until pstat_finish?
-	  @wait_cv.wait(@wait_mx)
-	end
-      end
-    end
-
     def info
       "#{File.basename(@command_path)}[#{@pid}](#{@pstat.id2name})"
     end
@@ -270,20 +232,8 @@ module Reish
       end
     end
 
-    def io_popen(open_mode, &block)
-      JobController.current_job.popen_process(self,
-					      @exenv.env, 
-					      to_script, 
-					      open_mode, 
-					      spawn_options, 
-					      &block)
-    end
-
-    def io_spawn
-      JobController.current_job.spawn_process(self,
-					       @exenv.env, 
-					       to_script, 
-					       spawn_options)
+    def exection_class
+      ShellExecution
     end
 
     def to_script

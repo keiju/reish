@@ -197,7 +197,7 @@ p
 		end
 
 		set_process_stat(pid, :TERM)
-
+		
 	      when stat.stopped?
 		puts "ProcessMonitor: child #{stat.pid} was stopped by signal #{stat.stopsig}"
 		case stat.stopsig
@@ -371,4 +371,81 @@ p
       "#<Job: @processes=[#{@processes.collect{|com| com.inspect}.join(", ")}]>"
     end
   end
+
+  class CommandExecution
+    def initialize(command)
+      @command = command
+      @job = JobController.current_job
+
+      @pid = nil
+      @pstat = :NULL
+      @exit_status = nil
+
+      @wait_mx = Mutex.new
+      @wait_cv = ConditionVariable.new
+    end
+
+    attr_accessor :pid
+    attr_reader :pstat
+
+    def pstat=(stat)
+      @wait_mx.synchronize do
+	@pstat = stat
+	@wait_cv.broadcast
+      end
+    end
+
+    def pstat_finish?
+      @pstat == :EXIT || @pstat == :TERM
+    end
+
+    def popen(mode, &block)
+      @job.popen_process(self, 
+			 [@command.exenv.env, 
+			   @command.command_path, 
+			   *@command.command_opts], 
+			 mode, 
+			 @command.spawn_options, 
+			 &block)
+    end
+
+    def spawn
+      @job.spawn_process(self, 
+			 @command.exenv.env, 
+			 @command.command_path, 
+			 *@command.command_opts,
+			 @command.spawn_options)
+    end
+
+    def wait
+      @wait_mx.synchronize do
+	until pstat_finish?
+	  @wait_cv.wait(@wait_mx)
+	end
+      end
+    end
+
+
+  end
+
+  class ShellExecution<CommandExecution
+    def popen(open_mode, &block)
+      @job.popen_process(self,
+			 @command.exenv.env, 
+			 @command.to_script, 
+			 open_mode, 
+			 @command.spawn_options, 
+			 &block)
+    end
+
+
+    def spawn
+      @job.spawn_process(self,
+			 @command.exenv.env, 
+			 @command.to_script, 
+			 @command.spawn_options)
+    end
+    
+  end
+
 end
