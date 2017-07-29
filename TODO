@@ -1,9 +1,3 @@
-* job ctl TODO
-** subshell
-** JobController
-** 各実行のThread化
-** ^Zの取得
-** fg/bg
 * return/break/next/redo/retryの対応
   #  rubyでは, 式中に上記のものを入れることができない.
 * case expr に変更?

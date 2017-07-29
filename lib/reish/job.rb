@@ -287,6 +287,7 @@ p
     def to_foreground
       @stat = nil
       @foreground = true
+      job_cont
       for com in @processes do
 	if com.pstat == :TSTP
 	  Reish.tcsetpgrp(STDOUT, com.pid)
@@ -299,6 +300,7 @@ p
 
     def to_background
       @foreground = false
+      job_cont
       if @stat == :TSTP
 	for com in @processes do
 	  if com.pstat == :TSTP
@@ -318,7 +320,7 @@ p
 	  @thread.value
 	when :TSTP
 	  Reish.tcsetpgrp(STDOUT, Process.pid)
-	  puts "enter background job and suspend system-command"
+	  puts "suspend job"
 	else
 	  p s
 	end
@@ -331,12 +333,21 @@ p
 
     def suspend
       @foreground = false
+      job_stop
       @mx.synchronize do
 	@stat = :TSTP
 	@cv.signal
       end
     end
 
+    def job_stop
+      @thread.set_trace_func proc{Thread.stop}
+    end
+
+    def job_cont
+      @thread.set_trace_func nil
+      @thread.run
+    end
 
 #    def start_backgorund_job(script)
 #      
