@@ -72,6 +72,7 @@ module Reish
     attr_reader :receiver
     attr_reader :command_path
     attr_accessor :reds
+    attr_accessor :exit_status
 
     def exection_class
       CommandExecution
@@ -107,7 +108,7 @@ module Reish
       end
 
       exec = exection_class.new(self)
-      exec.popen(mod) do |io|
+      exec.popen(mode) do |io|
 	if receive?
 	  case receiver
 	  when Enumerable
@@ -136,12 +137,16 @@ module Reish
 	exec.popen("w") do |io|
 	  case receiver 
 	  when Enumerable
-	    @receiver.each{|e| io.puts e.to_s}
+	    @receiver.each{|e| io.print e.to_s}
 	  else
 	    io.write @receiver.to_s
 	  end
-	  io.close
-	  @exit_status = $?
+	  exec.wait_while_closing(io)
+# 	  if $?
+# 	    exec.exit_status = $? 
+# 	  else
+# 	    @exit_status = exec.exit_status
+# 	  end
 	end
       else
 	exec.spawn
@@ -409,7 +414,7 @@ class Object
     case self
     when Array
 #      puts collect{|e| e.to_s}.sort
-	each{|e| puts e.to_s}
+      each{|e| puts e.to_s}
     when Enumerable
       if STDOUT.tty?
 	each{|e| puts e.to_s}

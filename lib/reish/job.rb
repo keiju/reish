@@ -97,9 +97,10 @@ module Reish
     end
 
     def suspend_foreground_job
-      @foreground_job.suspend
-      @jobs.push @foreground_job
+      job = @foreground_job
       @foreground_job = nil
+      job.suspend
+      @jobs.push job
     end
   end
 
@@ -204,7 +205,7 @@ p
 		when 20
 		  set_process_stat(pid, :TSTP)
 		  
-		  Reish.tcsetpgrp(STDOUT, Process.pid)
+#		  Reish.tcsetpgrp(STDOUT, Process.pid)
 		  MAIN_SHELL.reish_tstp(MAIN_SHELL)
 		  
 		when 21
@@ -251,6 +252,8 @@ p
 
       @processes = []
 
+      @foreground = nil
+
       @thread = nil
       @stat = nil
       @mx = Mutex.new
@@ -270,6 +273,7 @@ p
 	  @stat = true
 	  @cv.signal
 	end
+	puts "FINISH background job(#{info})" unless @foreground
 	v
       }
 
@@ -282,6 +286,7 @@ p
 
     def to_foreground
       @stat = nil
+      @foreground = true
       for com in @processes do
 	if com.pstat == :TSTP
 	  Reish.tcsetpgrp(STDOUT, com.pid)
@@ -293,6 +298,7 @@ p
     end
 
     def to_background
+      @foreground = false
       if @stat == :TSTP
 	for com in @processes do
 	  if com.pstat == :TSTP
@@ -311,6 +317,7 @@ p
 	when true
 	  @thread.value
 	when :TSTP
+	  Reish.tcsetpgrp(STDOUT, Process.pid)
 	  puts "enter background job and suspend system-command"
 	else
 	  p s
@@ -323,6 +330,7 @@ p
     end
 
     def suspend
+      @foreground = false
       @mx.synchronize do
 	@stat = :TSTP
 	@cv.signal
@@ -387,6 +395,7 @@ p
 
     attr_accessor :pid
     attr_reader :pstat
+    attr_reader :exit_status
 
     def pstat=(stat)
       @wait_mx.synchronize do
@@ -425,7 +434,25 @@ p
       end
     end
 
-
+    def wait_while_closing(io)
+      io.close
+      @wait_mx.synchronize do
+	unless $?
+	  @command.exit_status = @exit_status
+	  return
+	end
+	@exit_status = $?
+	case 
+	when @exit_status.signaled?
+	  puts "CommandExecution: pid=#{@pid} was killed by signal #{@exit_status.termsig}"
+	  @pstat = :TERM
+	when @exit_status.exited?
+	  puts "CommandExecution: pid=#{@pid} exited normally. status=#{@exit_status.exitstatus}"
+	  @pstat = :EXIT
+	end
+	@wait_cv.broadcast
+      end
+    end
   end
 
   class ShellExecution<CommandExecution
