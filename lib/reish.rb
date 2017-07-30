@@ -97,7 +97,7 @@ module Reish
     end
   end
 
-  debug_category = [:GENERAL, :INPUT, :YY, :CMPL, :JOBCTL, :LEX_STATE]
+  debug_category = [:GENERAL, :INPUT, :YY, :CMPL, :CMPL_YY, :JOBCTL, :LEX_STATE]
   f = 1
   debug_category.each do |cat|
     p f
@@ -115,10 +115,10 @@ module Reish
     })
     f<<=1
   end
+
   def Reish.debug?(flag = DEBUG_GENERAL)
     @CONF[:DEBUG] & flag != 0
   end
-
 end
 
 class Object

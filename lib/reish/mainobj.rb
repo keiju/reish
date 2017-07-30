@@ -42,11 +42,8 @@ module Reish
 
     def_delegator :@exenv, :verbose
     def_delegator :@exenv, :verbose=
-    def_delegator :@exenv, :debug_input=
     def_delegator :@exenv, :display_comp
     def_delegator :@exenv, :display_comp=
-    def_delegator :@exenv, :yydebug
-    def_delegator :@exenv, :yydebug=
 
     def inspect
       if Reish::INSPECT_LEBEL < 3

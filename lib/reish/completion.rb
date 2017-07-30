@@ -25,10 +25,8 @@ module Reish
       @lex = Lex.new
       @parser = Parser.new(@lex)
 
-      @lex.debug_lex_state=Reish::debug_lex_state?
-      @parser.yydebug = Reish::debug_yy?
       @parser.cmpl_mode = true
-      @parser.debug_cmpl = Reish::debug_cmpl?
+      @parser.yydebug = Reish::debug_cmpl_yy?
 
       @completion_proc = proc{|input|
 	puts "input: #{input}" if @debug
@@ -39,15 +37,13 @@ module Reish
       }
 
       Readline.completion_proc = @completion_proc
-
-      @debug = Reish::debug_cmpl?
     end
 
     attr_reader :completion_proc
 
     def candidate(str)
       if str == ""
-	puts "input: ''" if @debug
+	puts "input: ''" if Reish::debug_cmpl?
 	return candidate_any_commands 
       end
 
@@ -56,9 +52,9 @@ module Reish
       @lex.initialize_input
       @lex.set_input(im) do
 	if l = im.gets
-	  print l  if @debug
+	  print l  if Reish::debug_cmpl?
 	else
-	  print "\n" if @debug
+	  print "\n" if Reish::debug_cmpl?
 	end
 	l
       end
@@ -66,12 +62,12 @@ module Reish
       parsed = nil
       begin 
 	input_unit = [@parser.yyparse(@lex, :racc_token_cmpl)]
-	puts "PARSE COMPLETED"  if @debug
+	puts "PARSE COMPLETED"  if Reish::debug_cmpl?
 
 	parsed = true
 
       rescue ParserComplSupp
-	if @debug
+	if Reish::debug_cmpl?
 	  puts "PARSE IMCOMLETED" 
 	  require "pp"
 	  puts "TEST_CMPL:"
@@ -81,10 +77,10 @@ module Reish
 	parsed = false
 	input_unit = @parser.cmpl_mode
 
-	puts "INDENT CURRENT: #{@lex.indent_current.inspect}" if @debug
+	puts "INDENT CURRENT: #{@lex.indent_current.inspect}" if Reish::debug_cmpl?
       end
 
-      if @debug
+      if Reish::debug_cmpl?
 	puts "INPUT UNIT:"
 	pp input_unit
 	puts "SPACE_SEEN: #{@lex.space_seen}"
@@ -99,7 +95,7 @@ module Reish
 #      elsif 
 
       path = find_path(input_unit, @lex.pretoken)
-      if @debug
+      if Reish::debug_cmpl?
 	puts "PATH:"
 	pp path
 	puts "PATH: END"
@@ -107,17 +103,17 @@ module Reish
 
       if @lex.space_seen
 	if @lex.lex_state?(Lex::EXPR_BEG | Lex::EXPR_DO_BEG)
-	  puts "IDENT CMPL: BEG" if @debug
-	  puts "CANDIDATE: ANY COMMAND" if @debug
+	  puts "IDENT CMPL: BEG" if Reish::debug_cmpl?
+	  puts "CANDIDATE: ANY COMMAND" if Reish::debug_cmpl?
 
 	  candidate_commands
 
 	elsif @lex.lex_state?(Lex::EXPR_ARG | Lex::EXPR_END)
-	  puts "IDENT CMPL: ARG/END" if @debug
+	  puts "IDENT CMPL: ARG/END" if Reish::debug_cmpl?
 	  
 	  command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
 
-	  puts "CANDINATE: ARGUMENT OF: #{command.inspect}" if @debug
+	  puts "CANDINATE: ARGUMENT OF: #{command.inspect}" if Reish::debug_cmpl?
 	  
 	  candidate_argument_of(command)
 
@@ -138,12 +134,12 @@ module Reish
 	      "(", :LBLACK_A, :LBLACK_I, :LBRACE_H, :LBRACE_I,
 	      "]", ")", "}", ":", :DOT_COMMAND, ".", ';', '&', :AND_AND, :OR_OR,
 	      :LBLACK_A, :LBRACE_H, "$"
-	    puts "CANDIDATE: ANY COMMAND" if @debug
+	    puts "CANDIDATE: ANY COMMAND" if Reish::debug_cmpl?
 	    candidate_commands
 
 	  when :LPARLEN_ARG
 	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
-	    puts "CANDINATE: ARGUMENT OF: #{command.inspect}" if @debug
+	    puts "CANDINATE: ARGUMENT OF: #{command.inspect}" if Reish::debug_cmpl?
 	    candidate_argument_of(command)
 	      
 	  else
@@ -156,7 +152,7 @@ module Reish
 	  case @lex.pretoken.value
 	  when '|', "&", "&&", "||", "$", "-", "+", "/", "*", 
 	      ">=", "<=", "==", "<=>", "=~", "!~"
-	    puts "CANDIDATE: SPECIAL(#{@lex.pretoken.value})" if @debug
+	    puts "CANDIDATE: SPECIAL(#{@lex.pretoken.value})" if Reish::debug_cmpl?
 	    candidate_argument_of(path[-2])
 	    
 	  end
@@ -164,12 +160,12 @@ module Reish
 	  case @lex.pretoken.token_id
 	  when "=", :BANG, '|', :SYMBEG, :COLON2, 
 	      *Lex::Redirection2ID.values
-	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})" if @debug
+	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})" if Reish::debug_cmpl?
 	    CompCommandArg.new(nil, @lex.pretoken, [], nil, @shell.exenv.binding).candidates
 	   
 	  when :MOD_IF, :MOD_UNLESS, :MOD_WHILE, :MOD_UNTIL, :MOD_RESCUE,
 	      *Lex::PseudoVars, *Lex::PreservedWord.values
-	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})" if @debug
+	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})" if Reish::debug_cmpl?
 
 	    # 未実装
 	    # これらは, 変数(一般コマンド?)としてコンプレーションする必要あり
@@ -181,34 +177,34 @@ module Reish
 	  end
 
 	when TestToken
-	  puts "CANDIDATE: TEST(#{@lex.pretoken.value})" if @debug
+	  puts "CANDIDATE: TEST(#{@lex.pretoken.value})" if Reish::debug_cmpl?
 	  
 	  sub = @lex.pretoken.value
 	  (class<<Test; p TestMap.keys; TestMap.keys; end).grep(/^#{sub}/).collect{|sub| "-"+sub}
 
 	when IDToken
-	  puts "CANDIDATE: ID(#{@lex.pretoken.value})" if @debug
+	  puts "CANDIDATE: ID(#{@lex.pretoken.value})" if Reish::debug_cmpl?
 	  candidate_commands(@lex.pretoken.value)
 
 	when PathToken
-	  puts "CANDIDATE: PATH(#{@lex.pretoken.value})" if @debug
+	  puts "CANDIDATE: PATH(#{@lex.pretoken.value})" if Reish::debug_cmpl?
 	  candidate_path(@lex.pretoken.value)
 	  
 	when WordToken
 	  command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
-	  puts "CANDINATE: ARGUMENT: (#{@lex.pretoken.value}) OF: #{command.inspect}" if @debug
+	  puts "CANDINATE: ARGUMENT: (#{@lex.pretoken.value}) OF: #{command.inspect}" if Reish::debug_cmpl?
 	  candidate_argument_of(command, @lex.pretoken)
 
 	when StringToken
 	  if @lex.lex_state?(Lex::EXPR_INSTR)
 	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
-	    puts "CANDINATE: ARGUMENT STR(#{@lex.pretoken.inspect}) OF: #{command.inspect}" if @debug
+	    puts "CANDINATE: ARGUMENT STR(#{@lex.pretoken.inspect}) OF: #{command.inspect}" if Reish::debug_cmpl?
 	    
 	    candidate_argument_of(command, @lex.pretoken)
 	    
 	  else
 	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
-	    puts "CANDINATE: ANY ARGUMENT OF: #{command.inspect}" if @debug
+	    puts "CANDINATE: ANY ARGUMENT OF: #{command.inspect}" if Reish::debug_cmpl?
 
 	    # ちゃんとできていない
 	    candidate_argument_of(command, @lex.pretoken)

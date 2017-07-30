@@ -207,8 +207,6 @@ module Reish
       @indent_stack = []
 
       @readed = ""
-
-      @debug_lex_state = false
     end
 
     attr_reader :io
@@ -218,11 +216,9 @@ module Reish
     attr_reader :space_seen
     attr_reader :readed
 
-    attr_accessor :debug_lex_state
-
 #    attr_accessor :lex_state
     def lex_state=(v)
-      if @debug_lex_state
+      if Reish::debug_lex_state?
 	puts "LEX STATE CHANGE: #{lex_state_sym(v).join('|')}"
       end
 
@@ -253,7 +249,7 @@ module Reish
 
     def cond_push(v=true)
       @cond_stack.push v
-      puts "LEX COND: #{@cond_stack.inspect}" if @debug_lex_state
+      puts "LEX COND: #{@cond_stack.inspect}" if Reish::debug_lex_state?
     end
 
     def cond_pop
