@@ -937,14 +937,11 @@ end
     @yydebug = nil
     @cmpl_mode = nil
 
-    @debug_cmpl = nil
-
     @lex = lex
   end
 
   attr_accessor :yydebug
   attr_accessor :cmpl_mode
-  attr_accessor :debug_cmpl
 
   def next_token
     @lex.racc_token
@@ -956,7 +953,7 @@ end
 
     def on_error(token_id, token, value_stack)
 
-      if @yydebug || @debug_cmpl
+      if @yydebug || Reish::debug_cmpl?
 	require "pp"
   
 	puts "Reish: parse error: token line: #{token.line_no} char: #{token.char_no}"

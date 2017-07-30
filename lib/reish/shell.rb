@@ -46,6 +46,7 @@ module Reish
 
       @current_input_unit = nil
 
+      @parser.yydebug = Reish::debug_yy?
     end
 
 #    attr_reader :thread
@@ -125,7 +126,7 @@ module Reish
 	begin
 	  @current_input_unit = @parser.do_parse
 	  input = @lex.reset_readed
-	  if @exenv.debug_input
+	  if Reish::debug_input?
 	    puts "input: #{input}"
 	    puts "input_unit: #{@current_input_unit}"
 	  end
@@ -455,7 +456,6 @@ module Reish
 
     def yydebug=(val)
       @parser.yydebug = val
-      @lex.debug_lex_state=val
     end
   end
 
