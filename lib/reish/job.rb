@@ -77,9 +77,7 @@ module Reish
 	begin
 	  block.call
 	ensure
-	  puts "FINISH"
 	  finish_job(job)
-	  puts "FINISH END"
 	end
       end
     end
@@ -130,11 +128,11 @@ module Reish
 	@processes.delete(com)
       end
     end
-p
+
     def set_process_stat(pid, stat)
       com = @processes[pid]
       unless com
-	puts "ProcessMonitor: process id[#{pid}] no exist(stat = #{stat})"
+	puts "ProcessMonitor: process id[#{pid}] no exist(stat = #{stat})" if Reish::debug_jobctl?
 	return
       end
       com.pstat = stat
@@ -172,7 +170,7 @@ p
 
     def start_monitor
 
-# ruby's bug?
+# ruby's Bug#13768
       Thread.start do
 	loop do
 	  sleep 100
@@ -192,15 +190,15 @@ p
 	  
 	      case 
 	      when stat.signaled?
-		puts "ProcessMonitor: child #{stat.pid} was killed by signal #{stat.termsig}"
+		puts "ProcessMonitor: child #{stat.pid} was killed by signal #{stat.termsig}" if Reish::debug_jobctl?
 		if stat.coredump?
-		  puts "ProcessMonitor: child #{stat.pid} dumped core."
+		  puts "ProcessMonitor: child #{stat.pid} dumped core." if Reish::debug_jobctl?
 		end
 
 		set_process_stat(pid, :TERM)
 		
 	      when stat.stopped?
-		puts "ProcessMonitor: child #{stat.pid} was stopped by signal #{stat.stopsig}"
+		puts "ProcessMonitor: child #{stat.pid} was stopped by signal #{stat.stopsig}" if Reish::debug_jobctl?
 		case stat.stopsig
 		when 20
 		  set_process_stat(pid, :TSTP)
@@ -217,22 +215,20 @@ p
 		end
 
 	      when stat.exited?
-		puts "ProcessMonitor: child #{stat.pid} exited normally. status=#{stat.exitstatus}"
-
-		p @process
+		puts "ProcessMonitor: child #{stat.pid} exited normally. status=#{stat.exitstatus}" if Reish::debug_jobctl?
 
 		set_process_stat(pid, :EXIT)
 
 	      when Reish::wifscontined?(stat)
-		puts "ProcessMonitor: child #{stat.pid} continued."
+		puts "ProcessMonitor: child #{stat.pid} continued." if Reish::debug_jobctl?
 		set_process_stat(pid, :RUN)
 	      else
-		p "ProcessMonitor: Unknown status %#x" % stat.to_i
+		p "ProcessMonitor: Unknown status %#x" % stat.to_i if Reish::debug_jobctl?
 	      end
 	    end
 	  rescue Errno::ECHILD
 	    # ignore
-	    puts "ProcessMonitor: #{$!}"
+	    puts "ProcessMonitor: #{$!}" if Reish::debug_jobctl?
 	  end
 	end
       }
@@ -455,10 +451,10 @@ p
 	@exit_status = $?
 	case 
 	when @exit_status.signaled?
-	  puts "CommandExecution: pid=#{@pid} was killed by signal #{@exit_status.termsig}"
+	  puts "CommandExecution: pid=#{@pid} was killed by signal #{@exit_status.termsig}" if Reish::debug_jobctl?
 	  @pstat = :TERM
 	when @exit_status.exited?
-	  puts "CommandExecution: pid=#{@pid} exited normally. status=#{@exit_status.exitstatus}"
+	  puts "CommandExecution: pid=#{@pid} exited normally. status=#{@exit_status.exitstatus}" if Reish::debug_jobctl?
 	  @pstat = :EXIT
 	end
 	@wait_cv.broadcast
