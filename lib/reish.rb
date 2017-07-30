@@ -100,9 +100,7 @@ module Reish
   debug_category = [:GENERAL, :INPUT, :YY, :CMPL, :CMPL_YY, :JOBCTL, :LEX_STATE]
   f = 1
   debug_category.each do |cat|
-    p f
     c = "DEBUG_"+cat.id2name
-    p c
     const_set(c, f)
     method_name = cat.id2name.downcase
     module_eval(%{
