@@ -44,8 +44,8 @@ module Reish
 
       @verbose = Reish.conf[:VERBOSE]
       @display_comp = Reish.conf[:DISPLAY_COMP]
-      @debug_input = Reish.conf[:DEBUG_INPUT]
-      self.yydebug = Reish::conf[:YYDEBUG]
+      @debug_input = Reish.debug_input?
+      self.yydebug = Reish::debug_yy?
 
       Reish.conf[:REISH_RC].call(self) if Reish.conf[:REISH_RC]
     end

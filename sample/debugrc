@@ -2,5 +2,5 @@
 Reish.conf[:COMPLETION] = true
 
 Reish.conf[:DISPLAY_COMP] = true
-Reish.conf[:DEBUG_INPUT] = true
-Reish.conf[:YYDEBUG] = true
+Reish.debug_input_on
+Reish.debug_racc_on

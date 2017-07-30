@@ -96,6 +96,29 @@ module Reish
       $VERBOSE = verbose
     end
   end
+
+  debug_category = [:GENERAL, :INPUT, :YY, :CMPL, :JOBCTL, :LEX_STATE]
+  f = 1
+  debug_category.each do |cat|
+    p f
+    c = "DEBUG_"+cat.id2name
+    p c
+    const_set(c, f)
+    method_name = cat.id2name.downcase
+    module_eval(%{
+      def Reish.debug_#{method_name}?
+	@CONF[:DEBUG] & #{c} != 0
+      end
+      def Reish.debug_#{method_name}_on
+	@CONF[:DEBUG] |= #{c}
+      end
+    })
+    f<<=1
+  end
+  def Reish.debug?(flag = DEBUG_GENERAL)
+    @CONF[:DEBUG] & flag != 0
+  end
+
 end
 
 class Object

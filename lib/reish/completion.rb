@@ -25,10 +25,10 @@ module Reish
       @lex = Lex.new
       @parser = Parser.new(@lex)
 
-      @lex.debug_lex_state=Reish::conf[:YYDEBUG]
-      @parser.yydebug = Reish::conf[:YYDEBUG]
+      @lex.debug_lex_state=Reish::debug_lex_state?
+      @parser.yydebug = Reish::debug_yy?
       @parser.cmpl_mode = true
-      @parser.debug_cmpl = Reish::conf[:DEBUG_CMPL]
+      @parser.debug_cmpl = Reish::debug_cmpl?
 
       @completion_proc = proc{|input|
 	puts "input: #{input}" if @debug
@@ -40,7 +40,7 @@ module Reish
 
       Readline.completion_proc = @completion_proc
 
-      @debug = Reish::conf[:DEBUG_CMPL]
+      @debug = Reish::debug_cmpl?
     end
 
     attr_reader :completion_proc
