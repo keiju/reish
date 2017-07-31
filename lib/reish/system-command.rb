@@ -20,6 +20,10 @@ module Reish
     else
       c = SystemCommand.new(exenv, receiver, path, *args)
     end
+
+    if Reish::debug_system_command?
+      puts "Call SystemCommand: #{path}"
+    end
     Lazize.lazize(c)
   end
 
