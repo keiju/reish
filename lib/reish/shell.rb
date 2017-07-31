@@ -461,13 +461,17 @@ module Reish
 
   class MainShell < Shell
 
-    def initialize
+    def initialize(input_method = nil)
       super
 
+      @term_ctl = nil
+
       @backup_tcpgrp = nil
-      if STDIN.tty?
+      if @io.tty?
+	@termctl = true
+
 	@backup_tcpgrp = Reish::tcgetpgrp(STDIN)
-	puts "Backup TCPGRP: #{@backup_tcpgrp}"
+	puts "Backup TCPGRP: #{@backup_tcpgrp}" if Reish::debug_jobctl?
 	@tcpgrp = Process.pid
 	Reish::tcsetpgrp(STDIN, @tcpgrp)
       end
@@ -492,5 +496,14 @@ module Reish
     end
 
     attr_reader :process_monitor
+
+    def term_ctl?; @term_ctl; end
+
+    def set_ctlterm(pid)
+      unless pid
+	pid = @tcpgrp
+      end
+      Reish::tcsetpgrp(@io.real_io, pid)
+    end
   end
 end

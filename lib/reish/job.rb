@@ -203,11 +203,11 @@ module Reish
 		when 20
 		  set_process_stat(pid, :TSTP)
 		  
-#		  Reish.tcsetpgrp(STDOUT, Process.pid)
 		  MAIN_SHELL.reish_tstp(MAIN_SHELL)
 		  
 		when 21
 		  set_process_stat(pid, :TTIN)
+
 		when 22
 		  set_process_stat(pid, :TTOU)
 		else
@@ -286,7 +286,8 @@ module Reish
       job_cont
       for com in @processes do
 	if com.pstat == :TSTP
-	  Reish.tcsetpgrp(STDOUT, com.pid)
+	  #Reish.tcsetpgrp(STDOUT, com.pid)
+	  set_ctlterm(com)
 	  Process.kill(:CONT, com.pid)
 	end
       end
@@ -315,7 +316,8 @@ module Reish
 	when true
 	  @thread.value
 	when :TSTP
-	  Reish.tcsetpgrp(STDOUT, Process.pid)
+	  #Reish.tcsetpgrp(STDOUT, Process.pid)
+	  set_ctlterm
 	  puts "suspend job"
 	else
 	  p s
@@ -354,11 +356,13 @@ module Reish
       begin
 	opts[-1][:pgroup] = true
 	ProcessMonitor.Monitor.popen_process(com, *opts) do |io|
-	  Reish.tcsetpgrp(STDOUT, io.pid) if @foreground
+	  #Reish.tcsetpgrp(STDOUT, io.pid) if @foreground
+	  set_ctlterm(com) if @foreground
 	  block.call io
 	end
       ensure
-	Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
+	#Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
+	set_ctlterm if @foreground
 	@processes.delete(com)
       end
     end
@@ -368,12 +372,24 @@ module Reish
       begin
 	opts[-1][:pgroup] = true
 	ProcessMonitor.Monitor.spawn_process(com, *opts) do
-	  Reish.tcsetpgrp(STDOUT, com.pid) if @foreground
+	  #Reish.tcsetpgrp(STDOUT, com.pid) if @foreground
+	  set_ctlterm(com) if @foreground
 	end
       ensure
-	Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
+	#Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
+	set_ctlterm if @foreground
 	@processes.delete(com)
       end
+    end
+
+    def set_ctlterm(exe = nil)
+      if exe
+	pid = exe.pid
+      else
+	pid = nil
+      end
+
+      MAIN_SHELL.set_ctlterm(pid)
     end
 
     def info
@@ -459,6 +475,10 @@ module Reish
 	end
 	@wait_cv.broadcast
       end
+    end
+
+    def info
+      "<#{@command.info}[#{@pid}](#{@pstat.id2name})>"
     end
   end
 

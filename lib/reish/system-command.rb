@@ -214,7 +214,7 @@ module Reish
     end
 
     def info
-      "#{File.basename(@command_path)}[#{@pid}](#{@pstat.id2name})"
+      "#{File.basename(@command_path)}"
     end
 
     def inspect

@@ -39,6 +39,15 @@ module Reish
     def readable_after_eof?
       false
     end
+
+    def tty?
+      false
+    end 
+
+    def real_io
+      Reish.fail NotImplementedError, "gets"
+    end
+
   end
 
   class StdioInputMethod < InputMethod
@@ -89,6 +98,15 @@ module Reish
     def encoding
       @stdin.external_encoding
     end
+
+    def tty?
+      @stdin.tty?
+    end 
+
+    def real_io
+      STDIN
+    end
+
   end
 
   # Use a File for IO with irb, see InputMethod
@@ -121,6 +139,10 @@ module Reish
     # The external encoding for standard input.
     def encoding
       @io.external_encoding
+    end
+
+    def real_io
+      @io
     end
   end
 
@@ -193,6 +215,14 @@ module Reish
       # The external encoding for standard input.
       def encoding
         @stdin.external_encoding
+      end
+
+      def tty?
+	@stdin.tty?
+      end 
+
+      def real_io
+	@stdin
       end
     end
   rescue LoadError
