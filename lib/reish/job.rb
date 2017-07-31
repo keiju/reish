@@ -138,6 +138,15 @@ module Reish
       com.pstat = stat
     end
 
+    def set_process_exit_stat(pid, stat, status)
+      com = @processes[pid]
+      unless com
+	puts "ProcessMonitor: process id[#{pid}] no exist(stat = #{stat})" if Reish::debug_jobctl?
+	return
+      end
+      com.set_exit_stat(stat, status)
+    end
+
     def popen_process(com, *opts, &block)
       IO.popen(*opts) do |io|
 	com.pid = io.pid
@@ -195,7 +204,7 @@ module Reish
 		  puts "ProcessMonitor: child #{stat.pid} dumped core." if Reish::debug_jobctl?
 		end
 
-		set_process_stat(pid, :TERM)
+		set_process_exit_stat(pid, :TERM, stat)
 		
 	      when stat.stopped?
 		puts "ProcessMonitor: child #{stat.pid} was stopped by signal #{stat.stopsig}" if Reish::debug_jobctl?
@@ -217,7 +226,7 @@ module Reish
 	      when stat.exited?
 		puts "ProcessMonitor: child #{stat.pid} exited normally. status=#{stat.exitstatus}" if Reish::debug_jobctl?
 
-		set_process_stat(pid, :EXIT)
+		set_process_exit_stat(pid, :EXIT, stat)
 
 	      when Reish::wifscontined?(stat)
 		puts "ProcessMonitor: child #{stat.pid} continued." if Reish::debug_jobctl?
@@ -427,6 +436,14 @@ module Reish
       end
     end
 
+    def set_exit_stat(stat, status)
+      @wait_mx.synchronize do
+	@pstat = stat
+	@command.exit_status = status
+	@wait_cv.broadcast
+      end
+    end
+
     def pstat_finish?
       @pstat == :EXIT || @pstat == :TERM
     end
@@ -465,6 +482,7 @@ module Reish
 	  return
 	end
 	@exit_status = $?
+	@command.exit_status = @exit_status
 	case 
 	when @exit_status.signaled?
 	  puts "CommandExecution: pid=#{@pid} was killed by signal #{@exit_status.termsig}" if Reish::debug_jobctl?
