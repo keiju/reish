@@ -465,7 +465,7 @@ module Reish
       super
 
       begin
-	require "ext/reishff"
+	require "ext/reish"
 	Reish::conf[:LIB_TERMCTL] = true
       rescue LoadError
 	Reish::conf[:LIB_TERMCTL] = false
