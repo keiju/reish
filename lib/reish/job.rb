@@ -4,8 +4,6 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
-require "ext/reish.so"
-
 module Reish
 
   class JobController
@@ -108,13 +106,14 @@ module Reish
       MAIN_SHELL.process_monitor
     end
 
-    def initialize
+    def initialize(term_ctl)
+      @term_ctl = term_ctl
+
       @processes = {}
       @processes_mx = Mutex.new
 
       @monitor = nil
       @monitor_queue = Queue.new
-
     end
 
     def add_process(com)
@@ -189,12 +188,18 @@ module Reish
       @monitor = Thread.start{
 	Thread.abort_on_exception = true
 
+	if @term_ctl
+	  wait_flag = Process::WNOHANG|Process::WUNTRACED|Reish::WCONTINUED
+	else
+	  wait_flag = Process::WNOHANG|Process::WUNTRACED
+	end
+
 	loop do
 	  @monitor_queue.pop
 	  
 	  begin
 	    loop do
-	      pid, stat = Process.waitpid2(-1, Process::WNOHANG|Process::WUNTRACED|Reish::WCONTINUED)
+	      pid, stat = Process.waitpid2(-1, wait_flag)
 	      break unless pid
 	  
 	      case 
@@ -212,7 +217,7 @@ module Reish
 		when 20
 		  set_process_stat(pid, :TSTP)
 		  
-		  MAIN_SHELL.reish_tstp(MAIN_SHELL)
+		  MAIN_SHELL.reish_tstp(MAIN_SHELL) if @term_ctl
 		  
 		when 21
 		  set_process_stat(pid, :TTIN)
@@ -363,7 +368,7 @@ module Reish
     def popen_process(com, *opts, &block)
       @processes.push com
       begin
-	opts[-1][:pgroup] = true
+	opts[-1][:pgroup] = true if term_ctl?
 	ProcessMonitor.Monitor.popen_process(com, *opts) do |io|
 	  #Reish.tcsetpgrp(STDOUT, io.pid) if @foreground
 	  set_ctlterm(com) if @foreground
@@ -379,7 +384,7 @@ module Reish
     def spawn_process(com, *opts, &block)
       @processes.push com
       begin
-	opts[-1][:pgroup] = true
+	opts[-1][:pgroup] = true if term_ctl?
 	ProcessMonitor.Monitor.spawn_process(com, *opts) do
 	  #Reish.tcsetpgrp(STDOUT, com.pid) if @foreground
 	  set_ctlterm(com) if @foreground
@@ -399,6 +404,10 @@ module Reish
       end
 
       MAIN_SHELL.set_ctlterm(pid)
+    end
+
+    def term_ctl?
+      MAIN_SHELL.term_ctl?
     end
 
     def info

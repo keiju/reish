@@ -464,11 +464,18 @@ module Reish
     def initialize(input_method = nil)
       super
 
+      begin
+	require "ext/reishff"
+	Reish::conf[:LIB_TERMCTL] = true
+      rescue LoadError
+	Reish::conf[:LIB_TERMCTL] = false
+      end
+
       @term_ctl = nil
 
       @backup_tcpgrp = nil
-      if @io.tty?
-	@termctl = true
+      if @io.tty? && Reish::conf[:LIB_TERMCTL]
+	@term_ctl = true
 
 	@backup_tcpgrp = Reish::tcgetpgrp(STDIN)
 	puts "Backup TCPGRP: #{@backup_tcpgrp}" if Reish::debug_jobctl?
@@ -476,7 +483,7 @@ module Reish
 	Reish::tcsetpgrp(STDIN, @tcpgrp)
       end
 
-      @process_monitor = ProcessMonitor.new
+      @process_monitor = ProcessMonitor.new(@term_ctl)
       @process_monitor.start_monitor
 
       trap(:SIGINT) do
@@ -500,6 +507,8 @@ module Reish
     def term_ctl?; @term_ctl; end
 
     def set_ctlterm(pid)
+      return unless @term_ctl
+
       unless pid
 	pid = @tcpgrp
       end
