@@ -102,11 +102,11 @@ module Reish
     end
     
     def fg(opt=nil)
-      @shell.job_controller.fg opt
+      @shell.job_controller.fgbg(true, opt)
     end
 
     def bg(opt=nil)
-      @shell.job_controller.bg opt
+      @shell.job_controller.fgbg(false, opt)
     end
 
     attr_reader :env

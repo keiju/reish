@@ -8,9 +8,9 @@ module Reish
 
   class JobController
 
-    def self::start_background_job(script=nil, &block)
+    def self::start_job(fg=true, script=nil, &block)
       sh = Reish::current_shell
-      sh.job_controller.start_background_job(script) do
+      sh.job_controller.start_job(fg, script) do
 	sh.activate_command_search do
 	  block.call
 	end
@@ -39,39 +39,63 @@ module Reish
       until @jobs.empty? || @jobs.last; @jobs.pop; end
     end
 
-    def fg(id=nil)
+#     def fg(id=nil)
+#       id = @jobs.size-1 unless id
+#       job = @jobs[id]
+#       @foreground_job = job
+#       @jobs[id] = nil
+#       shrink_jobs
+#       job.to_foreground
+#     end
+
+#     def bg(id=nil)
+#       id = @jobs.size-1 unless id
+#       job = @jobs[id]
+#       job.to_background
+#     end
+
+    def fgbg(fg = true, id=nil)
       id = @jobs.size-1 unless id
       job = @jobs[id]
-      @foreground_job = job
-      @jobs[id] = nil
-      shrink_jobs
-      job.to_foreground
-    end
-
-    def bg(id=nil)
-      id = @jobs.size-1 unless id
-      job = @jobs[id]
-      job.to_background
-    end
-
-    def start_foreground_job(script=nil, &block)
-      job = Job.new(@shell)
-      job.source = script
-      @foreground_job = job
-      @foreground_job.start do
-	begin
-	  block.call
-	ensure
-	  finish_job(job)
-	end
+      if fg
+	@foreground_job = job
+	@jobs[id] = nil
+	shrink_jobs
       end
+      job.to_fgbg(fg)
     end
 
-    def start_background_job(script=nil, &block)
+#     def start_foreground_job(script=nil, &block)
+#       job = Job.new(@shell)
+#       job.source = script
+#       @foreground_job = job
+#       @foreground_job.start do
+# 	begin
+# 	  block.call
+# 	ensure
+# 	  finish_job(job)
+# 	end
+#       end
+#     end
+
+#     def start_background_job(script=nil, &block)
+#       job = Job.new(@shell)
+#       job.source = script
+#       @jobs.push job
+#       job.start(false) do
+# 	begin
+# 	  block.call
+# 	ensure
+# 	  finish_job(job)
+# 	end
+#       end
+#     end
+
+    def start_job(fg = true, script=nil, &block)
       job = Job.new(@shell)
       job.source = script
-      @jobs.push job
-      job.start(false) do
+      @foreground_job = job if fg
+      job.start(fg) do
 	begin
 	  block.call
 	ensure
@@ -186,13 +210,9 @@ module Reish
       end
 
       @monitor = Thread.start{
-	Thread.abort_on_exception = true
+#	Thread.abort_on_exception = true
 
-	if @term_ctl
-	  wait_flag = Process::WNOHANG|Process::WUNTRACED|Reish::WCONTINUED
-	else
-	  wait_flag = Process::WNOHANG|Process::WUNTRACED
-	end
+	wait_flag = Process::WNOHANG|Process::WUNTRACED|Reish::WCONTINUED
 
 	loop do
 	  @monitor_queue.pop
@@ -260,28 +280,28 @@ module Reish
 
       @source = nil
 
-      @processes = []
-
+      @current_exe = nil
       @foreground = nil
 
       @thread = nil
-      @stat = nil
-      @mx = Mutex.new
-      @cv = ConditionVariable.new
+
+      @wait_stat = nil
+      @wait_mx = Mutex.new
+      @wait_cv = ConditionVariable.new
     end
     attr_accessor :source
 
     def start(fg = true, &block)
       @foreground = fg
 
-      @stat = nil
+      @wait_stat = nil
       @thread = Thread.start {
-#	Thread.abort_on_exception = true
+	Thread.abort_on_exception = true
 	JobController::current_job = self
 	v = block.call
-	@mx.synchronize do
-	  @stat = true
-	  @cv.signal
+	@wait_mx.synchronize do
+	  @wait_stat = true
+	  @wait_cv.signal
 	end
 	puts "FINISH background job(#{info})" unless @foreground
 	v
@@ -294,44 +314,57 @@ module Reish
       end 
     end
 
-    def to_foreground
-      @stat = nil
-      @foreground = true
+#     def to_foreground
+#       @foreground = true
+#       job_cont
+#       if @current_exe
+# 	if @current_exe.pstat == :TSTP
+# 	  #Reish.tcsetpgrp(STDOUT, @current_exe.pid)
+# 	  set_ctlterm
+# 	  Process.kill(:CONT, @current_exe.pid)
+# 	end
+#       end
+
+#       @wait_stat = nil
+#       wait
+#     end
+
+#     def to_background
+#       @foreground = false
+#       job_cont
+#       if @wait_stat == :TSTP
+# 	if @current_exe
+# 	  if @current_exe.pstat == :TSTP
+# 	    Process.kill(:CONT, @current_exe.pid)
+# 	  end
+# 	end
+#       end
+#     end
+
+    def to_fgbg(fg=true)
+      @foreground = fg
       job_cont
-      for com in @processes do
-	if com.pstat == :TSTP
-	  #Reish.tcsetpgrp(STDOUT, com.pid)
-	  set_ctlterm(com)
-	  Process.kill(:CONT, com.pid)
-	end
+      if @current_exe && @current_exe.pstat == :TSTP
+	set_ctlterm if @foreground
+	Process.kill(:CONT, @current_exe.pid)
       end
 
-      wait
-    end
-
-    def to_background
-      @foreground = false
-      job_cont
-      if @stat == :TSTP
-	for com in @processes do
-	  if com.pstat == :TSTP
-	    Process.kill(:CONT, com.pid)
-	  end
-	end
+      if @foreground
+	wait
       end
     end
 
     def wait
-      @mx.synchronize do
-	while !@stat
-	  @cv.wait(@mx)
+      @wait_mx.synchronize do
+	while !@wait_stat
+	  @wait_cv.wait(@wait_mx)
 	end
-	case @stat
+	case @wait_stat
 	when true
 	  @thread.value
 	when :TSTP
 	  #Reish.tcsetpgrp(STDOUT, Process.pid)
-	  set_ctlterm
+	  reset_ctlterm 
 	  puts "suspend job"
 	else
 	  p s
@@ -346,9 +379,9 @@ module Reish
     def suspend
       @foreground = false
       job_stop
-      @mx.synchronize do
-	@stat = :TSTP
-	@cv.signal
+      @wait_mx.synchronize do
+	@wait_stat = :TSTP
+	@wait_cv.signal
       end
     end
 
@@ -357,53 +390,48 @@ module Reish
     end
 
     def job_cont
+      @wait_stat = nil
       @thread.set_trace_func nil
       @thread.run
     end
 
-#    def start_backgorund_job(script)
-#      
-#    end
-
-    def popen_process(com, *opts, &block)
-      @processes.push com
+    def popen_process(exe, *opts, &block)
+      @current_exe = exe
       begin
 	opts[-1][:pgroup] = true if term_ctl?
-	ProcessMonitor.Monitor.popen_process(com, *opts) do |io|
+	ProcessMonitor.Monitor.popen_process(exe, *opts) do |io|
 	  #Reish.tcsetpgrp(STDOUT, io.pid) if @foreground
-	  set_ctlterm(com) if @foreground
+	  set_ctlterm if @foreground
 	  block.call io
 	end
       ensure
 	#Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
-	set_ctlterm if @foreground
-	@processes.delete(com)
+	reset_ctlterm if @foreground
+	@current_exe = nil
       end
     end
 
-    def spawn_process(com, *opts, &block)
-      @processes.push com
+    def spawn_process(exe, *opts, &block)
+      @current_exe = exe
       begin
 	opts[-1][:pgroup] = true if term_ctl?
-	ProcessMonitor.Monitor.spawn_process(com, *opts) do
-	  #Reish.tcsetpgrp(STDOUT, com.pid) if @foreground
-	  set_ctlterm(com) if @foreground
+	ProcessMonitor.Monitor.spawn_process(exe, *opts) do
+	  #Reish.tcsetpgrp(STDOUT, exe.pid) if @foreground
+	  set_ctlterm if @foreground
 	end
       ensure
 	#Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
-	set_ctlterm if @foreground
-	@processes.delete(com)
+	reset_ctlterm if @foreground
+	@current_exe = nil
       end
     end
 
-    def set_ctlterm(exe = nil)
-      if exe
-	pid = exe.pid
-      else
-	pid = nil
-      end
+    def set_ctlterm
+      MAIN_SHELL.set_ctlterm(@current_exe.pid)
+    end
 
-      MAIN_SHELL.set_ctlterm(pid)
+    def reset_ctlterm
+      MAIN_SHELL.set_ctlterm(nil)
     end
 
     def term_ctl?
@@ -411,13 +439,17 @@ module Reish
     end
 
     def info
-      "<#{@source} step=#{@processes.collect{|com| com.info}.join(" ")}>"
+      if @current_exe
+	"<#{@source}(#{@wait_stat && :RUN}) exe=#{@current_exe.info}>"
+      else
+	"<#{@source}(#{@wait_stat && :RUN})>"
+      end
     end
 
     def inspect
       return super if Reish::INSPECT_LEBEL >= 3
       
-      "#<Job: @processes=[#{@processes.collect{|com| com.inspect}.join(", ")}]>"
+      "#<Job: @current_exe=#{@current_exe.inspect}>"
     end
   end
 
@@ -519,14 +551,11 @@ module Reish
 			 &block)
     end
 
-
     def spawn
       @job.spawn_process(self,
 			 @command.exenv.env, 
 			 @command.to_script, 
 			 @command.spawn_options)
     end
-    
   end
-
 end

@@ -148,7 +148,7 @@ module Reish
 	exp = @current_input_unit.accept(@codegen)
 	puts "<= #{exp}" if @exenv.display_comp
 
-	@job_controller.start_foreground_job(exp) do
+	@job_controller.start_job(true, exp) do
 	  exc = nil
 	  val = nil
 	  begin
@@ -223,7 +223,7 @@ module Reish
 	when :IN_EVAL
 	  print "^Z"
 	  reish_tstp(self)
-	when :IN_INPUT, :IN_EVAL, IN_LOAD, IN_IRB
+	when :IN_INPUT, :IN_EVAL, :IN_LOAD, :IN_IRB
 	  # ignore
 	else
 	  # ignore other cases as well
@@ -469,6 +469,8 @@ module Reish
 	Reish::conf[:LIB_TERMCTL] = true
       rescue LoadError
 	Reish::conf[:LIB_TERMCTL] = false
+	# 仮設定
+	Reish.const_set(:WCONTINUED, 8)
       end
 
       @term_ctl = nil

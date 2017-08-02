@@ -252,7 +252,7 @@ module Reish
 
     def visit_async_command(command)
       super do |s|
-	"Reish::JobController::start_background_job(\"#{s}\"){#{s}}"
+	"Reish::JobController::start_job(false, \"#{s}\"){#{s}}"
       end
     end
 
