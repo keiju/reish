@@ -148,23 +148,30 @@ module Reish
 	exp = @current_input_unit.accept(@codegen)
 	puts "<= #{exp}" if @exenv.display_comp
 
-	@job_controller.start_job(true, exp) do
-	  exc = nil
-	  val = nil
-	  begin
-	    signal_status(:IN_EVAL) do
-	      activate_command_search do 
-		val = eval(exp, @exenv.binding, @exenv.src_path, @lex.prev_line_no)
-	      end
-	    end
-	    display val
-	  rescue Interrupt => exc
-	  rescue SystemExit, SignalException
-	    raise
-	  rescue Exception => exc
-	  end
-	  handle_exception(exc, exp) if exc
+	start_job(true, exp) do
+	  eval(exp, @exenv.binding, @exenv.src_path, @lex.prev_line_no)
 	end
+
+      end
+    end
+
+    def start_job(fg, exp, &block)
+      @job_controller.start_job(fg, exp) do
+	exc = nil
+	val = nil
+	begin
+	  signal_status(:IN_EVAL) do
+	    activate_command_search do 
+	      val = block.call
+	    end
+	  end
+	  display val
+	rescue Interrupt => exc
+	rescue SystemExit, SignalException
+	  raise
+	rescue Exception => exc
+	end
+	handle_exception(exc, exp) if exc
       end
     end
 

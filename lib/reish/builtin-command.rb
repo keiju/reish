@@ -120,6 +120,22 @@ module Reish
     
     alias cd chdir
 
+#     def background_job(script=nil, &block)
+#       sh = Reish::current_shell
+#       sh.job_controller.start_job(false, script) do
+# 	sh.signal_status(:IN_EVAL) do
+# 	  sh.activate_command_search do
+# 	    block.call
+# 	  end
+# 	end
+#       end
+#       nil
+#     end
+
+    def background_job(script=nil, &block)
+      sh = Reish::current_shell
+      sh.start_job(false, script, &block)
+    end
 
     def self.def_command(name, klass)
       BuiltIn.module_eval %{

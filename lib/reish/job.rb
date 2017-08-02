@@ -7,17 +7,6 @@
 module Reish
 
   class JobController
-
-    def self::start_job(fg=true, script=nil, &block)
-      sh = Reish::current_shell
-      sh.job_controller.start_job(fg, script) do
-	sh.activate_command_search do
-	  block.call
-	end
-      end
-      nil
-    end
-
     def self::current_job
       Thread.current[:__REISH_CURRENT_JOB__]
     end
@@ -94,7 +83,11 @@ module Reish
     def start_job(fg = true, script=nil, &block)
       job = Job.new(@shell)
       job.source = script
-      @foreground_job = job if fg
+      if fg
+	@foreground_job = job
+      else
+	@jobs.push job
+      end
       job.start(fg) do
 	begin
 	  block.call
@@ -298,7 +291,9 @@ module Reish
       @thread = Thread.start {
 	Thread.abort_on_exception = true
 	JobController::current_job = self
+
 	v = block.call
+
 	@wait_mx.synchronize do
 	  @wait_stat = true
 	  @wait_cv.signal
@@ -344,11 +339,10 @@ module Reish
     def to_fgbg(fg=true)
       @foreground = fg
       job_cont
-      if @current_exe && @current_exe.pstat == :TSTP
+      if @current_exe
 	set_ctlterm if @foreground
-	Process.kill(:CONT, @current_exe.pid)
+	Process.kill(:CONT, @current_exe.pid) if @current_exe.pstat == :TSTP
       end
-
       if @foreground
 	wait
       end
