@@ -478,6 +478,9 @@ module Reish
 	Reish::conf[:LIB_TERMCTL] = false
 	# 仮設定
 	Reish.const_set(:WCONTINUED, 8)
+	def Reish::wifscontinued?(st) 
+	  st.to_i == 0xffff
+	end
       end
 
       @term_ctl = nil

@@ -47,6 +47,7 @@ module Reish
       id = @jobs.size-1 unless id
       job = @jobs[id]
       if fg
+	@foreground_job.instance_eval{@foreground=false} if @foreground_job
 	@foreground_job = job
 	@jobs[id] = nil
 	shrink_jobs
@@ -95,6 +96,8 @@ module Reish
 	  finish_job(job)
 	end
       end
+      # fgでbackground-jobがforegroundになったときの待ちの処理
+      @foreground_job.wait if fg && @foreground_job
     end
 
     def finish_job(job)
@@ -246,7 +249,7 @@ module Reish
 
 		set_process_exit_stat(pid, :EXIT, stat)
 
-	      when Reish::wifscontined?(stat)
+	      when Reish::wifscontinued?(stat)
 		puts "ProcessMonitor: child #{stat.pid} continued." if Reish::debug_jobctl?
 		set_process_stat(pid, :RUN)
 	      else
@@ -343,9 +346,9 @@ module Reish
 	set_ctlterm if @foreground
 	Process.kill(:CONT, @current_exe.pid) if @current_exe.pstat == :TSTP
       end
-      if @foreground
-	wait
-      end
+#      if @foreground
+#	wait
+#      end
     end
 
     def wait

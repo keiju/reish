@@ -113,6 +113,9 @@ module Reish
       def Reish.debug_#{method_name}_on
 	@CONF[:DEBUG] |= #{c}
       end
+      def Reish.debug_#{method_name}_off
+	@CONF[:DEBUG] &= ~#{c}
+      end
     })
     f<<=1
   end

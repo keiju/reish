@@ -71,7 +71,7 @@ Init_reish()
   rb_define_module_function(rb_mReish, "tcgetpgrp", reish_tcgetpgrp, 1);
   rb_define_module_function(rb_mReish, "tcsetpgrp", reish_tcsetpgrp, 2);
 
-  rb_define_module_function(rb_mReish, "wifscontined?", reish_wifscontinued, 1);
+  rb_define_module_function(rb_mReish, "wifscontinued?", reish_wifscontinued, 1);
 }
 
 
