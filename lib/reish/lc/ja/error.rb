@@ -14,6 +14,7 @@ module Reish
   def_exception :ReishAlreadyDead, 'Irbは既に死んでいます.'
   def_exception :IrbSwitchedToCurrentThread, 'カレントスレッドに切り替わりました.'
   def_exception :NoSuchJob, 'そのようなジョブ(%s)はありません.'
+  def_exception :NoTargetJob, '対象となるジョブはありません.'
   def_exception :CantShiftToMultiReishMode, 'multi-irb modeに移れません.'
   def_exception :CantSetBinding, 'バインディング(%s)に設定できません.'
   def_exception :CantChangeBinding, 'バインディング(%s)に変更できません.'

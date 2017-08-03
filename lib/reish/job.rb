@@ -46,6 +46,7 @@ module Reish
     def fgbg(fg = true, id=nil)
       id = @jobs.size-1 unless id
       job = @jobs[id]
+      Reish.fail NoTargetJob
       if fg
 	@foreground_job.instance_eval{@foreground=false} if @foreground_job
 	@foreground_job = job
