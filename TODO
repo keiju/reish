@@ -1,5 +1,6 @@
+* jobctl
+  TTIN, TTOUTの処理
 * fg/bg
-  jobが無いときの処理
   jobの選択アルゴリズム
 * return/break/next/redo/retryの対応
   #  rubyでは, 式中に上記のものを入れることができない.

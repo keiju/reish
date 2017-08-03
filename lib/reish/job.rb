@@ -7,14 +7,6 @@
 module Reish
 
   class JobController
-    def self::current_job
-      Thread.current[:__REISH_CURRENT_JOB__]
-    end
-
-    def self::current_job=(job)
-      Thread.current[:__REISH_CURRENT_JOB__] = job
-    end
-
     def initialize(shell)
       @shell = shell
 
@@ -294,7 +286,7 @@ module Reish
       @wait_stat = nil
       @thread = Thread.start {
 	Thread.abort_on_exception = true
-	JobController::current_job = self
+	Reish::current_job = self
 
 	v = block.call
 
@@ -454,7 +446,7 @@ module Reish
   class CommandExecution
     def initialize(command)
       @command = command
-      @job = JobController.current_job
+      @job = Reish::current_job
 
       @pid = nil
       @pstat = :NULL
