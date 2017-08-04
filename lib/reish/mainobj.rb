@@ -28,7 +28,11 @@ module Reish
     attr_reader :exenv
 
     def each &block
-      STDIN.each &block
+      job = Reish::current_job
+      job.loop_foreground_only("STDIN") do
+	break unless s = STDIN.gets
+	block.call s
+      end
     end
 
     def_delegator :@exenv, :rehash

@@ -1,5 +1,6 @@
 * jobctl
-  TTIN, TTOUTの処理
+  bg時のTTINの処理
+  TTOUTの処理は必要ない?
 * fg/bg
   jobの選択アルゴリズム
 * return/break/next/redo/retryの対応

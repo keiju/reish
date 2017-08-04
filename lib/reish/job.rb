@@ -38,7 +38,7 @@ module Reish
     def fgbg(fg = true, id=nil)
       id = @jobs.size-1 unless id
       job = @jobs[id]
-      Reish.fail NoTargetJob
+      Reish.fail NoTargetJob unless job
       if fg
 	@foreground_job.instance_eval{@foreground=false} if @foreground_job
 	@foreground_job = job
@@ -266,13 +266,19 @@ module Reish
   class Job
     def initialize(shell)
       @shell = shell
-
       @source = nil
 
       @current_exe = nil
-      @foreground = nil
-
       @thread = nil
+
+      @foreground = nil
+      @foreground_mx = Mutex.new
+      @foreground_cv = ConditionVariable.new
+      @enter_foreground_only = nil
+
+      @suspend_wait_reason = nil
+      @suspend_mx = Mutex.new
+      @suspend_cv = ConditionVariable.new
 
       @wait_stat = nil
       @wait_mx = Mutex.new
@@ -281,7 +287,7 @@ module Reish
     attr_accessor :source
 
     def start(fg = true, &block)
-      @foreground = fg
+      self.foreground = fg
 
       @wait_stat = nil
       @thread = Thread.start {
@@ -333,7 +339,7 @@ module Reish
 #     end
 
     def to_fgbg(fg=true)
-      @foreground = fg
+      self.foreground = fg
       job_cont
       if @current_exe
 	set_ctlterm if @foreground
@@ -342,6 +348,114 @@ module Reish
 #      if @foreground
 #	wait
 #      end
+    end
+
+    def foreground=(value)
+      @foreground_mx.synchronize do
+	@foreground=value
+	@foreground_cv.broadcast
+      end
+    end
+
+
+    def foreground_only(reason, &block)
+      @foregrond_mx.synchronize do
+	until @foregrond && !@suspend_reserve
+	  @foreground_cv.wait(@foreground_mx)
+	end
+			  
+	begin
+	  @suspend_wait_reason = reason
+	  block.call
+	ensure
+	  @suspend_wait_reason = nil
+	end
+      end
+    end
+
+    def loop_foreground_only_org(reason, &block)
+      @foreground_mx.synchronize do
+	loop do
+	  until @foreground && !@suspend_reserve
+	    @foreground_cv.wait(@foreground_mx)
+	  end
+	  begin
+	    @suspend_wait_reason = reason
+	    block.call
+	  ensure
+	    @suspend_wait_reason = nil
+	    @suspend_cv.broadcast
+	  end
+	end
+      end
+    end
+
+    def loop_foreground_only(reason, &block)
+      begin
+	@enter_foreground_only = true
+	@foreground_mx.synchronize do
+	  loop do
+	    until @foreground && !@suspend_reserve
+	      @foreground_cv.wait(@foreground_mx)
+	    end
+	    begin
+	      @suspend_wait_reason = reason
+	      block.call
+	    ensure
+	      @suspend_wait_reason = nil
+	      @suspend_cv.broadcast
+	    end
+	  end
+	end
+      ensure
+	@enter_foreground_only = nil
+      end
+    end
+
+    def suspend
+      @suspend_mx.synchronize do
+	while @suspend_wait_reason
+	  puts "Wait suspending, because this job is executing critical section(#{@suspend_wait_reason})."
+	  @suspend_reserve = true
+	  @suspend_cv.wait(@suspend_mx)
+	end
+	begin
+	  self.foreground = false
+	  job_stop
+	  @wait_mx.synchronize do
+	    @wait_stat = :TSTP
+	    @wait_cv.signal
+	  end
+	
+	ensure
+	  @suspend_reserve = false
+	  @foreground_cv.broadcast
+	end
+      end
+    end
+	
+    def job_stop
+      @thread.set_trace_func proc{
+	begin
+	  if @enter_foreground_only && @foreground_mx.locked?
+	    foreground_mx_unlock = true
+	    @foreground_mx.unlock
+	  end
+
+	  Thread.stop
+
+	ensure
+	  if foreground_mx_unlock
+	    @foreground_mx.lock
+	  end
+	end
+      }
+    end
+
+    def job_cont
+      @wait_stat = nil
+      @thread.set_trace_func nil
+      @thread.run
     end
 
     def wait
@@ -364,25 +478,6 @@ module Reish
 
     def throw_exception(*option)
       @thread.raise *option
-    end
-
-    def suspend
-      @foreground = false
-      job_stop
-      @wait_mx.synchronize do
-	@wait_stat = :TSTP
-	@wait_cv.signal
-      end
-    end
-
-    def job_stop
-      @thread.set_trace_func proc{Thread.stop}
-    end
-
-    def job_cont
-      @wait_stat = nil
-      @thread.set_trace_func nil
-      @thread.run
     end
 
     def popen_process(exe, *opts, &block)
