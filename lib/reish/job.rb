@@ -240,9 +240,9 @@ module Reish
 
     def info
       if @current_exe
-	"<#{@source}(#{@wait_stat && :RUN}) exe=#{@current_exe.info}>"
+	"<#{@source}(#{@wait_stat || :RUN}) exe=#{@current_exe.info}>"
       else
-	"<#{@source}(#{@wait_stat && :RUN})>"
+	"<#{@source}(#{@wait_stat || :RUN})>"
       end
     end
 
