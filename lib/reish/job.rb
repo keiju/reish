@@ -20,21 +20,6 @@ module Reish
       until @jobs.empty? || @jobs.last; @jobs.pop; end
     end
 
-#     def fg(id=nil)
-#       id = @jobs.size-1 unless id
-#       job = @jobs[id]
-#       @foreground_job = job
-#       @jobs[id] = nil
-#       shrink_jobs
-#       job.to_foreground
-#     end
-
-#     def bg(id=nil)
-#       id = @jobs.size-1 unless id
-#       job = @jobs[id]
-#       job.to_background
-#     end
-
     def fgbg(fg = true, id=nil)
       id = @jobs.size-1 unless id
       job = @jobs[id]
@@ -47,32 +32,6 @@ module Reish
       end
       job.to_fgbg(fg)
     end
-
-#     def start_foreground_job(script=nil, &block)
-#       job = Job.new(@shell)
-#       job.source = script
-#       @foreground_job = job
-#       @foreground_job.start do
-# 	begin
-# 	  block.call
-# 	ensure
-# 	  finish_job(job)
-# 	end
-#       end
-#     end
-
-#     def start_background_job(script=nil, &block)
-#       job = Job.new(@shell)
-#       job.source = script
-#       @jobs.push job
-#       job.start(false) do
-# 	begin
-# 	  block.call
-# 	ensure
-# 	  finish_job(job)
-# 	end
-#       end
-#     end
 
     def start_job(fg = true, script=nil, &block)
       job = Job.new(@shell)
@@ -310,33 +269,6 @@ module Reish
 	# do nothing
       end 
     end
-
-#     def to_foreground
-#       @foreground = true
-#       job_cont
-#       if @current_exe
-# 	if @current_exe.pstat == :TSTP
-# 	  #Reish.tcsetpgrp(STDOUT, @current_exe.pid)
-# 	  set_ctlterm
-# 	  Process.kill(:CONT, @current_exe.pid)
-# 	end
-#       end
-
-#       @wait_stat = nil
-#       wait
-#     end
-
-#     def to_background
-#       @foreground = false
-#       job_cont
-#       if @wait_stat == :TSTP
-# 	if @current_exe
-# 	  if @current_exe.pstat == :TSTP
-# 	    Process.kill(:CONT, @current_exe.pid)
-# 	  end
-# 	end
-#       end
-#     end
 
     def to_fgbg(fg=true)
       self.foreground = fg
