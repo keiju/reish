@@ -195,11 +195,11 @@ module Reish
       @thread.raise *option
     end
 
-    def popen_process(exe, *opts, &block)
+    def popen_exe(exe, *opts, &block)
       @current_exe = exe
       begin
 	opts[-1][:pgroup] = true if term_ctl?
-	ProcessMonitor.Monitor.popen_process(exe, *opts) do |io|
+	ProcessMonitor.Monitor.popen_exe(exe, *opts) do |io|
 	  #Reish.tcsetpgrp(STDOUT, io.pid) if @foreground
 	  set_ctlterm if @foreground
 	  block.call io
@@ -211,11 +211,11 @@ module Reish
       end
     end
 
-    def spawn_process(exe, *opts, &block)
+    def spawn_exe(exe, *opts, &block)
       @current_exe = exe
       begin
 	opts[-1][:pgroup] = true if term_ctl?
-	ProcessMonitor.Monitor.spawn_process(exe, *opts) do
+	ProcessMonitor.Monitor.spawn_exe(exe, *opts) do
 	  #Reish.tcsetpgrp(STDOUT, exe.pid) if @foreground
 	  set_ctlterm if @foreground
 	end

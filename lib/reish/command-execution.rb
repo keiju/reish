@@ -46,21 +46,22 @@ module Reish
     end
 
     def popen(mode, &block)
-      @job.popen_process(self, 
-			 [@command.exenv.env, 
-			   @command.command_path, 
-			   *@command.command_opts], 
-			 mode, 
-			 @command.spawn_options, 
-			 &block)
+      @job.popen_exe(self, 
+		     [@command.exenv.env, 
+		       @command.command_path, 
+		       *@command.command_opts], 
+		     mode, 
+		     @command.spawn_options,
+		     &block)
     end
 
+    
     def spawn
-      @job.spawn_process(self, 
-			 @command.exenv.env, 
-			 @command.command_path, 
-			 *@command.command_opts,
-			 @command.spawn_options)
+      @job.spawn_exe(self,
+		     @command.exenv.env, 
+		     @command.command_path, 
+		     *@command.command_opts,
+		     @command.spawn_options)
     end
 
     def wait
@@ -99,19 +100,19 @@ module Reish
 
   class ShellExecution<CommandExecution
     def popen(open_mode, &block)
-      @job.popen_process(self,
-			 @command.exenv.env, 
-			 @command.to_script, 
-			 open_mode, 
-			 @command.spawn_options, 
-			 &block)
+      @job.popen_exe(self,
+		     @command.exenv.env, 
+		     @command.to_script, 
+		     open_mode, 
+		     @command.spawn_options, 
+		     &block)
     end
 
     def spawn
-      @job.spawn_process(self,
-			 @command.exenv.env, 
-			 @command.to_script, 
-			 @command.spawn_options)
+      @job.spawn_exe(self,
+		     @command.exenv.env, 
+		     @command.to_script, 
+		     @command.spawn_options)
     end
   end
 end

@@ -15,70 +15,70 @@ module Reish
     def initialize(term_ctl)
       @term_ctl = term_ctl
 
-      @processes = {}
-      @processes_mx = Mutex.new
+      @pid2exe = {}
+      @pid2exe_mx = Mutex.new
 
       @monitor = nil
       @monitor_queue = Queue.new
     end
 
-    def add_process(com)
-      @processes_mx.synchronize do
-	@processes[com.pid] = com
+    def add_exe(exe)
+      @pid2exe_mx.synchronize do
+	@pid2exe[exe.pid] = exe
       end
     end
 
-    def del_process(com)
-      @processes_mx.synchronize do
-	@processes.delete(com)
+    def del_exe(exe)
+      @pid2exe_mx.synchronize do
+	@pid2exe.delete(exe)
       end
     end
 
-    def set_process_stat(pid, stat)
-      com = @processes[pid]
-      unless com
+    def set_exe_stat(pid, stat)
+      exe = @pid2exe[pid]
+      unless exe
 	puts "ProcessMonitor: process id[#{pid}] no exist(stat = #{stat})" if Reish::debug_jobctl?
 	return
       end
-      com.pstat = stat
+      exe.pstat = stat
     end
 
-    def set_process_exit_stat(pid, stat, status)
-      com = @processes[pid]
-      unless com
+    def set_exe_exit_stat(pid, stat, status)
+      exe = @pid2exe[pid]
+      unless exe
 	puts "ProcessMonitor: process id[#{pid}] no exist(stat = #{stat})" if Reish::debug_jobctl?
 	return
       end
-      com.set_exit_stat(stat, status)
+      exe.set_exit_stat(stat, status)
     end
 
-    def popen_process(com, *opts, &block)
+    def popen_exe(exe, *opts, &block)
       IO.popen(*opts) do |io|
-	com.pid = io.pid
-	add_process(com)
-	com.pstat = :RUN
+	exe.pid = io.pid
+	add_exe(exe)
+	exe.pstat = :RUN
 
 	begin
 	  block.call io
 	ensure
-	  com.wait
-	  del_process(com)
+	  exe.wait
+	  del_exe(exe)
 	end
       end
     end
 
-    def spawn_process(com, *opts, &block)
+    def spawn_exe(exe, *opts, &block)
       pid = Process.spawn(*opts)
       begin
-	com.pid = pid
-	add_process(com)
-	com.pstat = :RUN
+	exe.pid = pid
+	add_exe(exe)
+	exe.pstat = :RUN
 	
 	block.call
 
-	com.wait
+	exe.wait
       ensure
-	del_process(com)
+	del_exe(exe)
       end
     end
 
@@ -111,21 +111,21 @@ module Reish
 		  puts "ProcessMonitor: child #{stat.pid} dumped core." if Reish::debug_jobctl?
 		end
 
-		set_process_exit_stat(pid, :TERM, stat)
+		set_exe_exit_stat(pid, :TERM, stat)
 		
 	      when stat.stopped?
 		puts "ProcessMonitor: child #{stat.pid} was stopped by signal #{stat.stopsig}" if Reish::debug_jobctl?
 		case stat.stopsig
 		when 20
-		  set_process_stat(pid, :TSTP)
+		  set_exe_stat(pid, :TSTP)
 		  
 		  MAIN_SHELL.reish_tstp(MAIN_SHELL) if @term_ctl
 		  
 		when 21
-		  set_process_stat(pid, :TTIN)
+		  set_exe_stat(pid, :TTIN)
 
 		when 22
-		  set_process_stat(pid, :TTOU)
+		  set_exe_stat(pid, :TTOU)
 		else
 		  
 		end
@@ -133,11 +133,11 @@ module Reish
 	      when stat.exited?
 		puts "ProcessMonitor: child #{stat.pid} exited normally. status=#{stat.exitstatus}" if Reish::debug_jobctl?
 
-		set_process_exit_stat(pid, :EXIT, stat)
+		set_exe_exit_stat(pid, :EXIT, stat)
 
 	      when Reish::wifscontinued?(stat)
 		puts "ProcessMonitor: child #{stat.pid} continued." if Reish::debug_jobctl?
-		set_process_stat(pid, :RUN)
+		set_exe_stat(pid, :RUN)
 	      else
 		p "ProcessMonitor: Unknown status %#x" % stat.to_i if Reish::debug_jobctl?
 	      end
