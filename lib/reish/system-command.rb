@@ -8,6 +8,8 @@
 #   
 #
 
+require "reish/command-execution"
+
 module Reish
   def Reish.SystemCommand(exenv, receiver, path, *args)
     case receiver
