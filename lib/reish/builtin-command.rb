@@ -101,21 +101,15 @@ module Reish
 
   module BuiltIn
 
-    def BuiltIn::current_shell
-      sh = Reish.current_shell
-      Reish.Fail NotExistCurrentShell unless sh
-      sh
-    end
-
     def command(name, *opts)
-      sh = BuiltIn::current_shell
+      sh = Reish::current_shell
       com = sh.search_command(self, name, *opts)
       Reish.Fail CommandNotFound, name unless com
       com
     end
 
     def chdir(path)
-      BuiltIn::current_shell.exenv.chdir(path)
+      Reish::current_shell.exenv.chdir(path)
     end
     
     alias cd chdir

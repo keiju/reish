@@ -59,7 +59,9 @@ module Reish
   end
 
   def Reish::current_shell
-    Thread.current[:__REISH_CURRENT_SHELL__]
+    sh = Thread.current[:__REISH_CURRENT_SHELL__]
+    Reish.Fail NotExistCurrentShell unless sh
+    sh
   end
 
   def Reish::inactivate_command_search(ifnoactive: nil, &block)
