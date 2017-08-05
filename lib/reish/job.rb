@@ -58,7 +58,7 @@ module Reish
       job_cont
       if @current_exe
 	set_ctlterm if @foreground
-	Process.kill(:CONT, @current_exe.pid) if @current_exe.pstat == :TSTP
+	Process.kill(:CONT, @current_exe.pid) if @current_exe.pstat_stop?
       end
 #      if @foreground
 #	wait

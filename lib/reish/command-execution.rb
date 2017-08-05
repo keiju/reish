@@ -41,6 +41,10 @@ module Reish
       @pstat == :EXIT || @pstat == :TERM
     end
 
+    def pstat_stop?
+      @pstat == :TSTP || @pstat == :TTIN || @pstat == :TTOU
+    end
+
     def popen(mode, &block)
       @job.popen_process(self, 
 			 [@command.exenv.env, 
