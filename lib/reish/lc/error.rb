@@ -24,6 +24,7 @@ module Reish
   def_exception :UndefinedPromptMode, "Undefined prompt mode(%s)."
 
   def_exception :NotExistCurrentShell, "Not exist current shell."
+  def_exception :NotExistCurrentJob, "Not exist current job."
   def_exception :CommandNotFound, "Command not found(%s)"
 
   def_exception :ParserComplSupp, "Parser completion support exception."
