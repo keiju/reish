@@ -322,7 +322,7 @@ module Reish
     end
 
     def activate_command_search(&block)
-      sh = Reish::current_shell
+      sh = Reish::current_shell(true)
       Reish::current_shell = self
       begin
 	block.call self
@@ -332,7 +332,7 @@ module Reish
     end
 
     def inactivate_command_search(&block)
-      sh = Reish::current_shell
+      sh = Reish::current_shell(true)
       return ifnoactive.call if !sh && ifnoactive
 
       back = sh

@@ -57,9 +57,9 @@ module Reish
     Thread.current[:__REISH_CURRENT_SHELL__]
   end
 
-  def Reish::current_shell
+  def Reish::current_shell(no_exception = nil)
     sh = Thread.current[:__REISH_CURRENT_SHELL__]
-    Reish.Fail NotExistCurrentShell unless sh
+    Reish.Fail NotExistCurrentShell unless no_exception || sh
     sh
   end
 

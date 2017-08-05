@@ -164,12 +164,12 @@ module Reish
       end
 
       def reish_result
-	sh = BuiltIn::current_shell
+	sh = Reish::current_shell
 	sh.job_controller.jobs
       end
 
       def reish_term
-	sh = BuiltIn::current_shell
+	sh = Reish::current_shell
 	jobs = sh.job_controller.jobs
 	if STDOUT.tty?
 	  jobs.each_with_index do |job, idx|
