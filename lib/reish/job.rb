@@ -85,10 +85,15 @@ module Reish
     end
 
 
-    def foreground_only(reason, &block)
+    def foreground_only(reason: "unknown", 
+			pre_waiting_proc: nil, 
+			post_waiting_proc: nil, 
+			&block)
       @foregrond_mx.synchronize do
 	until @foregrond && !@suspend_reserve
+	  pre_waiting_proc.call(self) if pre_waiting_proc
 	  @foreground_cv.wait(@foreground_mx)
+	  post_waiting_proc.call(self) if post_waiting_proc
 	end
 			  
 	begin
@@ -96,23 +101,7 @@ module Reish
 	  block.call
 	ensure
 	  @suspend_wait_reason = nil
-	end
-      end
-    end
-
-    def loop_foreground_only_org(reason, &block)
-      @foreground_mx.synchronize do
-	loop do
-	  until @foreground && !@suspend_reserve
-	    @foreground_cv.wait(@foreground_mx)
-	  end
-	  begin
-	    @suspend_wait_reason = reason
-	    block.call
-	  ensure
-	    @suspend_wait_reason = nil
-	    @suspend_cv.broadcast
-	  end
+	  @suspend_cv.broadcast
 	end
       end
     end
