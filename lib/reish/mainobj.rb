@@ -29,10 +29,7 @@ module Reish
 
     def each &block
       job = Reish::current_job
-      job.loop_foreground_only("STDIN") do
-	break unless s = STDIN.gets
-	block.call s
-      end
+      job.stdin_each &block
     end
 
     def_delegator :@exenv, :rehash

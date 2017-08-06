@@ -26,7 +26,19 @@ module Reish
       @wait_mx = Mutex.new
       @wait_cv = ConditionVariable.new
     end
+
     attr_accessor :source
+    attr_reader :foreground
+    alias foreground? foreground
+
+    attr_reader :wait_stat
+
+    def wait_stat=(st)
+      @wait_mx.synchronize do
+	@wait_stat = st
+	@wait_cv.broadcast
+      end
+    end
 
     def start(fg = true, &block)
       self.foreground = fg
@@ -105,13 +117,18 @@ module Reish
       end
     end
 
-    def loop_foreground_only(reason, &block)
+    def loop_foreground_only(reason: "unknown", 
+			     pre_waiting_proc: nil, 
+			     post_waiting_proc: nil, 
+			     &block)
       begin
 	@enter_foreground_only = true
 	@foreground_mx.synchronize do
 	  loop do
 	    until @foreground && !@suspend_reserve
+	      pre_waiting_proc.call(self) if pre_waiting_proc
 	      @foreground_cv.wait(@foreground_mx)
+	      post_waiting_proc.call(self) if post_waiting_proc
 	    end
 	    begin
 	      @suspend_wait_reason = reason
@@ -223,6 +240,29 @@ module Reish
 	#Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
 	reset_ctlterm if @foreground
 	@current_exe = nil
+      end
+    end
+
+    def stdin_each(&block)
+      back_st = nil
+      pre_ttin_proc = proc{|job|
+	unless job.foreground?
+	  back_st = job.wait_stat
+	  job.wait_stat = :TTIN
+	  puts "suspend TTIN"
+	end
+      }
+      post_ttin_proc = proc{|job|
+	if back_st
+	  job.wait_stat = back_st
+	end
+      }
+
+      loop_foreground_only(reason: "STDIN",
+			   pre_waiting_proc: pre_ttin_proc,
+			   post_waiting_proc: post_ttin_proc) do
+	break unless s = STDIN.gets
+	block.call s
       end
     end
 
