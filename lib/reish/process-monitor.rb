@@ -76,8 +76,8 @@ module Reish
 	
 	block.call
 
-	exe.wait
       ensure
+	exe.wait
 	del_exe(exe)
       end
     end

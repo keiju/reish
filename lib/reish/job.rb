@@ -201,6 +201,19 @@ module Reish
       @thread.raise *option
     end
 
+
+    def kill(signal=:SIGTERM)
+      if @current_exe
+	@current_exe.kill(signal)
+      else
+	unless [:SIGTERM, :TERM, "SIGTERM", "TERM", 15].include?(signal)
+	  puts "ビルトインコマンドはSIGTERM以外ではkillできません."
+	  raise ArgumentError, "Illegal signal specification"
+	end
+	@thread.raise Abort, "job abort signaled."
+      end
+    end
+
     def popen_exe(exe, *opts, &block)
       @current_exe = exe
       begin
@@ -213,7 +226,11 @@ module Reish
       ensure
 	#Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
 	reset_ctlterm if @foreground
+	exe = @current_exe
 	@current_exe = nil
+	if exe && exe.exit_status.signaled?
+	  @thread.raise Abort, "job abort signaled."
+	end
       end
     end
 
@@ -228,7 +245,11 @@ module Reish
       ensure
 	#Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
 	reset_ctlterm if @foreground
+	exe_b = @current_exe
 	@current_exe = nil
+	if exe_b.exit_status.signaled?
+	  @thread.raise Abort, "job abort signaled."
+	end
       end
     end
 

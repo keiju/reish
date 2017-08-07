@@ -18,6 +18,15 @@ module Reish
 
     attr_reader :jobs
 
+    
+    def kill_jobs(signal=:SIGTERM, *jobs)
+      jobs.each do |jid|
+	job = @jobs[jid]
+	Reish.Fail NoSuchJob, "%"+jid unless job
+	job.kill(signal)
+      end
+    end
+
     def shrink_jobs
       until @jobs.empty? || @jobs.last; @jobs.pop; end
     end

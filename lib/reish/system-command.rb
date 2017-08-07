@@ -225,7 +225,7 @@ module Reish
 
     def inspect
       if Reish::INSPECT_LEBEL < 3
-	format("#<SystemCommand: @receiver=%s, @command_path=%s, @args=%s, @exis_status=%s>", @receiver, @command_path, @args, @exit_status)
+	format("#<SystemCommand: @receiver=%s, @command_path=%s, @args=%s, @exit_status=%s>", @receiver, @command_path, @args, @exit_status)
       else
 	super
       end

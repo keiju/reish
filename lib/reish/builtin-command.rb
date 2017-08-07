@@ -114,6 +114,66 @@ module Reish
     
     alias cd chdir
 
+    # kill [signame|-signum] [pid|jobid]...
+    # kill signame|-signum 0|-1
+    # kill signame|-signum -pid...
+    def kill(sig, *pids, signal: nil)
+      case sig
+      when Integer
+	case 
+	when sig > 0
+	  pids.unshift sig
+	  sig = nil
+	when  sig == 0
+	  raise ArgumentError, "invarid first argument: 0"
+	when sig < 0
+	  if pids.empty?
+	    raise ArgumentError, "have to specify pids."
+	  end
+	  sig = -sig
+	end
+
+      when /^-([0-9]+)$/
+	sig = $1,to_i
+      when /^-(.*)$/
+	sig = $1
+      when /^%([0-9]+)%/
+	pids.unshift sig
+	sig = nil
+      end
+
+      ppids = []
+      jobs = []
+      pids.each do |pid|
+	case pid
+	when Integer
+	  ppids.push pid
+	when /%([0-9]+)/
+	  jobs.push $1.to_i
+	else
+	  raise ArgumentError, "invarid pid specs(%{pid})."
+	end
+      end
+
+      if sig == nil && ppids.find{|p| p <= 0}
+	raise ArgumentError, "have to specify signal when pid is 0 or minus."
+      end
+
+      if sig && signal
+	raise ArgumentError, "double specify signal argument"
+      end
+      signal ||= sig
+      signal ||= :SIGTERM
+
+      unless jobs.empty?
+	sh = Reish::current_shell
+	sh.job_controller.kill_jobs(signal, *jobs)
+      end
+      unless ppids.empty?
+	Process.kill signal, *ppids
+      end
+    end
+
 #     def background_job(script=nil, &block)
 #       sh = Reish::current_shell
 #       sh.job_controller.start_job(false, script) do

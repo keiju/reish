@@ -32,6 +32,7 @@ module Reish
     def set_exit_stat(stat, status)
       @wait_mx.synchronize do
 	@pstat = stat
+	@exit_status = status
 	@command.exit_status = status
 	@wait_cv.broadcast
       end
@@ -91,6 +92,10 @@ module Reish
 	end
 	@wait_cv.broadcast
       end
+    end
+
+    def kill(signal=:SIGTERM)
+      Process.kill signal, @pid
     end
 
     def info
