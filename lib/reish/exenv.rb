@@ -44,8 +44,6 @@ module Reish
 
       @verbose = Reish.conf[:VERBOSE]
       @display_comp = Reish.conf[:DISPLAY_COMP]
-      @debug_input = Reish.conf[:DEBUG_INPUT]
-      self.yydebug = Reish::conf[:YYDEBUG]
 
       Reish.conf[:REISH_RC].call(self) if Reish.conf[:REISH_RC]
     end
@@ -90,9 +88,13 @@ module Reish
     end
 
     def chdir(path)
-      @pwd = path
-      
+      p = File.expand_path(path, @pwd)
+      unless File.directory?(p)
+	raise Errno::ENOENT, path
+      end
+      @pwd = p
       rehash if @have_relative_path
+      @pwd
     end
 
     attr_reader :env
@@ -249,10 +251,8 @@ module Reish
     end
 
     attr_accessor :display_comp
-    attr_accessor :debug_input
 
     def yydebug=(val)
-      @yydebug = val
       @shell.yydebug = val
     end
 

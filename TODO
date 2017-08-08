@@ -1,3 +1,7 @@
+* new stream feature
+  pipelineでEnumerator::Lazyを使いたい
+  mainobjでのstdinを実現
+  termのstdout処理
 * return/break/next/redo/retryの対応
   #  rubyでは, 式中に上記のものを入れることができない.
 * case expr に変更?
@@ -14,6 +18,10 @@
 * &
 * 構文以下を許したい:
   foo::bar arg
+* Enumerator::Lazy化
+* コマンドキャッシュの変更(Class-in-stateの応用)
+  # * コマンド検索をメソッド検索にしたい
+      コマンドをモジュールのメソッドとして定義して, それを利用したい
 * テスト環境
 * ビルトイン関数
 * ary[...] の ... 部分のリスト化
@@ -26,8 +34,6 @@
 * # def_main arg1 ... argn -flag1 .. -fragn --key1 val1 ...  の対応
   ARGVの自動パーズ機能
 * エリアス(bashの)
-* コマンド検索をメソッド検索にしたい
-  コマンドをモジュールのメソッドとして定義して, それを利用したい
 * コンプレーション機能 
   CompSpec#optparse optparseのような指定でオプションスペック指定できるようにする
 

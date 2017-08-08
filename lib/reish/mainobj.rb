@@ -19,7 +19,7 @@ module Reish
 
     include Enumerable
     include OSSpace
-    include BuiltIn
+#    include BuiltIn
 
     def initialize(exenv)
       @exenv = exenv
@@ -30,9 +30,6 @@ module Reish
     def each &block
       STDIN.each &block
     end
-
-    def_delegator :@exenv, :chdir
-    def_delegator :@exenv, :chdir, :cd
 
     def_delegator :@exenv, :rehash
 
@@ -45,11 +42,8 @@ module Reish
 
     def_delegator :@exenv, :verbose
     def_delegator :@exenv, :verbose=
-    def_delegator :@exenv, :debug_input=
     def_delegator :@exenv, :display_comp
     def_delegator :@exenv, :display_comp=
-    def_delegator :@exenv, :yydebug
-    def_delegator :@exenv, :yydebug=
 
     def inspect
       if Reish::INSPECT_LEBEL < 3

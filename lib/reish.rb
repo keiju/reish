@@ -59,7 +59,9 @@ module Reish
   end
 
   def Reish::current_shell
-    Thread.current[:__REISH_CURRENT_SHELL__]
+    sh = Thread.current[:__REISH_CURRENT_SHELL__]
+    Reish.Fail NotExistCurrentShell unless sh
+    sh
   end
 
   def Reish::inactivate_command_search(ifnoactive: nil, &block)
@@ -95,6 +97,27 @@ module Reish
     ensure
       $VERBOSE = verbose
     end
+  end
+
+  debug_category = [:GENERAL, :SYSTEM_COMMAND, :INPUT, :YY, :CMPL, :CMPL_YY, :JOBCTL, :LEX_STATE]
+  f = 1
+  debug_category.each do |cat|
+    c = "DEBUG_"+cat.id2name
+    const_set(c, f)
+    method_name = cat.id2name.downcase
+    module_eval(%{
+      def Reish.debug_#{method_name}?
+	@CONF[:DEBUG] & #{c} != 0
+      end
+      def Reish.debug_#{method_name}_on
+	@CONF[:DEBUG] |= #{c}
+      end
+    })
+    f<<=1
+  end
+
+  def Reish.debug?(flag = DEBUG_GENERAL)
+    @CONF[:DEBUG] & flag != 0
   end
 end
 

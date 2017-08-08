@@ -115,13 +115,14 @@ module Reish
 
     # debuging configurations
     @CONF[:DISPLAY_COMP] = false
-    @CONF[:YYDEBUG] = false
-    @CONF[:DEBUG_INPUT] = false
+    @CONF[:DEBUG] = 0
+#    @CONF[:YYDEBUG] = false
+#    @CONF[:DEBUG_INPUT] = false
 
     @CONF[:OPT_TEST_CMPL] = nil
-    @CONF[:DEBUG_CMPL] = false
+#    @CONF[:DEBUG_CMPL] = false
 
-    @CONF[:DEBUG_LEVEL] = 1
+#    @CONF[:DEBUG_LEVEL] = 1
 
     # Reish components
     if defined?(ReadlineInputMethod)
@@ -147,14 +148,14 @@ module Reish
       opt.on("-v", "--verbose"){|v| @CONF[:VERBOSE] = v == true ? 1 : v.to_i}
 
       opt.on("--display-comp", "--display_comp"){@CONF[:DISPLAY_COMP]=true}
-      opt.on("--debug-input", "--debug_input"){@CONF[:DEBUG_INPUT]=true}
-      opt.on("--yydebug"){@CONF[:YYDEBUG] = true}
+      opt.on("--debug-input", "--debug_input"){Reish::debug_input_on}
+      opt.on("--debug-racc", "--yydebug"){Reish::debug_yy_on}
 
       opt.on("--test-cmpl exp"){|v| 
 	@CONF[:OPT_TEST_CMPL] = v; 
-	@CONF[:DEBUG_CMPL] = true
+	Reish::debug_cmpl_on
       }
-      opt.on("--debug-cmpl", "--debug_cmpl"){@CONF[:DEBUG_CMPL]=true}
+      opt.on("--debug-cmpl", "--debug_cmpl"){Reish::debug_cmpl_on}
     end
     opt.parse!(ARGV)
   end
