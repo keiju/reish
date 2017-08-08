@@ -8,6 +8,8 @@
 #   
 #
 
+require "reish/command-execution"
+
 module Reish
   def Reish.SystemCommand(exenv, receiver, path, *args)
     case receiver
@@ -15,6 +17,8 @@ module Reish
       c = SystemCommand.new(exenv, receiver, path, *args)
     when SystemCommand
       c = CompSystemCommand.new(exenv, receiver, path, *args)
+    when Lazize
+      c = CompSystemCommand.new(exenv, receiver.source, path, *args)
     else
       c = SystemCommand.new(exenv, receiver, path, *args)
     end
@@ -32,6 +36,8 @@ module Reish
       l.instance_eval{@source = c}
       l
     end
+
+    attr_reader :source
     
     def reish_term
       @source.reish_term
@@ -42,6 +48,10 @@ module Reish
       @source.reish_result
     end
     alias result reish_result
+
+    def info
+      "Lazy(#{@source.info})"
+    end
   end
     
   class SystemCommand
@@ -56,17 +66,24 @@ module Reish
 
       @reds = nil
 
+      @pid = nil
+      @pstat = :NULL
       @exit_status = nil
+
+      @wait_mx = Mutex.new
+      @wait_cv = ConditionVariable.new
     end
 
+    attr_reader :exenv
     attr_reader :receiver
+    attr_reader :command_path
     attr_accessor :reds
+    attr_accessor :exit_status
 
-    def io_popen(mode, &block)
-      IO.popen([@exenv.env, 
-		 @command_path, 
-		 *command_opts], mode, spawn_options, &block)
+    def exection_class
+      CommandExecution
     end
+
 
     def command_opts(ary = @args)
       opts = []
@@ -89,14 +106,6 @@ module Reish
       opts
     end
 
-    def io_spawn
-      pid = Process.spawn(@exenv.env, 
-			  @command_path, 
-			  *command_opts,
-			  spawn_options)
-      pid
-    end
-
     def each(&block)
       if receive?
 	mode = "r+"
@@ -104,7 +113,8 @@ module Reish
 	mode = "r"
       end
 
-      io_popen(mode) do |io|
+      exec = exection_class.new(self)
+      exec.popen(mode) do |io|
 	if receive?
 	  case receiver
 	  when Enumerable
@@ -128,25 +138,24 @@ module Reish
     end
 
     def term
+      exec = exection_class.new(self)
       if receive?
-	io_popen("w") do |io|
+	exec.popen("w") do |io|
 	  case receiver 
 	  when Enumerable
 	    @receiver.each{|e| io.print e.to_s}
 	  else
 	    io.write @receiver.to_s
 	  end
-	  io.close
-	  @exit_status = $?
+	  exec.wait_while_closing(io)
+# 	  if $?
+# 	    exec.exit_status = $? 
+# 	  else
+# 	    @exit_status = exec.exit_status
+# 	  end
 	end
       else
-	pid = io_spawn
-	begin
-	  pid2, stat = Process.waitpid2(pid)
-	  @exit_status = stat
-	rescue Errno::ECHILD
-	  puts "#{command_path} not stated"
-	end
+	exec.spawn
       end
 
       @exit_status
@@ -210,9 +219,13 @@ module Reish
       opts
     end
 
+    def info
+      "#{File.basename(@command_path)}"
+    end
+
     def inspect
       if Reish::INSPECT_LEBEL < 3
-	format("#<SystemCommand: @receiver=%s, @command_path=%s, @args=%s, @exis_status=%s>", @receiver, @command_path, @args, @exit_status)
+	format("#<SystemCommand: @receiver=%s, @command_path=%s, @args=%s, @exit_status=%s>", @receiver, @command_path, @args, @exit_status)
       else
 	super
       end
@@ -230,17 +243,17 @@ module Reish
       end
     end
 
-    def io_popen(open_mode, &block)
-      IO.popen(@exenv.env, to_script, open_mode, spawn_options, &block)
-    end
-
-    def io_spawn
-      Process.spawn(@exenv.env, to_script, spawn_options)
+    def exection_class
+      ShellExecution
     end
 
     def to_script
       @receiver_script + "|" +
 	@command_path + " " + command_opts.join(" ")
+    end
+
+    def info
+      "#{to_script}[#{pid}](#{@pstat.id2name})"
     end
   end
 
@@ -261,7 +274,7 @@ module Reish
   end
 
   def Reish::WildCard(wc)
-    exenv = Thread.current[:__REISH_CURRENT_SHELL__].exenv
+    exenv = Reish::current_shell.exenv
     WildCard::new(exenv, wc)
   end
 
@@ -407,7 +420,7 @@ class Object
     case self
     when Array
 #      puts collect{|e| e.to_s}.sort
-	each{|e| puts e.to_s}
+      each{|e| puts e.to_s}
     when Enumerable
       if STDOUT.tty?
 	each{|e| puts e.to_s}

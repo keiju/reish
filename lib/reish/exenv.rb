@@ -97,6 +97,18 @@ module Reish
       @pwd
     end
 
+    def jobs
+      @shell.job_controller.jobs
+    end
+    
+    def fg(opt=nil)
+      @shell.job_controller.fgbg(true, opt)
+    end
+
+    def bg(opt=nil)
+      @shell.job_controller.fgbg(false, opt)
+    end
+
     attr_reader :env
 
     #

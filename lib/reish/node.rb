@@ -626,7 +626,7 @@ module Reish
       def_accept
     end
 
-    class AsyncCommand<Node
+    class AsyncCommand<Command
       def_constructor
 
       def initialize(com)

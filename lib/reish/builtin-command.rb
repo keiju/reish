@@ -114,67 +114,173 @@ module Reish
     
     alias cd chdir
 
-  end
-
-  def self.def_command(name, klass)
-    BuiltIn.module_eval %{
-      def #{name}(*opts)
-	begin
-	  return super unless Reish::active_thread?
-	rescue NoMethodError
-	  raise NameError, "undefined local variable or method `#{name}' for \#{self}"
+    # kill [signame|-signum] [pid|jobid]...
+    # kill signame|-signum 0|-1
+    # kill signame|-signum -pid...
+    def kill(sig, *pids, signal: nil)
+      case sig
+      when Integer
+	case 
+	when sig > 0
+	  pids.unshift sig
+	  sig = nil
+	when  sig == 0
+	  raise ArgumentError, "invarid first argument: 0"
+	when sig < 0
+	  if pids.empty?
+	    raise ArgumentError, "have to specify pids."
+	  end
+	  sig = -sig
 	end
-	#{klass}.new(self, *opts)
+
+      when /^-([0-9]+)$/
+	sig = $1,to_i
+      when /^-(.*)$/
+	sig = $1
+      when /^%([0-9]+)%/
+	pids.unshift sig
+	sig = nil
       end
-    }
-  end
 
-  class BuiltInCommand
-    include Enumerable
-
-    def initialize(receiver, *opt)
-      @receiver = receiver
-    end
-  end
-
-
-  class SampleLS<BuiltInCommand
-    def initialize(receiver, path = nil)
-      super
-
-      path = Reish.current_shell.exenv.pwd unless path
-      @path = path
-    end
-
-    def each(&block)
-      for f in Dir.entries(@path)
-	block.call f
+      ppids = []
+      jobs = []
+      pids.each do |pid|
+	case pid
+	when Integer
+	  ppids.push pid
+	when /%([0-9]+)/
+	  jobs.push $1.to_i
+	else
+	  raise ArgumentError, "invarid pid specs(%{pid})."
+	end
       end
-    end
 
-    def reish_term
-      each do |f|
-	puts f
+      if sig == nil && ppids.find{|p| p <= 0}
+	raise ArgumentError, "have to specify signal when pid is 0 or minus."
       end
-    end
-  end
 
-  class SampleGrep<BuiltInCommand
-    def initialize(receiver, reg)
-      super
+      if sig && signal
+	raise ArgumentError, "double specify signal argument"
+      end
+      signal ||= sig
+      signal ||= :SIGTERM
 
-      @regex = reg
-    end
-
-    def each(&block)
-      @receiver.each do |e|
-	block.call e if @regex =~ e
+      unless jobs.empty?
+	sh = Reish::current_shell
+	sh.job_controller.kill_jobs(signal, *jobs)
+      end
+      unless ppids.empty?
+	Process.kill signal, *ppids
       end
     end
-  end
 
-  def_command :sample_ls, SampleLS
-  def_command :sample_grep, SampleGrep
+#     def background_job(script=nil, &block)
+#       sh = Reish::current_shell
+#       sh.job_controller.start_job(false, script) do
+# 	sh.signal_status(:IN_EVAL) do
+# 	  sh.activate_command_search do
+# 	    block.call
+# 	  end
+# 	end
+#       end
+#       nil
+#     end
+
+    def background_job(script=nil, &block)
+      sh = Reish::current_shell
+      sh.start_job(false, script, &block)
+    end
+
+    def self.def_command(name, klass)
+      BuiltIn.module_eval %{
+	def #{name}(*opts)
+	  begin
+	    return super unless Reish::active_thread?
+	  rescue NoMethodError
+	    raise NameError, "undefined local variable or method `#{name}' for \#{self}"
+	  end
+	  #{klass}.new(self, *opts)
+	end
+      }
+    end
+
+    class BuiltInCommand
+      include Enumerable
+
+      def initialize(receiver, *opt)
+	@receiver = receiver
+      end
+
+      def reish_result
+	to_a
+      end
+    end
+
+    class Jobs<BuiltInCommand
+
+      def each(&block)
+	sh = BuiltIn::current_shell
+	sh.job_controller.jobs.each &block
+      end
+
+      def reish_result
+	sh = Reish::current_shell
+	sh.job_controller.jobs
+      end
+
+      def reish_term
+	sh = Reish::current_shell
+	jobs = sh.job_controller.jobs
+	if STDOUT.tty?
+	  jobs.each_with_index do |job, idx|
+	    puts "#{idx} #{job.info} " if job
+	  end
+	  nil
+	else
+	  jobs.each{|job| puts job.to_s}
+	end
+      end
+    end
+
+    class SampleLS<BuiltInCommand
+      def initialize(receiver, path = nil)
+	super
+
+	path = Reish.current_shell.exenv.pwd unless path
+	@path = path
+      end
+
+      def each(&block)
+	for f in Dir.entries(@path)
+	  block.call f
+	end
+      end
+
+      def reish_term
+	each do |f|
+	  puts f
+	end
+      end
+    end
+
+    class SampleGrep<BuiltInCommand
+      def initialize(receiver, reg)
+	super
+
+	@regex = reg
+      end
+
+      def each(&block)
+	@receiver.each do |e|
+	  block.call e if @regex =~ e
+	end
+      end
+    end
+
+    def_command :jobs, Jobs
+    def_command :sample_ls, SampleLS
+    def_command :sample_grep, SampleGrep
+  end
 end
 
 class Object

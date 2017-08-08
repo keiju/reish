@@ -28,10 +28,15 @@ module Reish
     attr_reader :exenv
 
     def each &block
-      STDIN.each &block
+      job = Reish::current_job
+      job.stdin_each &block
     end
 
     def_delegator :@exenv, :rehash
+
+#    def_delegator :@exenv, :jobs
+    def_delegator :@exenv, :fg
+    def_delegator :@exenv, :bg
 
     def_delegator :@exenv, :display_mode
     def_delegator :@exenv, :display_mode=

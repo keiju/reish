@@ -37,19 +37,18 @@ module Reish
 
     if @CONF[:OPT_C]
       im = StringInputMethod.new(@CONF[:OPT_C])
-      sh = Shell.new(im)
+      sh = MainShell.new(im)
     elsif @CONF[:OPT_TEST_CMPL]
       compl = @COMP[:COMPLETOR].new(Shell.new)
       compl.candidate(@CONF[:OPT_TEST_CMPL])
       exit
     elsif !ARGV.empty?
       f = ARGV.shift
-      sh = Shell.new(f)
+      sh = MainShell.new(f)
     else
-      sh = Shell.new
+      sh = MainShell.new
     end
     const_set(:MAIN_SHELL, sh)
-    sh.initialize_as_main_shell
 
     sh.start
   end
@@ -58,10 +57,24 @@ module Reish
     Thread.current[:__REISH_CURRENT_SHELL__]
   end
 
-  def Reish::current_shell
+  def Reish::current_shell(no_exception = nil)
     sh = Thread.current[:__REISH_CURRENT_SHELL__]
-    Reish.Fail NotExistCurrentShell unless sh
+    Reish.Fail NotExistCurrentShell unless no_exception || sh
     sh
+  end
+
+  def Reish::current_shell=(sh)
+    Thread.current[:__REISH_CURRENT_SHELL__] = sh
+  end
+
+  def self::current_job(no_exception = nil)
+    job = Thread.current[:__REISH_CURRENT_JOB__]
+    Reish.Fail NotExistCurrentJob unless no_exception || job
+    job
+  end
+  
+  def self::current_job=(job)
+    Thread.current[:__REISH_CURRENT_JOB__] = job
   end
 
   def Reish::inactivate_command_search(ifnoactive: nil, &block)
@@ -111,6 +124,9 @@ module Reish
       end
       def Reish.debug_#{method_name}_on
 	@CONF[:DEBUG] |= #{c}
+      end
+      def Reish.debug_#{method_name}_off
+	@CONF[:DEBUG] &= ~#{c}
       end
     })
     f<<=1

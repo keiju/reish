@@ -1,7 +1,8 @@
-* new stream feature
-  pipelineでEnumerator::Lazyを使いたい
-  mainobjでのstdinを実現
-  termのstdout処理
+* キーワード引数
+* jobctl
+  TTOUTの処理は必要ない?
+* fg/bg
+  jobの選択アルゴリズム
 * return/break/next/redo/retryの対応
   #  rubyでは, 式中に上記のものを入れることができない.
 * case expr に変更?
@@ -15,18 +16,14 @@
 * DO/ENDの前に";"を必要にする方が良いか?
   それとも, $do とか? --do ... end は?
 * 計算式文 $expr ... end $expr{...}, %e...
-* &
 * 構文以下を許したい:
   foo::bar arg
-* Enumerator::Lazy化
 * コマンドキャッシュの変更(Class-in-stateの応用)
   # * コマンド検索をメソッド検索にしたい
       コマンドをモジュールのメソッドとして定義して, それを利用したい
 * テスト環境
 * ビルトイン関数
 * ary[...] の ... 部分のリスト化
-* reish_termの振る舞い. ビルトインコマンドの場合端末に出力できるか?
-  つまり, 戻り値ではなくprintする
 * #   trivial_command: trivial_command0 lex_arg の lex_arg正しい?
 * # コード生成での括弧, セミコロンの使い方
 * 完全なCompSystemCommand - パイプライン, リダイレクションの処理
@@ -36,7 +33,9 @@
 * エリアス(bashの)
 * コンプレーション機能 
   CompSpec
-* ^Z
+* CompSpecでパイプライン処理できるものとできないものを区別し, それを, 
+  実際のコマンド検索にも用いる
+  stdinを利用する/stdoutに吐き出す等
 * %リテラル
 * XSTRINGの仕様変更. 文字列として渡してeval形式にする
 * DSTRING(#)
