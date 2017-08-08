@@ -14,6 +14,8 @@ require "reish/system-command"
 require "reish/lex"
 require "reish/parser"
 require "reish/code-generator"
+require "reish/job-controller"
+require "reish/process-monitor"
 
 require "reish/input-method"
 require "irb/inspector"
@@ -32,12 +34,15 @@ module Reish
       @parser = Parser.new(@lex)
       @codegen = CodeGenerator.new
 
+      @job_controller = JobController.new(self)
+
       @exenv = Exenv.new(self, Reish.conf)
       initialize_input_method(input_method)
 
       # name => path
       @command_cache = COMMAND_CACHE_BASE.dup
 
+      @signal_status_mx = Mutex.new
       @signal_status = :IN_IRB
 
       @current_input_unit = nil
@@ -49,13 +54,9 @@ module Reish
     attr_reader :exenv
 
     attr_reader :lex
-    attr_reader :completor
+    attr_reader :job_controller
 
-    def initialize_as_main_shell
-      trap("SIGINT") do
-	signal_handle
-      end
-    end
+    attr_reader :completor
 
     def initialize_input_method(input_method)
       case input_method
@@ -147,12 +148,22 @@ module Reish
 	end
 	exp = @current_input_unit.accept(@codegen)
 	puts "<= #{exp}" if @exenv.display_comp
+
+	start_job(true, exp) do
+	  eval(exp, @exenv.binding, @exenv.src_path, @lex.prev_line_no)
+	end
+
+      end
+    end
+
+    def start_job(fg, exp, &block)
+      @job_controller.start_job(fg, exp) do
 	exc = nil
+	val = nil
 	begin
-	  val = nil
 	  signal_status(:IN_EVAL) do
 	    activate_command_search do 
-	      val = eval(exp, @exenv.binding, @exenv.src_path, @lex.prev_line_no)
+	      val = block.call
 	    end
 	  end
 	  display val
@@ -194,24 +205,38 @@ module Reish
       puts "generated code: #{exp}" if exp
     end
 
-    def signal_handle
-      unless @exenv.ignore_sigint?
-	print "\nabort!!\n" if verbose?
-	exit
-      end
+    def signal_handle(signal = :INT)
+      case signal
+      when :INT
+	unless @exenv.ignore_sigint?
+	  print "\nabort!!\n" if verbose?
+	  exit
+	end
 
-      case @signal_status
-      when :IN_INPUT
-	print "^C\n"
-	raise Interrupt
-      when :IN_EVAL
-	reish_abort(self)
-      when :IN_LOAD
-	reish_abort(self, LoadAbort)
-      when :IN_IRB
-	# ignore
-      else
-	# ignore other cases as well
+	case @signal_status
+	when :IN_INPUT
+	  print "^C\n"
+	  raise Interrupt
+	when :IN_EVAL
+	  reish_abort(self)
+	when :IN_LOAD
+	  reish_abort(self, LoadAbort)
+	when :IN_IRB
+	  # ignore
+	else
+	  # ignore other cases as well
+	end
+      when :TSTP
+	case @signal_status
+	when :IN_EVAL
+	  print "^Z"
+	  reish_tstp(self)
+	when :IN_INPUT, :IN_EVAL, :IN_LOAD, :IN_IRB
+	  # ignore
+	else
+	  # ignore other cases as well
+	end
+
       end
     end
 
@@ -232,10 +257,14 @@ module Reish
     end
 
     def reish_abort(irb, exception = Abort)
-      if defined? Thread
-	thread.raise exception, "abort then interrupt!!"
-      else
-	raise exception, "abort then interrupt!!"
+      @job_controller.raise_foreground_job  exception, "abort then interrupt!!"
+    end
+
+    def reish_tstp(shell)
+      th = Thread.start do
+	th.abort_on_exception = true
+	puts "catch TSTP"
+	@job_controller.suspend_foreground_job
       end
     end
 
@@ -294,25 +323,25 @@ module Reish
     end
 
     def activate_command_search(&block)
-      sh = Thread.current[:__REISH_CURRENT_SHELL__]
-      Thread.current[:__REISH_CURRENT_SHELL__] = self
+      sh = Reish::current_shell(true)
+      Reish::current_shell = self
       begin
 	block.call self
       ensure
-	Thread.current[:__REISH_CURRENT_SHELL__] = sh
+	Reish::current_shell = sh
       end
     end
 
     def inactivate_command_search(&block)
-      sh = Thread.current[:__REISH_CURRENT_SHELL__]
+      sh = Reish::current_shell(true)
       return ifnoactive.call if !sh && ifnoactive
 
       back = sh
-      Thread.current[:__REISH_CURRENT_SHELL__] = nil
+      Reish::current_shell = nil
       begin
 	block.call sh
       ensure
-	Thread.current[:__REISH_CURRENT_SHELL__] = back
+	Reish::current_shell = back
       end
     end
 
@@ -436,6 +465,67 @@ module Reish
     def yydebug=(val)
       @parser.yydebug = val
     end
+  end
 
+  class MainShell < Shell
+
+    def initialize(input_method = nil)
+      super
+
+      begin
+	require "ext/reish"
+	Reish::conf[:LIB_TERMCTL] = true
+      rescue LoadError
+	Reish::conf[:LIB_TERMCTL] = false
+	# 仮設定
+	Reish.const_set(:WCONTINUED, 8)
+	def Reish::wifscontinued?(st) 
+	  st.to_i == 0xffff
+	end
+      end
+
+      @term_ctl = nil
+
+      @backup_tcpgrp = nil
+      if @io.tty? && Reish::conf[:LIB_TERMCTL]
+	@term_ctl = true
+
+	@backup_tcpgrp = Reish::tcgetpgrp(STDIN)
+	puts "Backup TCPGRP: #{@backup_tcpgrp}" if Reish::debug_jobctl?
+	@tcpgrp = Process.pid
+	Reish::tcsetpgrp(STDIN, @tcpgrp)
+      end
+
+      @process_monitor = ProcessMonitor.new(@term_ctl)
+      @process_monitor.start_monitor
+
+      trap(:SIGINT) do
+	signal_handle
+      end
+
+      trap(:SIGTSTP) do
+	signal_handle(:TSTP)
+      end
+
+#      trap(:TTIN, :IGNORE)
+      trap(:TTOU, :IGNORE)
+
+      trap(:SIGCHLD) do
+	@process_monitor.accept_sigchild
+      end
+    end
+
+    attr_reader :process_monitor
+
+    def term_ctl?; @term_ctl; end
+
+    def set_ctlterm(pid)
+      return unless @term_ctl
+
+      unless pid
+	pid = @tcpgrp
+      end
+      Reish::tcsetpgrp(@io.real_io, pid)
+    end
   end
 end

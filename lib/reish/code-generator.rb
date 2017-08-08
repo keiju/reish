@@ -252,7 +252,7 @@ module Reish
 
     def visit_async_command(command)
       super do |s|
-	"Reish::JobStart{#{s}}"
+	"background_job(\"#{s}\"){#{s}}"
       end
     end
 
@@ -306,6 +306,7 @@ module Reish
 	when nil
 	  script.concat ".reish_term"
 	else
+	  p command
 	  raise NoImplementError
 	end
 	script

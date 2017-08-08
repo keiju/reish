@@ -3,5 +3,8 @@
 .\#*
 *.bak
 lib/reish/parser.output
+*.o
+*.so
+
 
 
