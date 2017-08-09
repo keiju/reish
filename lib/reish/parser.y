@@ -146,7 +146,19 @@ class Reish::Parser
 	| strict_pipeline
         | trivial_command
 
-  strict_pipeline: strict_pipeline '.' opt_nl strict_command
+  strict_pipeline: strict_pipeline1
+        | strict_pipeline1 '.' opt_nl simple_command
+      	    {
+	       result = val[0]
+  	       result.pipe_command(:DOT, val[3])
+	    }
+        | strict_pipeline1 COLON2 opt_nl simple_command
+	    {
+	       result = val[0]
+  	       result.pipe_command(:COLON2, val[3])
+	    }
+
+  strict_pipeline1: strict_pipeline1 '.' opt_nl strict_command
       	    {
 	       result = val[0]
   	       result.pipe_command(:DOT, val[3])
@@ -156,7 +168,7 @@ class Reish::Parser
 #	       result = Node::PipelineCommand(val[0])
 #  	       result.pipe_command(:COLON2, val[3])
 #	    }
-	| strict_pipeline COLON2 opt_nl strict_command
+	| strict_pipeline1 COLON2 opt_nl strict_command
 	    {
 	       result = val[0]
   	       result.pipe_command(:COLON2, val[3])
@@ -423,7 +435,7 @@ class Reish::Parser
 		result = [val[0], val[3]]
 	    }
 
-  referenceable: strict_pipeline
+  referenceable: strict_pipeline1
 #	| literal_command
 #	| group_command
 #	    {
@@ -665,7 +677,7 @@ class Reish::Parser
 		result = val[2]
 	    }
 
-  trivial_command0: strict_pipeline
+  trivial_command0: strict_pipeline1
  	    {         
  	       result.pipeout = :RESULT
  	    }
