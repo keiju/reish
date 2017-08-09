@@ -26,7 +26,6 @@
 ** フォーマット付Number(FormedNumber)
 ** クラス定義
 ** 多重代入
-** foo()=const を構文的にNGにする.
 ** ヒアドキュメント
 ** # bash selectコマンド(ひつようない?)
 
