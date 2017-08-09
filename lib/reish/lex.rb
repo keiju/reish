@@ -168,7 +168,7 @@ module Reish
       :AND => EXPR_BEG,
       :OR => EXPR_BEG,
       :NOT => EXPR_BEG,
-      :ALIAS => EXPR_FNAME,
+      :ALIAS => EXPR_BEG, #EXPR_FNAME,
       :DEFINED => EXPR_END,
       :BEGIN => EXPR_END,
       :L_END => EXPR_END,

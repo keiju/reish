@@ -245,6 +245,20 @@ module Reish
       def_accept
     end
 
+    class AliasCommand<Command
+      def_constructor
+
+      def initialize(id, pipeline)
+	@id = id
+	@pipeline = pipeline
+      end
+
+      attr_reader :id
+      attr_reader :pipeline
+
+      def_accept
+    end
+
     class BeginCommand<Command
       def_constructor
       

@@ -113,6 +113,7 @@ class Reish::Parser
 	| return_command
 	| yield_command
 	| assgin_command
+	| alias_command
 
   pipeline_command: pipeline
 
@@ -451,7 +452,18 @@ class Reish::Parser
 #        | for_command
 #	| strict_pipeline
 
-  begin_command: BEGIN {@lex.indent_push(:BEGIN)} body_list indent_pop END
+#   alias_command: ALIAS ID lex_beg opt_nl pipeline_command
+#   	    {
+# 		val[4].pipeout = :NONE
+#   		result = Node::AliasCommand(val[1], val[4])
+#   	    }
+
+  alias_command: ALIAS ID lex_beg opt_nl ID
+	    {
+     		result = Node::AliasCommand(val[1], val[4])
+   	    }
+
+  BEGIN_command: BEGIN {@lex.indent_push(:BEGIN)} body_list indent_pop END
 	    {
 		result = Node::BeginCommand(*val[2])
 		result.space_seen = val[0].space_seen

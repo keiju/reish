@@ -40,6 +40,12 @@ module Reish
       end
     end
 
+    def visit_alias_command(command)
+      super do |id, pl|
+	"alias #{id} #{pl}"
+      end
+    end
+
     def visit_begin_command(command)
       super do |seq, res, els, ens|
 	code_res = res && "; #{res.join(";")}" || ""
