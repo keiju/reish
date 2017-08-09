@@ -423,7 +423,7 @@ class Reish::Parser
 #	       result = Node::IndexAssginCommand(val[0][0], val[0][1], val[3])
 #	    }
 
-  assginable: strict_pipeline
+  assginable: strict_pipeline1
 
   index_ref_command: index_ref
 	    {
