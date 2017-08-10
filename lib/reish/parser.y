@@ -463,7 +463,7 @@ class Reish::Parser
      		result = Node::AliasCommand(val[1], val[4])
    	    }
 
-  BEGIN_command: BEGIN {@lex.indent_push(:BEGIN)} body_list indent_pop END
+  begin_command: BEGIN {@lex.indent_push(:BEGIN)} body_list indent_pop END
 	    {
 		result = Node::BeginCommand(*val[2])
 		result.space_seen = val[0].space_seen
