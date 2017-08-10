@@ -644,7 +644,7 @@ class Reish::Parser
 	        result = Node::Group(val[2])
 	    }
 
-  xstring_command: XSTRING_BEG {@lex.indent_push(:BACK_QUOTE)} compound_list XSTRING_END indent_pop lex_arg
+  xstring_command: XSTRING_BEG {@lex.indent_push(:BACK_QUOTE); @lex.lex_state = Lex::EXPR_BEG} compound_list XSTRING_END indent_pop lex_arg
 	    {
 	        result = Node::XString(val[2])
 	    }

@@ -2109,7 +2109,7 @@ module_eval(<<'.,.,', 'parser.y', 643)
 
 module_eval(<<'.,.,', 'parser.y', 646)
   def _reduce_163(val, _values, result)
-    @lex.indent_push(:BACK_QUOTE)
+    @lex.indent_push(:BACK_QUOTE); @lex.lex_state = Lex::EXPR_BEG
     result
   end
 .,.,
