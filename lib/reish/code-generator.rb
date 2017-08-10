@@ -123,6 +123,8 @@ module Reish
     def visit_group(group)
       super do |list|
 	code = "(#{list.join("; ")})"
+puts "AAA:"
+p code
 	if group.pipein
 	  "reish_eval(%{#{code}}, binding)"
 	else
@@ -292,6 +294,8 @@ module Reish
 	      script.concat ".reish_result"
 	    when nil, :NONE
 	      # do nothing
+	    when :XNULL
+	      script.concat ".reish_xnull"
 	    else
 	      raise NoImplementError
 	    end
@@ -311,6 +315,8 @@ module Reish
 	  # do nothing
 	when nil
 	  script.concat ".reish_term"
+	when :XNULL
+	  script.concat ".reish_xnull"
 	else
 	  p command
 	  raise NoImplementError

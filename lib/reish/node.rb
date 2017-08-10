@@ -564,6 +564,8 @@ module Reish
       def initialize(node)
 	super()
 	@nodes = node.nodes
+	@nodes[0..-2].each{|n| n.pipeout = :XNULL}
+
 	@space_seen = !@nodes.empty? && @nodes.first.space_seen
       end
       
