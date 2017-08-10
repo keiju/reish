@@ -123,8 +123,6 @@ module Reish
     def visit_group(group)
       super do |list|
 	code = "(#{list.join("; ")})"
-puts "AAA:"
-p code
 	if group.pipein
 	  "reish_eval(%{#{code}}, binding)"
 	else
