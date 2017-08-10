@@ -133,7 +133,7 @@ module Reish
 
     def visit_xstring(xstring)
       super do |list|
-	code = "Reish::ConcatCommand.new(#{list.join(", ")}).reish_result"
+	code = "Reish::ConcatCommand.new(#{list.collect{|l| l+".reish_result"}.join(", ")}).reish_result"
 	if xstring.pipein
 	  "reish_eval(%{#{code}}, binding)"
 	else
