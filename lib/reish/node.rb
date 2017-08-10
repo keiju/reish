@@ -267,12 +267,20 @@ module Reish
 	@res = res
 	@els = els
 	@ens = ens
+
+	@seq.pipeout= :XNULL
+	@seq.last.pipeout= nil
       end
 
       attr_reader :seq
       attr_reader :res
       attr_reader :els
       attr_reader :ens
+
+      def pipeout=(val)
+	@pipeout = val
+	@seq.last.pipeout= val
+      end
 
       def_accept
     end

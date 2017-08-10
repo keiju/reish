@@ -416,7 +416,7 @@ module Reish
 
     def visit_redirector(command)
       super do |code, reds|
-	"reish_shell_command_with_redirection(\'#{code}\', [#{reds.join(",")}], binding).reish_term"
+	"reish_shell_command_with_redirection(\'#{code}\', [#{reds.join(",")}], binding)"
       end
     end
 

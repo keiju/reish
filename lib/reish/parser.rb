@@ -1757,7 +1757,7 @@ module_eval(<<'.,.,', 'parser.y', 462)
 
 module_eval(<<'.,.,', 'parser.y', 465)
   def _reduce_115(val, _values, result)
-    @lex.indent_push(:BEGIN)
+    @lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG
     result
   end
 .,.,
