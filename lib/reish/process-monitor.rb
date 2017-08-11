@@ -17,14 +17,18 @@ module Reish
 
       @pid2exe = {}
       @pid2exe_mx = Mutex.new
+      @pid2exe_cv = ConditionVariable.new
 
       @monitor = nil
       @monitor_queue = Queue.new
     end
 
-    def add_exe(exe)
+    def entry_exe(pid, exe)
       @pid2exe_mx.synchronize do
-	@pid2exe[exe.pid] = exe
+	exe.pid = pid
+	@pid2exe[pid] = exe
+	exe.pstat = :RUN
+	@pid2exe_cv.broadcast
       end
     end
 
@@ -44,19 +48,22 @@ module Reish
     end
 
     def set_exe_exit_stat(pid, stat, status)
-      exe = @pid2exe[pid]
-      unless exe
-	puts "ProcessMonitor: process id[#{pid}] no exist(stat = #{stat})" if Reish::debug_jobctl?
-	return
+      @pid2exe_mx.synchronize do
+	until exe = @pid2exe[pid]
+	  @pid2exe_cv.wait(@@pid2exe_mx)
+	end
+
+	unless exe
+	  puts "ProcessMonitor: process id[#{pid}] no exist(stat = #{stat})" if Reish::debug_jobctl?
+	  return
+	end
+	exe.set_exit_stat(stat, status)
       end
-      exe.set_exit_stat(stat, status)
     end
 
     def popen_exe(exe, *opts, &block)
       IO.popen(*opts) do |io|
-	exe.pid = io.pid
-	add_exe(exe)
-	exe.pstat = :RUN
+	entry_exe(io.pid, exe)
 
 	begin
 	  block.call io
@@ -69,13 +76,10 @@ module Reish
 
     def spawn_exe(exe, *opts, &block)
       pid = Process.spawn(*opts)
-      begin
-	exe.pid = pid
-	add_exe(exe)
-	exe.pstat = :RUN
-	
-	block.call
+      entry_exe(pid, exe)
 
+      begin
+	block.call
       ensure
 	exe.wait
 	del_exe(exe)

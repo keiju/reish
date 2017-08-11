@@ -52,7 +52,7 @@ module Reish
 
 	@wait_mx.synchronize do
 	  @wait_stat = true
-	  @wait_cv.signal
+	  @wait_cv.broadcast
 	end
 	puts "FINISH background job(#{info})" unless @foreground
 	v
