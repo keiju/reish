@@ -522,7 +522,7 @@ class Reish::Parser
 
   do: NL
 	| ';'
-	| DO_COND
+	| ';' DO_COND
 
   until_command: UNTIL cond_push opt_nl logical_command do {@lex.indent_push(:UNTIL)} cond_pop lex_beg compound_list indent_pop END
 	    {
@@ -561,6 +561,7 @@ class Reish::Parser
 
   then: THEN
 	| opt_terms
+	| opt_terms THEN
 
   unless_command: UNLESS opt_nl logical_command then {@lex.indent_push(:UNLESS)} compound_list opt_else indent_pop END
 	    {
