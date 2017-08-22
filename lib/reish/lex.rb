@@ -94,7 +94,7 @@ module Reish
     PreservedWordH = {
 #      "rescue"	=> :RESCUE, 
 #      "ensure"	=> :ENSURE, 
-      "end"	=> :END, 
+#      "end"	=> :END, 
       "then"	=> :THEN, 
       "elsif"	=> :ELSIF, 
       "else"	=> :ELSE, 
@@ -104,7 +104,7 @@ module Reish
 #      "redo"	=> :REDO, 
 #      "retry"	=> :RETRY, 
       "in"	=> :IN, 
-      "do"	=> :DO, 
+#      "do"	=> :DO, 
 #      "return"	=> :RETURN, 
 #      "yield"	=> :YIELD, 
 #      "super"	=> :SUPER, 
@@ -699,6 +699,17 @@ module Reish
 	  self.lex_state = TransState[tid]
 	  ReservedWordToken.new(self, tid)
 	end
+      end
+
+      @OP.def_rule("$do", proc{|op, io| /\s|;/ =~ io.peek(0)}) do
+	|op, io|
+	if cond?
+	  tid = :DO_COND
+	else
+	  tid = :DO
+	end
+	self.lex_state = TransState[tid]
+	ReservedWordToken.new(self, tid)
       end
 
       @OP.def_rule("$") do
