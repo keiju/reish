@@ -523,6 +523,7 @@ class Reish::Parser
   do: NL
 	| ';'
 	| ';' DO_COND
+        | DO_COND
 
   until_command: UNTIL cond_push opt_nl logical_command do {@lex.indent_push(:UNTIL)} cond_pop lex_beg compound_list indent_pop END
 	    {
@@ -568,9 +569,10 @@ class Reish::Parser
 		result = Node::IfCommand(val[2], val[6], val[5])
 	    }
 
-  for_command: FOR opt_nl for_arg opt_nl IN lex_arg simple_command_element do {@lex.indent_push(:FOR)} lex_beg compound_list indent_pop END
+#  for_command: FOR cond_push opt_nl for_arg opt_nl IN lex_arg simple_command_element do {@lex.indent_push(:FOR)} cond_pop lex_beg compound_list indent_pop END
+  for_command: FOR cond_push opt_nl for_arg opt_nl IN lex_arg simple_command_element lex_beg do {@lex.indent_push(:FOR)} cond_pop lex_beg compound_list indent_pop END
 	    {
-		result = Node::ForCommand(val[2], val[6], val[10])
+		result = Node::ForCommand(val[3], val[7], val[13])
             }
 
   for_arg: ID
