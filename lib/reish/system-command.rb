@@ -144,6 +144,7 @@ module Reish
 	end
 	io.each &block
       end
+      @exit_status
     end
 
     def term
@@ -435,6 +436,8 @@ end
 class Object
   def reish_term
     case self
+    when Reish::Main
+      puts self
     when Array
 #      puts collect{|e| e.to_s}.sort
       each{|e| puts e.to_s}
