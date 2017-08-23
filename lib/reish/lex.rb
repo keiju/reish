@@ -712,6 +712,12 @@ module Reish
 	ReservedWordToken.new(self, tid)
       end
 
+      @OP.def_rule("--do", proc{|op, io| lex_state?(EXPR_ARG)}) do
+	tid = :DO
+	self.lex_state = TransState[tid]
+	ReservedWordToken.new(self, tid)
+      end
+
       @OP.def_rule("$") do
 	|op, io|
 	self.lex_state = EXPR_BEG
