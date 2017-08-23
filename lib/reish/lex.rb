@@ -527,7 +527,7 @@ module Reish
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(self, :LBRACE_H)
-	elsif !@space_seen && lex_state?(EXPR_ARG | EXPR_END)
+	elsif lex_state?(EXPR_ARG | EXPR_END)
 	  self.lex_state = EXPR_DO_BEG
 	  SimpleToken.new(self, :LBRACE_I)
 	else

@@ -53,7 +53,7 @@ ls [a-z]*
 #ls ~
 
 echo "イテレータ"
-ls | each do |l| p $l end
+ls | each $do |l| p $l; end
 ls | each{|l| p $l}
 ls.each{|l| p $l}
 ls::each{|l| p $l}
