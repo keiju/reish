@@ -673,7 +673,7 @@ module Reish
 	identify_compstmt(io, RubyToken::TkRPAREN)
       end
 
-      @OP.def_rule("$begin") do
+      @OP.def_rule("$begin", proc{|op, io| /\s|;/ =~ io.peek(0)}) do
 	|op, io|
 	"begin".split(//).reverse.each{|c| io.ungetc c}
 	identify_compstmt(io, RubyToken::TkEND)
