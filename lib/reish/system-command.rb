@@ -49,6 +49,15 @@ module Reish
     end
     alias result reish_result
 
+    def reish_xnull
+      @source.reish_xnull
+    end
+    alias xnull reish_xnull
+
+    def reds=(val)
+      @source.reds = val
+    end
+
     def info
       "Lazy(#{@source.info})"
     end
@@ -167,6 +176,14 @@ module Reish
     def reish_result
       self.to_a
     end
+
+    def xnull
+      unless @reds.find{|r| [">", "&>", ">>", "&>>"].include?(r.id)}
+	@reds.push Node::Redirection(-1, ">", "/dev/null")
+      end
+    end
+    
+    alias reish_xnull xnull
 
     def receive?
       !@receiver.kind_of?(Reish::Main)      
@@ -439,6 +456,7 @@ class Object
 
   def reish_stat; self; end
   def reish_result; self; end
+  def reish_xnull; self; end
 
   def reish_append_command_opts(opts)
     begin

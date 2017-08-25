@@ -8,7 +8,7 @@ ls -l -F
 echo "括弧付きシンプルコマンド"
 ls(-l)
 ls(-l -F)
-ls(-l, -F)
+#ls(-l, -F)	#<= サポートしていない
 /ls(-l)
 
 echo "コンポジット"
@@ -26,6 +26,7 @@ ls | cat
 ls -l | grep %/TODO/
 ls -l | /grep TODO
 
+echo "strictパイプライン"
 ls.cat
 ls(-l).cat
 ls(-l).grep(%/TODO/)
@@ -36,6 +37,12 @@ ls(-l)::cat
 ls(-l)::grep(%/TODO/)
 ls(-l)::/grep(TODO)
 
+ls::grep %/TODO/
+ls(-l)::grep %/TODO/
+ls.grep %/TODO/
+ls(-l).grep %/TODO/
+
+echo "パイプライン結合"
 ls | grep %/TODO/ | cat
 ls | /grep TODO | cat
 
@@ -46,7 +53,7 @@ ls [a-z]*
 #ls ~
 
 echo "イテレータ"
-ls | each do |l| p $l end
+ls | each $do |l| p $l; end
 ls | each{|l| p $l}
 ls.each{|l| p $l}
 ls::each{|l| p $l}

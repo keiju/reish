@@ -38,6 +38,13 @@ module Reish
 
       block_given? ? yield(var, idx) : [var, idx]
     end
+
+    def visit_alias_command(command)
+      id = command.id.accept(self)
+      p = command.pipeline.accept(self)
+
+      block_given? ? yield(id, p) : [id, p]
+    end
     
     def visit_begin_command(command)
       seq = command.seq.accept(self)
@@ -58,7 +65,7 @@ module Reish
 
       ens = nil
       if command.ens
-	command.ens.accept(self)
+	ens = command.ens.accept(self)
       end
 
       block_given? ? yield(seq, res, els, ens) : [seq, res, els, ens]

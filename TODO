@@ -1,9 +1,7 @@
-* parser
-** 構文以下を許したい:
-  foo::bar arg
+* PARSER
 ** キーワード引数
-** DO/ENDの前に";"を必要にする方が良いか?
-  それとも, $do とか? --do ... end は?
+** 関数定義
+** エリアス(bashの)
 ** case expr に変更?
   # 今は case arg
 ** メソッド定義
@@ -12,13 +10,9 @@
 ** 単語の区切り方要検討
   # foo =>baz
   # foo baz=>
-** PreservedWordH関係のパーズがおかしい
-  % end
-  とか
 ** ary[...] の ... 部分のリスト化
 ** #   trivial_command: trivial_command0 lex_arg の lex_arg正しい?
 ** Array, Hashで,を使えるようにする?
-** エリアス(bashの)
 ** %リテラル
 ** XSTRINGの仕様変更. 文字列として渡してeval形式にする
 ** DSTRING(#)
@@ -26,15 +20,21 @@
 ** フォーマット付Number(FormedNumber)
 ** クラス定義
 ** 多重代入
-** foo()=const を構文的にNGにする.
 ** ヒアドキュメント
+** EXPR_END再考
 ** # bash selectコマンド(ひつようない?)
+** ワイルドカード ワード先頭に {}が来たとき, blockになってしまう.
+** ワイルドカード 文字列"..."の中でワイルドカードが使えない.
+** 空文(;;)が不可
 
 * code generation
-** # コード生成での括弧, セミコロンの使い方
-** コマンド引数にEnumerableが渡ったときの処理
 ** # command | if ... をもっとちゃんと対応したい(instance_evalを使わなく
    て実現できるか?)
+   → comand | if cond ; then foo ; else bar ;end
+   →→ x=command if x.conf; then x.foo; else x.bar; end
+** リダイレクションのコード生成イマイチ
+** # コード生成での括弧, セミコロンの使い方
+** コマンド引数にEnumerableが渡ったときの処理
 ** return/break/next/redo/retryの対応
   #  rubyでは, 式中に上記のものを入れることができない.
 

@@ -94,24 +94,24 @@ module Reish
     PreservedWordH = {
 #      "rescue"	=> :RESCUE, 
 #      "ensure"	=> :ENSURE, 
-      "end"	=> :END, 
-      "then"	=> :THEN, 
-      "elsif"	=> :ELSIF, 
-      "else"	=> :ELSE, 
-      "when"	=> :WHEN, 
+#      "end"	=> :END, 
+#      "then"	=> :THEN, 
+#      "elsif"	=> :ELSIF, 
+#      "else"	=> :ELSE, 
+#      "when"	=> :WHEN, 
 #      "break"	=> :BREAK, 
 #      "next"	=> :NEXT, 
 #      "redo"	=> :REDO, 
 #      "retry"	=> :RETRY, 
-      "in"	=> :IN, 
-      "do"	=> :DO, 
+#      "in"	=> :IN, 
+#      "do"	=> :DO, 
 #      "return"	=> :RETURN, 
 #      "yield"	=> :YIELD, 
 #      "super"	=> :SUPER, 
-      "self"	=> :SELF, 
-      "nil"	=> :NIL, 
-      "true"	=> :TRUE, 
-      "false"	=> :FALSE, 
+#      "self"	=> :SELF, 
+#      "nil"	=> :NIL, 
+#      "true"	=> :TRUE, 
+#      "false"	=> :FALSE, 
 #      "and"	=> :AND, 
 #      "or"	=> :OR, 
 #      "not"	=> :NOT, 
@@ -168,7 +168,7 @@ module Reish
       :AND => EXPR_BEG,
       :OR => EXPR_BEG,
       :NOT => EXPR_BEG,
-      :ALIAS => EXPR_FNAME,
+      :ALIAS => EXPR_BEG, #EXPR_FNAME,
       :DEFINED => EXPR_END,
       :BEGIN => EXPR_END,
       :L_END => EXPR_END,
@@ -527,7 +527,7 @@ module Reish
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(self, :LBRACE_H)
-	elsif !@space_seen && lex_state?(EXPR_ARG | EXPR_END)
+	elsif lex_state?(EXPR_ARG | EXPR_END)
 	  self.lex_state = EXPR_DO_BEG
 	  SimpleToken.new(self, :LBRACE_I)
 	else
@@ -673,7 +673,7 @@ module Reish
 	identify_compstmt(io, RubyToken::TkRPAREN)
       end
 
-      @OP.def_rule("$begin") do
+      @OP.def_rule("$begin", proc{|op, io| /\s|;/ =~ io.peek(0)}) do
 	|op, io|
 	"begin".split(//).reverse.each{|c| io.ungetc c}
 	identify_compstmt(io, RubyToken::TkEND)
@@ -699,6 +699,23 @@ module Reish
 	  self.lex_state = TransState[tid]
 	  ReservedWordToken.new(self, tid)
 	end
+      end
+
+      @OP.def_rule("$do", proc{|op, io| /\s|;/ =~ io.peek(0)}) do
+	|op, io|
+	if cond?
+	  tid = :DO_COND
+	else
+	  tid = :DO
+	end
+	self.lex_state = TransState[tid]
+	ReservedWordToken.new(self, tid)
+      end
+
+      @OP.def_rule("--do", proc{|op, io| lex_state?(EXPR_ARG)}) do
+	tid = :DO
+	self.lex_state = TransState[tid]
+	ReservedWordToken.new(self, tid)
       end
 
       @OP.def_rule("$") do
