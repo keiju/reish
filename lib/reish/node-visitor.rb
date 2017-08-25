@@ -65,7 +65,7 @@ module Reish
 
       ens = nil
       if command.ens
-	command.ens.accept(self)
+	ens = command.ens.accept(self)
       end
 
       block_given? ? yield(seq, res, els, ens) : [seq, res, els, ens]

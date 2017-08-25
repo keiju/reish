@@ -48,11 +48,11 @@ class Reish::Parser
 	| simple_list1 '&'
 	    {
 		result.last_command_to_async
-		result.pipeout = :RESULT
+#		result.pipeout = :RESULT
 	    } 
 	| simple_list1 ';'
 	    {
-		result.pipeout = :RESULT
+#		result.pipeout = :RESULT
 	    } 
 
   simple_list1:	logical_command

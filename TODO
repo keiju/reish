@@ -1,4 +1,4 @@
-* parser
+* PARSER
 ** キーワード引数
 ** 関数定義
 ** エリアス(bashの)
@@ -32,7 +32,6 @@
    て実現できるか?)
    → comand | if cond ; then foo ; else bar ;end
    →→ x=command if x.conf; then x.foo; else x.bar; end
-** ネストしたshell-commandのコード生成
 ** リダイレクションのコード生成イマイチ
 ** # コード生成での括弧, セミコロンの使い方
 ** コマンド引数にEnumerableが渡ったときの処理

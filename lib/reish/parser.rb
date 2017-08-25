@@ -1184,7 +1184,7 @@ module_eval(<<'.,.,', 'parser.y', 42)
 module_eval(<<'.,.,', 'parser.y', 49)
   def _reduce_5(val, _values, result)
     		result.last_command_to_async
-		result.pipeout = :RESULT
+#		result.pipeout = :RESULT
 	    
     result
   end
@@ -1192,7 +1192,7 @@ module_eval(<<'.,.,', 'parser.y', 49)
 
 module_eval(<<'.,.,', 'parser.y', 54)
   def _reduce_6(val, _values, result)
-    		result.pipeout = :RESULT
+    #		result.pipeout = :RESULT
 	    
     result
   end

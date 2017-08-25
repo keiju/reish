@@ -129,7 +129,7 @@ module Reish
 	  input = @lex.reset_readed
 	  if Reish::debug_input?
 	    puts "input: #{input}"
-	    puts "input_unit: #{@current_input_unit}"
+	    puts "input_unit: #{@current_input_unit.pretty_inspect}"
 	  end
 	rescue ParseError => exc
 	  puts exc.message
