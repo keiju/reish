@@ -65,6 +65,11 @@ module Reish
       code.puts "self"
       code.puts "end"
 
+      if Reish::debug_function?
+	puts "Function Class:"
+	puts code.string
+      end
+
       @function_class = eval code.string, binding, __FILE__, line_no
       me = self
       @function_class.module_eval{const_set :Factory, me}
@@ -75,6 +80,8 @@ module Reish
       fn = real_fn(name)
       @body.pipeout = F2mode[name]
       body = @body.accept(@visitor)
+p arg_form, @args
+      puts "def #{fn}#{arg_form}\n #{body}\nend" if Reish::debug_function?
 
       @klass.module_eval "def #{fn}#{arg_form}\n #{body} \nend"
       @function_class.module_eval fun_body(name, pre)

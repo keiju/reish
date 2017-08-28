@@ -480,10 +480,10 @@ class Reish::Parser
     	    {
 	       result = []
 	    }
-	| func_arg_list0 opt_nl ID
+	| func_arg_list0 opt_nl lex_beg ID
 	    {
 	      result = val[0]
-	      result.push val[2]
+	      result.push val[3]
 	    }
 
   alias_command: ALIAS ID  lex_beg opt_nl ID

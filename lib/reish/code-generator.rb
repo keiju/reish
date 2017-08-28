@@ -46,9 +46,9 @@ module Reish
 
 	ags = args && args.join(", ")
 
-	fclass = Reish::define_function(UserFunctionSpace, name, ags, body, self)
+	fclass = Reish::define_function(UserFunctionSpace, name, args, body, self)
 	%{Reish::UserFunctionSpace.module_eval %{
-	  def #{name}#{ags}
+	  def #{name}(#{ags})
 	    #{fclass.name}.new(self#{ags && ", #{ags}" || ""})
 	  end
         }}
