@@ -56,9 +56,9 @@ module Reish
       code.puts "    @receiver.send(Factory.real_fn(name), *@args, &@block).send(name, *args, &block)"
       code.puts "  else"
       code.puts "    unless @receiver.respond_to?(Factory.real_fn('none'))"
-      code.puts "      Factory.make_real_function('none', name)"
+      code.puts "      Factory.make_real_function('reish_none', name)"
       code.puts "    end"
-      code.puts "    @receiver.send(Factory.real_fn('none'), *@args, &@block).send(name, *args, &block)"
+      code.puts "    @receiver.send(Factory.real_fn('reish_none'), *@args, &@block).send(name, *args, &block)"
       code.puts "  end"
       code.puts "end"
       
@@ -80,10 +80,10 @@ module Reish
       fn = real_fn(name)
       @body.pipeout = F2mode[name]
       body = @body.accept(@visitor)
-p arg_form, @args
       puts "def #{fn}#{arg_form}\n #{body}\nend" if Reish::debug_function?
-
       @klass.module_eval "def #{fn}#{arg_form}\n #{body} \nend"
+
+      puts fun_body(name, pre) if Reish::debug_function?
       @function_class.module_eval fun_body(name, pre)
     end
 
@@ -97,13 +97,13 @@ p arg_form, @args
     end
 
     def fun_body(name, pre=name)
-      %{def #{pre}#{arg_form}
-          @receiver.#{real_fn(name)}(*@args, &@block).#{pre}
-	end}
+      %{def #{pre}(*args, &block)
+          @receiver.#{real_fn(name)}(*@args, &@block).#{pre}(*args, &block)
+       end}
     end
 
     def real_fn(name)
-      "#{@name}__#{name}"
+      "__reish_impl_#{@name}__#{name}"
     end
   end
 
