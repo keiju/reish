@@ -6,4 +6,4 @@ Reish.conf[:DISPLAY_COMP] = true
 Reish.conf[:VERBOSE] = true
 
 #Reish.debug_jobctl_on
-#Reish.debug_input_on
+Reish.debug_input_on

@@ -245,6 +245,22 @@ module Reish
       def_accept
     end
 
+    class DefCommand<Command
+      def_constructor
+
+      def initialize(id, args, body)
+	@id = id
+	@args = args
+	@body = body
+      end
+
+      attr_reader :id
+      attr_reader :args
+      attr_reader :body
+
+      def_accept
+    end
+
     class AliasCommand<Command
       def_constructor
 
@@ -291,7 +307,10 @@ module Reish
 	  @els.pipeout = :NONE if @els
 	  @ens.pipeout = :NONE if @ens
 	when nil
-	  @nodes.last.pipeout = nil
+	  @seq.last.pipeout = nil
+	  @res.each{|r| r.pipeout = nil} if @res
+	  @els.pipeout = nil if @els
+	  @ens.pipeout = nil if @ens
 	end
       end
 

@@ -113,6 +113,7 @@ class Reish::Parser
 	| return_command
 	| yield_command
 	| assgin_command
+        | def_command
 	| alias_command
 
   pipeline_command: pipeline
@@ -458,7 +459,34 @@ class Reish::Parser
 #   		result = Node::AliasCommand(val[1], val[4])
 #   	    }
 
-  alias_command: ALIAS ID lex_beg opt_nl ID
+  def_command: DEF ID opt_terms {@lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG} body_list indent_pop END
+	    {
+		body = Node::BeginCommand(*val[4])
+		result = Node::DefCommand(val[1], nil, body)
+	    }
+	|  DEF ID func_arg_list {@lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG} body_list indent_pop END
+	    {
+		arg = val[2]
+		body = Node::BeginCommand(*val[4])
+		result = Node::DefCommand(val[1], arg, body)
+	    }
+
+  func_arg_list: LPARLEN_ARG func_arg_list0 ')'
+	    {
+	      result = val[1]
+	    }
+
+  func_arg_list0: lex_beg 
+    	    {
+	       result = []
+	    }
+	| func_arg_list0 opt_nl ID
+	    {
+	      result = val[0]
+	      result.push val[2]
+	    }
+
+  alias_command: ALIAS ID  lex_beg opt_nl ID
 	    {
      		result = Node::AliasCommand(val[1], val[4])
    	    }

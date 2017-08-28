@@ -13,6 +13,7 @@
 
 
 require "reish/node-visitor"
+require "reish/function"
 
 module Reish
 
@@ -37,6 +38,20 @@ module Reish
     def visit_index_ref_command(command)
       super do |var, idx|
 	"#{var}[#{idx}]"
+      end
+    end
+
+    def visit_def_command(command)
+      super do |name, args, body|
+
+	ags = args && args.join(", ")
+
+	fclass = Reish::define_function(UserFunctionSpace, name, ags, body, self)
+	%{Reish::UserFunctionSpace.module_eval %{
+	  def #{name}#{ags}
+	    #{fclass.name}.new(self#{ags && ", #{ags}" || ""})
+	  end
+        }}
       end
     end
 
