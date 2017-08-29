@@ -298,7 +298,7 @@ module Reish
 
 	@seq.pipeout= val
 	case val
-	when :BAR, :COLON2, :BAR_AND, :DOT, :RESULT, :XNULL, :NONE
+	when :BAR, :COLON2, :BAR_AND, :DOT, :RESULT, :XNULL, :NONE, :RESULTL
 	  @res.each{|r| r.pipeout = :XNULL} if @res
 	  @els.pipeout = :XNULL if @els
 	  @ens.pipeout = :XNULL if @ens
@@ -339,7 +339,7 @@ module Reish
 
       def initialize(cond, then_list=nil, else_list=nil)
 	@cond = cond
-	@cond.pipeout = :RESULT
+	@cond.pipeout = :XNULL
 	@then_list = then_list
 	@else_list = else_list
       end
@@ -363,6 +363,7 @@ module Reish
 
       def initialize(cond, node)
 	@cond = cond
+	@cond.pipeout = :XNULL
 	@node = node
       end
 
@@ -382,6 +383,7 @@ module Reish
 
       def initialize(cond, node)
 	@cond = cond
+	@cond.pipeout = :XNULL
 	@node = node
       end
 
@@ -422,6 +424,7 @@ module Reish
 
       def initialize(cond, body)
 	@cond = cond
+	@cond.pipeout = :XNULL
 	@body = body
       end
 
@@ -560,6 +563,7 @@ module Reish
       def initialize(com, cond)
 	@com = com
 	@cond = cond
+	@cond.pipeout = :XNULL
       end
 
       attr_reader :com
@@ -574,6 +578,7 @@ module Reish
       def initialize(com, cond)
 	@com = com
 	@cond = cond
+	@cond.pipeout = :XNULL
       end
 
       attr_reader :cond
@@ -588,6 +593,7 @@ module Reish
       def initialize(com, cond)
 	@com = com
 	@cond = cond
+	@cond.pipeout = :XNULL
       end
 
       attr_reader :cond
@@ -602,6 +608,7 @@ module Reish
       def initialize(com, cond)
 	@com = com
 	@cond = cond
+	@cond.pipeout = :XNULL
       end
 
       attr_reader :cond
@@ -640,14 +647,14 @@ module Reish
       def pipeout=(val)
 	@pipeout = val
 	case val
-	when :BAR, :COLON2, :BAR_AND, :DOT, :RESULT
+	when :BAR, :COLON2, :BAR_AND, :DOT
 	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
 	  @nodes.last.pipeout = :RESULT
 	when :XNULL
 	  @nodes.each{|n| n.pipeout = :XNULL}
-	when :NONE
+	when :NONE, :RESULT, :RESULTL
 	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
-	  @nodes.last.pipeout = :NONE
+	  @nodes.last.pipeout = val
 	when nil
 	  @nodes.last.pipeout = nil
 	end
@@ -694,9 +701,9 @@ module Reish
 	@pipeout = val
 	
 	case val
-	when :RESULT
+	when :RESULT, :RESULTL
 	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
-	  @nodes.last.pipeout = :RESULT
+	  @nodes.last.pipeout = val
 	when :BAR, :COLON2, :BAR_AND, :DOT, :NONE
 	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
 	  @nodes.last.pipeout = :NONE

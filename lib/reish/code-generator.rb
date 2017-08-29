@@ -263,8 +263,8 @@ module Reish
 	  "(#{s.join("; ")})"
 	when :TO_A
 	  "Reish::ConcatCommand.new(#{s.join(", ")}).resish_result"
-	when :RESULT
-	  "(#{s.join("; ")}).reish_result"
+	when :RESULT, :RESULTL
+	  "(#{s.join("; ")})"
 	when :NONE
 	  "(#{s.join("; ")})"
 	else

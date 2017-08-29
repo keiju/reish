@@ -30,6 +30,7 @@ module Reish
       reish_result: :RESULT,
       to_a: :TO_A ,
       reish_xnull: :XNULL,
+      reish_resultl: :RESULTL,
       reish_none:  :NONE,
     }
 
