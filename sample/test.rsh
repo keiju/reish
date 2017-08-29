@@ -19,7 +19,11 @@ echo "論理コマンド"
 true
 false
 true && ls
+false && ls
+true || ls
 false || ls
+-f TODO && ls
+
 
 echo "パイプライン"
 ls | cat

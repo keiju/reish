@@ -298,14 +298,10 @@ module Reish
 
 	@seq.pipeout= val
 	case val
-	when :BAR, :COLON2, :BAR_AND, :DOT, :RESULT, :XNULL
+	when :BAR, :COLON2, :BAR_AND, :DOT, :RESULT, :XNULL, :NONE
 	  @res.each{|r| r.pipeout = :XNULL} if @res
 	  @els.pipeout = :XNULL if @els
 	  @ens.pipeout = :XNULL if @ens
-	when :NONE
-	  @res.each{|r| r.pipeout = :NONE} if @res
-	  @els.pipeout = :NONE if @els
-	  @ens.pipeout = :NONE if @ens
 	when nil
 	  @seq.last.pipeout = nil
 	  @res.each{|r| r.pipeout = nil} if @res
@@ -647,6 +643,11 @@ module Reish
 	when :BAR, :COLON2, :BAR_AND, :DOT, :RESULT
 	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
 	  @nodes.last.pipeout = :RESULT
+	when :XNULL
+	  @nodes.each{|n| n.pipeout = :XNULL}
+	when :NONE
+	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
+	  @nodes.last.pipeout = :NONE
 	when nil
 	  @nodes.last.pipeout = nil
 	end
@@ -693,10 +694,13 @@ module Reish
 	@pipeout = val
 	
 	case val
-	when :BAR, :COLON2, :BAR_AND, :DOT, :RESULT
+	when :RESULT
 	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
 	  @nodes.last.pipeout = :RESULT
-	when :XNULL, :NONE, nil
+	when :BAR, :COLON2, :BAR_AND, :DOT, :NONE
+	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
+	  @nodes.last.pipeout = :NONE
+	when :XNULL, nil
 	  @nodes.each{|n| n.pipeout = val}
 	end
       end
