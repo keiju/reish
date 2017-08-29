@@ -55,6 +55,7 @@ module Reish
 
     attr_reader :lex
     attr_reader :job_controller
+    attr_reader :codegen
 
     attr_reader :completor
 

@@ -19,7 +19,11 @@ echo "論理コマンド"
 true
 false
 true && ls
+false && ls
+true || ls
 false || ls
+-f TODO && ls
+
 
 echo "パイプライン"
 ls | cat
@@ -297,6 +301,21 @@ echo *"foo"
 echo *"foo"*
 echo *"foo"*"bar"
 
+echo "関数定義"
+def foo(a)
+  ls $a
+end
+foo -l
+foo -l | cat
 
+def bar(a b)
+  ls $a
+  ls -b
+end
+bar -l -a
 
-
+def baz
+  cat
+end
+ls -l | baz
+foo -l | baz

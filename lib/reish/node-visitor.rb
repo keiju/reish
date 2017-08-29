@@ -39,6 +39,15 @@ module Reish
       block_given? ? yield(var, idx) : [var, idx]
     end
 
+    def visit_def_command(command)
+      name = command.id.accept(self)
+      args = command.args && command.args.collect{|e| e.accept(self)}
+#      body = command.body.accept(self)
+      body = command.body
+      
+      block_given? ? yield(name, args, body) : [name, args, body]
+    end
+
     def visit_alias_command(command)
       id = command.id.accept(self)
       p = command.pipeline.accept(self)
