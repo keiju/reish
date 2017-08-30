@@ -49,6 +49,11 @@ module Reish
     end
     alias result reish_result
 
+    def reish_resultl
+      @source.reish_resultl
+    end
+    alias result reish_resultl
+
     def reish_xnull
       @source.reish_xnull
     end
@@ -73,7 +78,7 @@ module Reish
       @command_path = path
       @args = args
 
-      @reds = nil
+      @reds = []
 
       @pid = nil
       @pstat = :NULL
@@ -170,20 +175,32 @@ module Reish
 
       @exit_status
     end
-
     alias reish_term term
 
     def reish_result
       self.to_a
     end
 
+    def reish_resultl
+      r = self.to_a
+      (@exit_status.success? || nil) && r
+    end
+
     def xnull
       unless @reds.find{|r| [">", "&>", ">>", "&>>"].include?(r.id)}
-	@reds.push Node::Redirection(-1, ">", "/dev/null")
+	@reds.push Reish::Redirect(-1, ">", "/dev/null")
       end
+      execute
+      @exit_status.success?
     end
-    
     alias reish_xnull xnull
+    alias reish_stat xnull
+
+    def execute
+      exec = exection_class.new(self)
+      exec.spawn
+      @exit_status
+    end
 
     def receive?
       !@receiver.kind_of?(Reish::Main)      
@@ -227,7 +244,7 @@ module Reish
 
     def spawn_options
       opts = {:chdir => @exenv.pwd}
-      return opts unless @reds
+      return opts if @reds.empty?
 
       @reds.each do |red|
 	key, value = red.spawn_option_key_value
@@ -456,6 +473,7 @@ class Object
 
   def reish_stat; self; end
   def reish_result; self; end
+  def reish_resultl; self; end
   def reish_xnull; self; end
 
   def reish_append_command_opts(opts)

@@ -19,7 +19,11 @@ echo "論理コマンド"
 true
 false
 true && ls
+false && ls
+true || ls
 false || ls
+-f TODO && ls
+
 
 echo "パイプライン"
 ls | cat
@@ -91,11 +95,21 @@ p $(1 + 2)
 echo "アサインコマンド"
 foo = foo
 bar = 100
+
+foo = (true || "string")
+foo = (true && "string")
+foo = (false || "string")
+foo = (false && "string")
+foo = (/true || "string")
+foo = (/true && "string")
+foo = (/false || "string")
+foo = (/false && "string")
+
+
+echo "インデックスアサインコマンド"
 baz = %[1 2 foo]
 
 baz[2] = zoo
-
-echo "インデックスアサインコマンド"
 baz[2] = bar
 
 echo "インデックスレフ"
@@ -297,6 +311,21 @@ echo *"foo"
 echo *"foo"*
 echo *"foo"*"bar"
 
+echo "関数定義"
+def foo(a)
+  ls $a
+end
+foo -l
+foo -l | cat
 
+def bar(a b)
+  ls $a
+  ls -b
+end
+bar -l -a
 
-
+def baz
+  cat
+end
+ls -l | baz
+foo -l | baz

@@ -1,6 +1,9 @@
-* PARSER
+* parser
 ** キーワード引数
 ** 関数定義
+   * アクセサ foo=
+   + 不定個引数など($*argで可能)
+   * キーワード引数
 ** エリアス(bashの)
 ** case expr に変更?
   # 今は case arg
