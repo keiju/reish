@@ -682,7 +682,7 @@ module Reish
       def initialize(node)
 	super()
 	@nodes = node.nodes
-	@nodes.each{|n| n.pipeout = :RESULT}
+	@nodes.each{|n| n.pipeout = :NONE}
 
 	@space_seen = @nodes.first.space_seen
       end
