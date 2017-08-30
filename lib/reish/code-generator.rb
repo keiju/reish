@@ -311,6 +311,8 @@ module Reish
   	      # do nothing
   	    when :XNULL
   	      script.concat ".reish_xnull"
+  	    when :RESULTL
+  	      script.concat ".reish_resultl"
   	    else
   	      raise NoImplementError
   	    end
@@ -385,6 +387,8 @@ module Reish
 	  script.concat ".to_a"
 	when :RESULT
 	  script.concat ".reish_result"
+	when :RESULTL
+	  script.concat ".reish_resultl"
 	when :XNULL
 	  script.concat ".reish_xnull"
 	when :NONE

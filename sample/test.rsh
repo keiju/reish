@@ -95,11 +95,21 @@ p $(1 + 2)
 echo "アサインコマンド"
 foo = foo
 bar = 100
+
+foo = (true || "string")
+foo = (true && "string")
+foo = (false || "string")
+foo = (false && "string")
+foo = (/true || "string")
+foo = (/true && "string")
+foo = (/false || "string")
+foo = (/false && "string")
+
+
+echo "インデックスアサインコマンド"
 baz = %[1 2 foo]
 
 baz[2] = zoo
-
-echo "インデックスアサインコマンド"
 baz[2] = bar
 
 echo "インデックスレフ"

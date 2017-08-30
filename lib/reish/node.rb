@@ -108,6 +108,20 @@ module Reish
       attr_accessor :space_seen
       alias space_seen? space_seen
 
+      def pipeout=(val)
+	case val
+	when :BAR, :COLON2, :BAR_AND, :DOT, :NONE, :RESULT, :RESULTL
+	  @first.pipeout = :RESULTL
+	  @second.pipeout = :RESULTL
+	when :XNULL
+	  @first.pipeout = :XNULL
+	  @second.pipeout = :XNULL
+	when nil
+	  @first.pipeout = nil
+	  @second.pipeout = nil
+	end
+      end
+
       def_accept
     end
 
@@ -356,7 +370,6 @@ module Reish
 
       def_accept
     end
-
 
     class WhileCommand<Command
       def_constructor
