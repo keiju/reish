@@ -158,7 +158,7 @@ module Reish
 	  end
 	when ReservedWordToken
 	  case @lex.pretoken.token_id
-	  when "=", :BANG, '|', :SYMBEG, :COLON2, 
+	  when "=", :BANG, '|', :SYMBEG, :COLON2, :DOT,
 	      *Lex::Redirection2ID.values
 	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})" if Reish::debug_cmpl?
 	    CompCommandArg.new(nil, @lex.pretoken, [], nil, @shell.exenv.binding).candidates

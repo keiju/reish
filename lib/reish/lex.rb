@@ -389,9 +389,14 @@ module Reish
 	    @space_seen = @token.kind_of?(SpaceToken)
 	  end
 	  last_nl = (@token.token_id == :NL)
+	rescue NoMethodError
+	  # $OP.def_rule("--"... がらみのエラー回避のため
+	  raise unless $!.name == :call
+	  @space_seen = false
+	  @token = WordToken.new(self, "--")
 	rescue SyntaxError
 	  raise if @exception_on_syntax_error
-	  @token= ErrorToken.new(self)
+	  @token = ErrorToken.new(self)
 	end
 
 #	puts "Tk: #{@token.inspect}"

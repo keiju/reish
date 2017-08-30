@@ -165,6 +165,7 @@ module Reish
 	raise "not implemented for token: #{@name.inspect}"
       end
       spec = Reish::CompSpec(@receiver, n)
+p spec
       spec.arg_candidates(self)
     end
   end
@@ -247,6 +248,22 @@ module Reish
   }
 
   CompSpec.def_command "ls", cs_ls
+
+  cs_grep = CompSpec.new
+  cs_grep.arg_proc = proc{|call|
+    if call.last_arg
+      case call.last_arg.value
+      when /^-/
+	cs_grep.options(call, nil, "",
+			["--extended-regexp", "--fixed-strings", "--basic-regexp", "--perl-regexp", "--regexp", "--file", "--ignore-case", "--word-regexp", "--line-regexp", "--null-data", "--no-messages", "--invert-match", "--version", "--help", "--max-count=NUM", "--byte-offset", "--line-number", "--line-buffered", "--with-filename", "--no-filename", "--label=LABEL", "--only-matching", "--quiet", "--silent", "--binary-files", "--text", "--directories", "--devices", "--recursive", "--dereference-recursive", "--include", "--exclude", "--exclude-from", "--exclude-dir", "--files-without-match", "--files-with-matches", "--count", "--initial-tab", "--null", "--before-context", "--after-context", "--context", "--color", "--colour", "--binary", "--unix-byte-offsets"])
+      else
+	cs_grep.files(call)
+      end
+    else
+      cs_grep.files(call)
+    end
+  }
+  CompSpec.def_command "grep", cs_grep
 
 end
 
