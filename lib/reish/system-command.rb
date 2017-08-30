@@ -49,11 +49,10 @@ module Reish
     end
     alias result reish_result
 
-    def reish_stat
-      @source.reish_stat
+    def reish_resultl
+      @source.reish_resultl
     end
-    alias result reish_result
-      
+    alias result reish_resultl
 
     def reish_xnull
       @source.reish_xnull
