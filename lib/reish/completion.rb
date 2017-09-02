@@ -180,7 +180,7 @@ module Reish
 	  puts "CANDIDATE: TEST(#{@lex.pretoken.value})" if Reish::debug_cmpl?
 	  
 	  sub = @lex.pretoken.value
-	  (class<<Test; p TestMap.keys; TestMap.keys; end).grep(/^#{sub}/).collect{|sub| "-"+sub}
+	  (class<<Test; TestMap.keys; end).grep(/^#{sub}/).collect{|sub| "-"+sub}
 
 	when IDToken
 	  puts "CANDIDATE: ID(#{@lex.pretoken.value})" if Reish::debug_cmpl?

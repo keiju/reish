@@ -90,11 +90,21 @@ module Reish
       proc{|call| files(call)}
     end
 
-    def options(call, filter=nil, sopt = "", lopts = [])
-      opts = sopt.split(//).collect{|c| "-" + c}
-      opts.concat lopts
+    def options(call, filter=nil, sopt = nil, lopts = [])
 
-      filter(opts, call, filter)
+# short opt も補完候補にする場合
+#      opts = sopt.split(//).collect{|c| "-" + c}
+#      opts.concat lopts
+
+      if filter && filter == "-" || call.last_arg && call.last_arg.value == "-"
+# short opy を表示のみする場合(表示はいまいち)
+#	puts "","-"+sopt
+	return ["-"]
+      end
+
+
+
+      filter(lopts, call, filter)
     end
 
     def commands(call, filter=nil)
@@ -161,11 +171,13 @@ module Reish
       when TestToken
 	n = "TEST#"+@name.token_id.to_s
 
+      when PathToken
+	n = @name.value
+	
       else
 	raise "not implemented for token: #{@name.inspect}"
       end
       spec = Reish::CompSpec(@receiver, n)
-p spec
       spec.arg_candidates(self)
     end
   end
@@ -263,7 +275,7 @@ p spec
       cs_grep.files(call)
     end
   }
-  CompSpec.def_command "grep", cs_grep
+  CompSpec.def_command "/grep", cs_grep
 
 end
 
