@@ -417,6 +417,10 @@ module Reish
     def visit_nop(nop)
       find(nop)
     end
+
+    def visit_EOF(eof)
+      false
+    end
   end
 end
 
