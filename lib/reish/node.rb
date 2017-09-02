@@ -1056,7 +1056,9 @@ module Reish
       def_accept
     end
      
-    class EOFNode<Node;end
+    class EOFNode<Node
+      def_accept "EOF"
+    end
     EOF = EOFNode.new
 
     class NOPNode<Node
