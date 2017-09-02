@@ -598,7 +598,8 @@ class Reish::Parser
 	    }
 
 #  for_command: FOR cond_push opt_nl for_arg opt_nl IN lex_arg simple_command_element do {@lex.indent_push(:FOR)} cond_pop lex_beg compound_list indent_pop END
-  for_command: FOR cond_push opt_nl for_arg opt_nl IN lex_arg simple_command_element lex_beg do {@lex.indent_push(:FOR)} cond_pop lex_beg compound_list indent_pop END
+#  for_command: FOR cond_push opt_nl for_arg opt_nl IN lex_arg simple_command_element lex_beg do {@lex.indent_push(:FOR)} cond_pop lex_beg compound_list indent_pop END
+  for_command: FOR cond_push opt_nl for_arg opt_nl IN lex_beg logical_command lex_beg do {@lex.indent_push(:FOR)} cond_pop lex_beg compound_list indent_pop END
 	    {
 		result = Node::ForCommand(val[3], val[7], val[13])
             }
@@ -614,12 +615,15 @@ class Reish::Parser
 	      result.push val[2]
 	    }
 
-  case_command: CASE simple_command_element opt_terms {@lex.indent_push(:CASE)} case_body indent_pop END
+#  case_command: CASE simple_command_element opt_terms {@lex.indent_push(:CASE)} case_body indent_pop END
+  case_command: CASE logical_command opt_terms {@lex.indent_push(:CASE)} case_body indent_pop END
 	    {
 		result = Node::CaseCommand(val[1], val[4])
 	    }
 
   case_body: WHEN simple_command_element_list then compound_list cases
+# case_body: WHEN logical_command then compound_list cases
+# case_body: WHEN when_list then compound_list cases
             {
 		case val[4]
 		when Array
@@ -631,8 +635,29 @@ class Reish::Parser
 		  result = [Node::WhenCommand(val[1], val[3]), val[4]]
 		end
 	    }
+
+#        | WHEN simple_command_element_list then compound_list cases
+
   cases:  opt_else
 	| case_body
+
+#   when_list: logical_command
+# 	    {
+# 	        result = Node::Sequence(val[0])
+# 	    }
+#         | WORD
+# 	    {
+# 	        result = Node::Sequence(val[0])
+# 	    }
+# 	| WILDCARD
+# 	    {
+# 	        result = Node::Sequence(val[0])
+# 	    }
+#         | when_list "," lex_beg logical_command
+# 	    {
+# 		val[0].add_command(val[3])
+# 		result = val[0]
+# 	    }
 
   break_command: BREAK simple_command_element_list
 	    {
