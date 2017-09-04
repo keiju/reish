@@ -414,10 +414,17 @@ module Reish
     class ForCommand<Command
       def_constructor
 
+#       def initialize(vars, enum, seq)
+# 	@vars = vars
+# 	@enum = enum
+# 	@seq = seq
+#       end
+
       def initialize(vars, enum, seq)
-	@vars = vars
-	@enum = enum
-	@seq = seq
+ 	@vars = vars
+ 	@enum = enum
+	@enum.pipeout = :RESULT
+ 	@seq = seq
       end
 
       attr_reader :vars
@@ -437,7 +444,7 @@ module Reish
 
       def initialize(cond, body)
 	@cond = cond
-	@cond.pipeout = :XNULL
+	@cond.pipeout = :RESULT
 	@body = body
       end
 
@@ -457,6 +464,8 @@ module Reish
 
       def initialize(cond, seq)
 	@cond = cond
+#	@cond = cond.nodes
+#	@cond.each{|c| c.pipeout = :RESULT}
 	@seq = seq
       end
 
@@ -1056,7 +1065,9 @@ module Reish
       def_accept
     end
      
-    class EOFNode<Node;end
+    class EOFNode<Node
+      def_accept "EOF"
+    end
     EOF = EOFNode.new
 
     class NOPNode<Node

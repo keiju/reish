@@ -344,7 +344,11 @@ module Reish
     end
 
     def ===(other)
-      File.fnmatch?(@pattern, other)
+      begin
+	File.fnmatch?(@pattern, other)
+      rescue TypeError
+	return false
+      end
     end
 
     def glob
