@@ -142,8 +142,9 @@ module Reish
       :THEN => EXPR_BEG,
       :ELSIF => EXPR_BEG,
       :ELSE => EXPR_BEG,
-      :CASE => EXPR_ARG,
+      :CASE => EXPR_BEG,
       :WHEN => EXPR_ARG,
+#      :WHEN => EXPR_BEG,
       :WHILE => EXPR_BEG,
       :MOD_WHILE => EXPR_BEG,
       :UNTIL => EXPR_BEG,
@@ -613,11 +614,11 @@ module Reish
 	SimpleToken.new(self, ';')
       end
 
-#      @OP.def_rule(",") do
-#	|op, io|
-#	SimpleToken.new(self, ',')
-#      end
-
+#       @OP.def_rule(",") do
+# 	|op, io|
+# #	self.lex_state = EXPR_BEG
+# 	SimpleToken.new(self, ',')
+#       end
 
       @OP.def_rule("&") do
 	|op, io|
@@ -797,7 +798,7 @@ module Reish
     def identify_id(io)
       token = ""
 
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;\(\)<>\[\{\}\]\`\$\"\']/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;,\(\)<>\[\{\}\]\`\$\"\']/ !~ ch
 	print ":", ch, ":" if Debug
 
 	if /[\/\-\+]/ =~ ch
@@ -817,7 +818,7 @@ module Reish
     end
 
     def identify_path(io, token = "")
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>]/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;,\(\)<>]/ !~ ch
 	print ":", ch, ":" if Debug
 
 	token.concat ch
