@@ -407,7 +407,7 @@ puts "X5"
 end
 
 if Readline.respond_to?("basic_word_break_characters=")
-  Readline.basic_word_break_characters= " \t\n\"\\'`><=;|&{("
+  Readline.basic_word_break_characters= " \t\n\"\\'`><=;|&{(.:"
 end
 Readline.completion_append_character = nil
 #Readline.completion_proc = Reish::Completor.new(Reish::current_shell).completion_proc

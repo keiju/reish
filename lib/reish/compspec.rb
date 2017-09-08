@@ -155,7 +155,7 @@ puts "CS#5"
     end
     
     def command_ret_proc
-      proc{|call| Reish::ModuleSpec(SystemCommand)}
+      proc{|call| Reish::ModuleSpec(Enumerator::Lazy)}
     end
 
     def symbols(call, filter=nil)
@@ -273,8 +273,12 @@ puts "CS#5"
 
   cs_grep = CompSpec.new
   cs_grep.arg_proc = cs_grep.objects_arg_proc
-  cs_grep.ret_proc = proc{|call| ModuleSpec(Array)}
+  cs_grep.ret_proc = proc{|call| call.args.size == 0 ? ModuleSpec(Enumerator) : ModuleSpec(Array)}
   CompSpec.def_method(Enumerable, "grep", cs_grep)
+
+  cs_lzgrep = cs_grep.clone
+  cs_lzgrep.ret_proc = proc{|call| Enumerator::Lazy}
+  CompSpec.def_method(Enumerator::Lazy, "grep", cs_lzgrep)
 
   # ls補完のサンプル
   cs_ls = CompSpec.new
