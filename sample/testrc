@@ -8,7 +8,7 @@ Reish.conf[:VERBOSE] = true
 #Reish.debug_jobctl_on
 #Reish.debug_input_on
 #Reish.debug_function_on
-#Reish.debug_cmpl_on
-#Reish.debug_cmpl_yy_on
+Reish.debug_cmpl_on
+Reish.debug_cmpl_yy_on
 
 #Reish::INSPECT_LEBEL = 2

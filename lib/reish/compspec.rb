@@ -1,3 +1,10 @@
+#
+#   compspec.rb - 
+#   	Copyright (C) 1996-2010 Keiju ISHITSUKA
+#				(Penta Advanced Labrabries, Co.,Ltd)
+
+require "reish/comp-module-spec"
+
 module Reish
 
   def Reish::CompSpec(receiver, name)
@@ -18,18 +25,51 @@ module Reish
     end
 
     def CompSpec.spec(receiver, name)
+puts "CS#0"
+p receiver
+p name
       unless  /^\// =~ name
-	for cls in receiver.class.ancestors
-	  spec = M2Spec[[cls, name]]
-	  if spec
-	    puts "Match CompSpec for #{cls}##{name} spec: #{spec.inspect}"
-	    return spec
+	case receiver
+	when ModuleSpec, DescendantSpec
+puts "CS#1"
+
+	  mod = receiver.module
+p mod
+	  spec = nil
+	  mod.ancestors.find{|m| spec = M2Spec[[m, name]]}
+p spec
+	  if !spec && receiver.respond_to?(name)
+	    spec = DefaultRubyMethodCS
 	  end
+	  return spec
+	when CompositeSpec
+puts "CS#2"
+	  specs = Set.new
+	  receiver.modules.each do |mod|
+	    spec = nil
+	    mod.ancestors.find{|m| spec = M2Spec[[m, name]]}
+	    if !spec && receiver.respond_to?(name)
+	      spec = DefaultRubyMethodCS
+	    end
+	    specs<<spec
+	  end
+	  return specs
+	else
+puts "CS#3"
+	  for mod in receiver.class.ancestors
+	    spec = M2Spec[[mod, name]]
+	    if spec
+	      puts "Match CompSpec for #{mod}##{name} spec: #{spec.inspect}"
+	      return spec
+	    end
+	  end
+	  return DefaultRubyMethodCS if receiver.respond_to?(name)
 	end
-	return DefaultRubyMethodCS if receiver.respond_to?(name)
       end
       spec = N2Spec[name]
+puts "CS#4"
       return spec if spec
+puts "CS#5"
       DefaultSystemCommandCS
     end
 
@@ -49,7 +89,7 @@ module Reish
 
     def return_value(call)
       return @ret_proc.call call if @ret_proc
-      Object
+      Reish::DescendantSpec(Object)
     end
 
     def objects(call, filer=nil)
@@ -101,9 +141,6 @@ module Reish
 #	puts "","-"+sopt
 	return ["-"]
       end
-
-
-
       filter(lopts, call, filter)
     end
 
@@ -113,8 +150,12 @@ module Reish
       filter shell.all_commands, call, filter
     end
 
-    def commands_arg_proc
+    def command_arg_proc
       proc{|call| commands(call)}
+    end
+    
+    def command_ret_proc
+      proc{|call| Reish::ModuleSpec(SystemCommand)}
     end
 
     def symbols(call, filter=nil)
@@ -142,56 +183,43 @@ module Reish
       end
     end
   end
-  
-  class CompCommandArg
-    def initialize(receiver, name, args, last_arg, bind)
-      @receiver = receiver
-      @name = name
-      @args = args
-      @last_arg = last_arg
-      @bind = bind
+
+  class CompositeCompSpec
+    def initialize
+      @specs = Set.new
     end
 
-    attr_reader :bind
-    attr_reader :receiver
-    attr_reader :compspec
-    attr_reader :args
-    attr_reader :last_arg
-
-    def candidates
-      case @name
-      when IDToken
-	n = @name.value
-      when SpecialToken
-	n = "Special#"+@name.value
-
-      when ReservedWordToken
-	n = "RESERVED#"+@name.token_id.to_s
-
-      when TestToken
-	n = "TEST#"+@name.token_id.to_s
-
-      when PathToken
-	n = @name.value
-	
-      else
-	raise "not implemented for token: #{@name.inspect}"
-      end
-      spec = Reish::CompSpec(@receiver, n)
-      spec.arg_candidates(self)
+    def <<(spec)
+      @specs<<spec
     end
-  end
 
-  class CompCommandCall
+    def return_value
+      @specs.inject{|ret, spec| ret |= spec.return_value}
+    end
   end
 
   DefaultRubyMethodCS = CompSpec.new
   DefaultRubyMethodCS.arg_proc = DefaultRubyMethodCS.objects_arg_proc
-  DefaultRubyMethodCS.ret_proc = proc{|call| Object}
+  DefaultRubyMethodCS.ret_proc = proc{|call| DescendantSpec(Object)}
+
+  DefaultNewCS = CompSpec.new
+  DefaultNewCS.arg_proc = DefaultRubyMethodCS.objects_arg_proc
+  DefaultNewCS.ret_proc = proc{|call| 
+    rec = call.receiver
+    case rec
+    when Class
+      ModuleSpec(rec)
+    when ModuleSpec, DescendantSpec, CompositeSpec
+      rec
+    else
+      raise "not implemented for: #{rec.inspect}"
+    end
+  }
+  CompSpec.def_method(Class, "new", DefaultNewCS)
 
   DefaultSystemCommandCS = CompSpec.new
   DefaultSystemCommandCS.arg_proc = DefaultSystemCommandCS.files_arg_proc
-  DefaultSystemCommandCS.ret_proc = proc{|call| SystemCommand}
+  DefaultSystemCommandCS.ret_proc = proc{|call| ModuleSpec(SystemCommand)}
 
   CompSpec.def_method Object, "Special#|", DefaultRubyMethodCS
   CompSpec.def_method Object, "Special#&", DefaultRubyMethodCS
@@ -211,7 +239,7 @@ module Reish
   CompSpec.def_method Object, "RESERVED#=", DefaultSystemCommandCS
 
   command_arg_cs = CompSpec.new
-  command_arg_cs.arg_proc = command_arg_cs.commands_arg_proc
+  command_arg_cs.arg_proc = command_arg_cs.command_arg_proc
   command_arg_cs.ret_proc = proc{|call| Object}
   CompSpec.def_method Object, "RESERVED#BANG", command_arg_cs
   CompSpec.def_method Object, "RESERVED#|", command_arg_cs
@@ -243,6 +271,11 @@ module Reish
   end
   #例外: -owner? fn user 
 
+  cs_grep = CompSpec.new
+  cs_grep.arg_proc = cs_grep.objects_arg_proc
+  cs_grep.ret_proc = proc{|call| ModuleSpec(Array)}
+  CompSpec.def_method(Enumerable, "grep", cs_grep)
+
   # ls補完のサンプル
   cs_ls = CompSpec.new
   cs_ls.arg_proc = proc{|call|
@@ -258,7 +291,7 @@ module Reish
       cs_ls.files(call)
     end
   }
-
+  cs_ls.ret_proc = cs_ls.command_ret_proc
   CompSpec.def_command "ls", cs_ls
 
   cs_grep = CompSpec.new
