@@ -107,10 +107,10 @@ module Reish
 	  opts.push e.to_s
 	when String
 	  opts.push e
-	when Array
-	  opts.concat command_opts(e)
 	when Hash
 	  opts.concat e.collect{|key, value| "--#{key}=#{value}"}
+	when Enumerable
+	  opts.concat command_opts(e)
 	when Symbol
 	  opts.push "--"+e.id2name
 	else

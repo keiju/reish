@@ -97,14 +97,16 @@ p com
 	  case com.name
 	  when IDToken, TestToken
 	    name = com.name.value
-	    var = eval("local_variables | self.class.constants(true)", @bind).find{|v| v.to_s == name}
+	    var = eval("local_variables | self.class.constants(true) | Object.constants", @bind).find{|v| v.to_s == name}
 	    if var
 	      receiver = eval(var.to_s, @bind)
 	    else
+puts "CALL"
 	      call = CompCommandCall.new(receiver,
-				       com.name,
-				       com.args,
-				       bind)
+					 com.name,
+					 com.args,
+					 bind)
+p call
 	      receiver = call.return_value
 	    end
 	  when SpecialToken, ReservedWordToken, PathToken

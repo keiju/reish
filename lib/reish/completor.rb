@@ -125,24 +125,32 @@ module Reish
 	end
       else
 	case @lex.pretoken
-	when SimpleToken
+	when SimpleToken, ReservedWordToken
 	  case @lex.pretoken.token_id
 	  when :NL, '\\', :ASSOC, :XSTRING_END, :XSTRING_BEG,
 	      "(", :LBLACK_A, :LBLACK_I, :LBRACE_H, :LBRACE_I,
-	      "]", ")", "}", ":", :DOT_COMMAND, ".", ';', '&', :AND_AND, :OR_OR,
+	      "]", ")", "}", ":", :DOT_COMMAND, ';', '&', :AND_AND, :OR_OR,
 	      :LBLACK_A, :LBRACE_H, "$"
 
 	    puts "IDENT CMPL: BEG/NO_SP" if Reish::debug_cmpl?
 	    puts "CANDIDATE: ANY COMMAND" if Reish::debug_cmpl?
 	    candidate_commands
 
+	  when "=", :BANG, '|', :SYMBEG, :COLON2, ".", 
+	      *Lex::Redirection2ID.values
+	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})" if Reish::debug_cmpl?
+	    
+	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
+	    puts "CANDIDATE: ANY COMMAND OF: #{command.inspect}" if Reish::debug_cmpl?
+	    candidate_commands(command)
+
+#	    CompCommandArg.new(nil, @lex.pretoken, [], nil, @shell.exenv.binding).candidates
+	   
 	  when :LPARLEN_ARG
 	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
 	    puts "CANDINATE: ARGUMENT OF: #{command.inspect}" if Reish::debug_cmpl?
 	    candidate_argument_of(command)
 	      
-	  else
-	    # ここは来ないはず
 	    puts "CANDINATE: UNKNOWN"
 	    puts "LEX STATE: #{@lex.state_sym}"
 	    
@@ -153,20 +161,7 @@ module Reish
 	      ">=", "<=", "==", "<=>", "=~", "!~"
 	    puts "CANDIDATE: SPECIAL(#{@lex.pretoken.value})" if Reish::debug_cmpl?
 	    candidate_argument_of(path[-2])
-	    
-	  end
-	when ReservedWordToken
-	  case @lex.pretoken.token_id
-	  when "=", :BANG, '|', :SYMBEG, :COLON2, :DOT,
-	      *Lex::Redirection2ID.values
-	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})" if Reish::debug_cmpl?
-	    
-	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
-	    puts "CANDIDATE: ANY COMMAND OF: #{command.inspect}" if Reish::debug_cmpl?
-	    candidate_commands(command)
 
-#	    CompCommandArg.new(nil, @lex.pretoken, [], nil, @shell.exenv.binding).candidates
-	   
 	  when :MOD_IF, :MOD_UNLESS, :MOD_WHILE, :MOD_UNTIL, :MOD_RESCUE,
 	      *Lex::PseudoVars, *Lex::PreservedWord.values
 	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})" if Reish::debug_cmpl?
@@ -346,7 +341,7 @@ puts "X7"
     def candidate_commands(command = nil)
       case command
       when nil
-	candidates = eval("methods | private_methods | local_variables | self.class.constants", @shell.exenv.binding).collect{|m| m.to_s} | @shell.all_commands
+	candidates = eval("methods | private_methods | local_variables | self.class.constants | Object.constants", @shell.exenv.binding).collect{|m| m.to_s} | @shell.all_commands
 	candidates
 	
       when Node::PipelineCommand
@@ -360,10 +355,11 @@ puts "X7"
 	end
 
       when Node::SimpleCommand
-	candidates = eval("methods | private_methods | local_variables | self.class.constants", @shell.exenv.binding).collect{|m| m.to_s} | @shell.all_commands
-
+	candidates = eval("methods | private_methods | local_variables | self.class.constants(true) | Object.constants", @shell.exenv.binding).collect{|m| m.to_s} | @shell.all_commands
+puts "XXXXXXXXXX"
+puts candidates
 	filter = command&.name&.value
-	
+puts filter	
 	if filter
 	  candidates.grep(/^#{filter}/)
 	else
@@ -414,7 +410,7 @@ puts "X7"
 end
 
 if Readline.respond_to?("basic_word_break_characters=")
-  Readline.basic_word_break_characters= " \t\n\"\\'`><=;|&{(.:"
+  Readline.basic_word_break_characters= " \t\n\"\\'`><=;|&{(.:$"
 end
 Readline.completion_append_character = nil
 #Readline.completion_proc = Reish::Completor.new(Reish::current_shell).completion_proc
