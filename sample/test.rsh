@@ -297,6 +297,7 @@ echo `ls`foo
 echo `ls`foo`ls`
 echo `ls`foo`ls`bar
 
+
 echo foo-$ls
 echo foo-$ls()
 echo foo-$ls()bar
@@ -310,6 +311,10 @@ echo "foo"*"bar"*
 echo *"foo"
 echo *"foo"*
 echo *"foo"*"bar"
+
+foo=R
+echo *$foo
+echo *$foo*
 
 echo "関数定義"
 def foo(a)

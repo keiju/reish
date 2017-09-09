@@ -798,7 +798,7 @@ module Reish
     def identify_id(io)
       token = ""
 
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;,\(\)<>\[\{\}\]\`\$\"\']/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;,\(\)<>\[\{\}\]\`\$\"\'\*]/ !~ ch
 	print ":", ch, ":" if Debug
 
 	if /[\/\-\+]/ =~ ch
@@ -818,7 +818,7 @@ module Reish
     end
 
     def identify_path(io, token = "")
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;,\(\)<>]/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;,\(\)<>\*]/ !~ ch
 	print ":", ch, ":" if Debug
 
 	token.concat ch
@@ -876,7 +876,7 @@ module Reish
 
     def identify_wildcard(io, token = "")
       
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\"\']/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\"\'\$]/ !~ ch
 	print ":", ch, ":" if Debug
 	token.concat ch
       end
