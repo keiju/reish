@@ -11,7 +11,7 @@ module Reish
   @ModuleSpecs = {}
   @DescendantSpecs = {}
 
-  def self.ModuleSpec(mod, descendant: false)
+  def self.ModuleSpec(mod)
     spec = @ModuleSpecs[mod]
     return spec if spec
     spec = ModuleSpec.new(mod)

@@ -41,7 +41,7 @@ p spec
 	  if !spec && receiver.respond_to?(name)
 	    spec = DefaultRubyMethodCS
 	  end
-	  return spec
+	  return spec if spec
 	when CompositeSpec
 puts "CS#2"
 	  specs = Set.new

@@ -259,7 +259,8 @@ puts "FAE PATH: #{p.inspect}"
 
 puts "FAE: search in INPUT_UNIT: #{input_unit.inspect}"
 
-      next_pipeline = false
+      next_simplecommand = nil
+      next_pipeline = nil
       input_unit.flatten.reverse.each do |n|
 	case n
 	when *ARGUMENTABLE_ELEMENT
@@ -267,7 +268,9 @@ puts "FAE IU: #{n.inspect}"
 	  return n
 	when Node::SimpleCommand
 puts "X1"
-	  com = p
+	  com = n
+p com
+	  return com if next_simplecommand
 	when Node::PipelineCommand
 puts "X2"
 	  if com && p.commands.last == com
@@ -279,13 +282,17 @@ puts "X3"
 	  end
 	when SimpleToken, ReservedWordToken
 puts "X4"
-	  case n.kind_of?(SimpleToken) && n.value || n.token_id
+	  case n.token_id
 	  when "|", ".", :COLON2
 puts "X5"
 	    next_pipeline = true if n == token
+	  when :LPARLEN_ARG
+puts "X6"
+	    next_simplecommand = true if n == token
 	  end
 	end
       end
+puts "X7"
       com
     end
 

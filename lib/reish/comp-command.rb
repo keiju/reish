@@ -27,19 +27,19 @@ module Reish
 	case com
 	when first_comm
 	  case com.name
-	  when IDToken
+	  when IDToken, TestToken
 	    name = com.name.value
 	    var = eval("local_variables | self.class.constants(true) | Object.constants", @bind).find{|v| v.to_s == name}
 	    if var
 	      receiver = eval(var.to_s, @bind)
 	    else
-	      arg = CompCommandCall.new(receiver,
+	      call = CompCommandCall.new(receiver,
 				       com.name,
 				       com.args,
 				       bind)
-	      receiver = arg.return_value
+	      receiver = call.return_value
 	    end
-	  when SpecialToken, ReservedWordToken, TestToken, PathToken
+	  when SpecialToken, ReservedWordToken, PathToken
 	    raise "not implemented for token: #{@name.inspect}"
 	  else
 	    raise "not implemented for token: #{@name.inspect}"
@@ -69,7 +69,7 @@ module Reish
     end
   end
 
-  class CompPipelineneArg
+  class CompPipelineArg
     def initialize(receiver, pipeline, last_arg, bind)
       @receiver = receiver
       @pipeline = pipeline
@@ -90,19 +90,20 @@ module Reish
       last_comm = @pipeline.commands.last
       
       @pipeline.commands.each do |com|
+puts "PIPE"
+p com
 	case com
 	when first_comm
 	  case com.name
 	  when IDToken
 	    name = com.name.value
-	    var = eval("local_variables | self.class.constants", @shell.exenv.binding).find{|v| v.to_s == name}
+	    var = eval("local_variables | self.class.constants(true)", @bind).find{|v| v.to_s == name}
 	    if var
-	      receiver = eval(var, @shell.exenv.binding)
+	      receiver = eval(var.to_s, @bind)
 	    else
 	      call = CompCommandCall.new(receiver,
 				       com.name,
 				       com.args,
-				       last_arg,
 				       bind)
 	      receiver = call.return_value
 	    end
@@ -118,17 +119,15 @@ module Reish
 				   com.args,
 				   last_arg,
 				   bind)
-	  candidates = arg.candidates
+	  return arg.candidates
 	else
 	  call = CompCommandCall.new(receiver,
 				   com.name,
 				   com.args,
-				   nil,
 				   bind)
 	  receiver = call.return_value
 	end
       end
-      candidates
     end
   end
 
