@@ -95,7 +95,7 @@ p com
 	case com
 	when first_comm
 	  case com.name
-	  when IDToken
+	  when IDToken, TestToken
 	    name = com.name.value
 	    var = eval("local_variables | self.class.constants(true)", @bind).find{|v| v.to_s == name}
 	    if var
@@ -107,7 +107,7 @@ p com
 				       bind)
 	      receiver = call.return_value
 	    end
-	  when SpecialToken, ReservedWordToken, TestToken, PathToken
+	  when SpecialToken, ReservedWordToken, PathToken
 	    raise "not implemented for token: #{@name.inspect}"
 	  else
 	    raise "not implemented for token: #{@name.inspect}"
