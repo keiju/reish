@@ -78,8 +78,10 @@ module Reish
     end
 
     def inspect
-      if Reish::INSPECT_LEBEL < 3
+      if Reish::INSPECT_LEBEL < 2
 	"#<#{inspect_tag}:#{@value.inspect}: l=#{@line_no}, c=#{@char_no}>"
+      elsif Reish::INSPECT_LEBEL < 3
+	"#<#{inspect_tag}:#{@value.inspect}: l=#{@line_no}, c=#{@char_no} space_seen=#{@space_seen}>"
       else
 	super
       end

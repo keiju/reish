@@ -1,19 +1,13 @@
 #
 #   completion.rb - 
-#   	$Release Version: $
-#   	$Revision: 1.1 $
-#   	$Date: 1997/08/08 00:57:08 $
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
-#
-# --
-#
-#   
 #
 require "pp"
 
 require "reish/path-finder"
 require "reish/compspec"
+require "reish/comp-command"
 
 module Reish
 
@@ -44,7 +38,7 @@ module Reish
     def candidate(str)
       if str == ""
 	puts "input: ''" if Reish::debug_cmpl?
-	return candidate_any_commands 
+	return candidate_commands 
       end
 
       im = StringInputMethod.new(str)
@@ -103,10 +97,13 @@ module Reish
 
       if @lex.space_seen
 	if @lex.lex_state?(Lex::EXPR_BEG | Lex::EXPR_DO_BEG)
-	  puts "IDENT CMPL: BEG" if Reish::debug_cmpl?
+	  puts "IDENT CMPL: BEG/SP" if Reish::debug_cmpl?
 	  puts "CANDIDATE: ANY COMMAND" if Reish::debug_cmpl?
 
-	  candidate_commands
+	  command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
+	  puts "CANDIDATE: ANY COMMAND OF: #{command.inspect}" if Reish::debug_cmpl?
+
+	  candidate_commands(command)
 
 	elsif @lex.lex_state?(Lex::EXPR_ARG | Lex::EXPR_END)
 	  puts "IDENT CMPL: ARG/END" if Reish::debug_cmpl?
@@ -128,22 +125,32 @@ module Reish
 	end
       else
 	case @lex.pretoken
-	when SimpleToken
+	when SimpleToken, ReservedWordToken
 	  case @lex.pretoken.token_id
 	  when :NL, '\\', :ASSOC, :XSTRING_END, :XSTRING_BEG,
 	      "(", :LBLACK_A, :LBLACK_I, :LBRACE_H, :LBRACE_I,
-	      "]", ")", "}", ":", :DOT_COMMAND, ".", ';', '&', :AND_AND, :OR_OR,
+	      "]", ")", "}", ":", :DOT_COMMAND, ';', '&', :AND_AND, :OR_OR,
 	      :LBLACK_A, :LBRACE_H, "$"
+
+	    puts "IDENT CMPL: BEG/NO_SP" if Reish::debug_cmpl?
 	    puts "CANDIDATE: ANY COMMAND" if Reish::debug_cmpl?
 	    candidate_commands
 
+	  when "=", :BANG, '|', :SYMBEG, :COLON2, ".", 
+	      *Lex::Redirection2ID.values
+	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})" if Reish::debug_cmpl?
+	    
+	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
+	    puts "CANDIDATE: ANY COMMAND OF: #{command.inspect}" if Reish::debug_cmpl?
+	    candidate_commands(command)
+
+#	    CompCommandArg.new(nil, @lex.pretoken, [], nil, @shell.exenv.binding).candidates
+	   
 	  when :LPARLEN_ARG
 	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
 	    puts "CANDINATE: ARGUMENT OF: #{command.inspect}" if Reish::debug_cmpl?
 	    candidate_argument_of(command)
 	      
-	  else
-	    # ここは来ないはず
 	    puts "CANDINATE: UNKNOWN"
 	    puts "LEX STATE: #{@lex.state_sym}"
 	    
@@ -154,15 +161,7 @@ module Reish
 	      ">=", "<=", "==", "<=>", "=~", "!~"
 	    puts "CANDIDATE: SPECIAL(#{@lex.pretoken.value})" if Reish::debug_cmpl?
 	    candidate_argument_of(path[-2])
-	    
-	  end
-	when ReservedWordToken
-	  case @lex.pretoken.token_id
-	  when "=", :BANG, '|', :SYMBEG, :COLON2, 
-	      *Lex::Redirection2ID.values
-	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})" if Reish::debug_cmpl?
-	    CompCommandArg.new(nil, @lex.pretoken, [], nil, @shell.exenv.binding).candidates
-	   
+
 	  when :MOD_IF, :MOD_UNLESS, :MOD_WHILE, :MOD_UNTIL, :MOD_RESCUE,
 	      *Lex::PseudoVars, *Lex::PreservedWord.values
 	    puts "CANDIDATE: RESERVE(#{@lex.pretoken.token_id})" if Reish::debug_cmpl?
@@ -180,11 +179,15 @@ module Reish
 	  puts "CANDIDATE: TEST(#{@lex.pretoken.value})" if Reish::debug_cmpl?
 	  
 	  sub = @lex.pretoken.value
-	  (class<<Test; p TestMap.keys; TestMap.keys; end).grep(/^#{sub}/).collect{|sub| "-"+sub}
+	  (class<<Test; TestMap.keys; end).grep(/^#{sub}/).collect{|sub| "-"+sub}
 
 	when IDToken
 	  puts "CANDIDATE: ID(#{@lex.pretoken.value})" if Reish::debug_cmpl?
-	  candidate_commands(@lex.pretoken.value)
+	  command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
+
+	  puts "COMMAND: #{command.inspect}"  if Reish::debug_cmpl?
+
+	  candidate_commands(command)
 
 	when PathToken
 	  puts "CANDIDATE: PATH(#{@lex.pretoken.value})" if Reish::debug_cmpl?
@@ -230,28 +233,62 @@ module Reish
 #      :PATH, 
 #      :TEST, 
 #      :SPECIAL,
-      Node::SimpleCommand
     ]
 
     def find_argumentable_element_in_path(token, path, input_unit)
+      com = nil
       for p in path.reverse
 	case p
 	when *ARGUMENTABLE_ELEMENT
-#puts "FAE PATH: #{p.inspect}"
+puts "FAE PATH: #{p.inspect}"
 	  return p
+	when Node::SimpleCommand
+	  com = p
+	when Node::PipelineCommand
+	  if com && p.commands.last == com
+	    return p
+	  end
 	end
       end
+      return com if com
 
-#puts "FAE: search in INPUT_UNIT: #{input_unit.inspect}"
+puts "FAE: search in INPUT_UNIT: #{input_unit.inspect}"
 
+      next_simplecommand = nil
+      next_pipeline = nil
       input_unit.flatten.reverse.each do |n|
 	case n
 	when *ARGUMENTABLE_ELEMENT
-#puts "FAE IU: #{n.inspect}"
+puts "FAE IU: #{n.inspect}"
 	  return n
+	when Node::SimpleCommand
+puts "X1"
+	  com = n
+p com
+	  return com if next_simplecommand
+	when Node::PipelineCommand
+puts "X2"
+	  if com && p.commands.last == com
+puts "X3"
+	    return n
+	  elsif  next_pipeline
+	    n.commands.push Node::VoidSimpleCommand()
+	    return n
+	  end
+	when SimpleToken, ReservedWordToken
+puts "X4"
+	  case n.token_id
+	  when "|", ".", :COLON2
+puts "X5"
+	    next_pipeline = true if n == token
+	  when :LPARLEN_ARG
+puts "X6"
+	    next_simplecommand = true if n == token
+	  end
 	end
       end
-      nil
+puts "X7"
+      com
     end
 
     def find_path(list, node)
@@ -301,12 +338,33 @@ module Reish
       "yield",
     ]
 
-    def candidate_commands(filter=nil)
-      candidates = eval("methods | private_methods | local_variables | self.class.constants", @shell.exenv.binding).collect{|m| m.to_s} | @shell.all_commands
-      if filter
-	candidates.grep(/^#{filter}/)
-      else
+    def candidate_commands(command = nil)
+      case command
+      when nil
+	candidates = eval("methods | private_methods | local_variables | self.class.constants | Object.constants", @shell.exenv.binding).collect{|m| m.to_s} | @shell.all_commands
 	candidates
+	
+      when Node::PipelineCommand
+	if command.commands.size == 1
+	  candidate_commands(command.commands[0])
+	else
+	  call = CompPipelineCall.new(@shell.exenv.main,
+				      command,
+				      @shell.exenv.binding)
+	  call.candidates
+	end
+
+      when Node::SimpleCommand
+	candidates = eval("methods | private_methods | local_variables | self.class.constants(true) | Object.constants", @shell.exenv.binding).collect{|m| m.to_s} | @shell.all_commands
+puts "XXXXXXXXXX"
+puts candidates
+	filter = command&.name&.value
+puts filter	
+	if filter
+	  candidates.grep(/^#{filter}/)
+	else
+	  candidates
+	end
       end
     end
 
@@ -324,8 +382,18 @@ module Reish
     # top level command call
     def candidate_argument_of(command, last_arg = nil)
       case command
+      when Node::PipelineCommand
+	if command.commands.size == 1
+	  candidate_argument_of(command.commands[0], last_arg)
+	else
+	  arg = CompPipelineArg.new(@shell.exenv.main,
+				    command,
+				    last_arg,
+				    @shell.exenv.binding)
+	  arg.candidates
+	end
+	
       when Node::SimpleCommand
-
 	arg = CompCommandArg.new(@shell.exenv.main,
 				 command.name,
 				 command.args,
@@ -338,206 +406,11 @@ module Reish
 	raise "not implemented for command: #{command.inspect}"
       end
     end
-
-      
-    CompletionProc2 = proc{ |input|
-      shell = Reish::current_shell
-      
-      puts "input: #{input}"
-
-      case input
-      when /^(\/[^\/]*\/)\.([^.]*)$/
-	# Regexp
-puts "R"
-	receiver = $1
-	message = Regexp.quote($2)
-
-	candidates = Regexp.instance_methods(true).collect{|m| m.to_s}
-	select_message(receiver, message, candidates)
-
-      when /^([^\]]*\])\.([^.]*)$/
-	# Array
-puts "A"
-	receiver = $1
-	message = Regexp.quote($2)
-
-	candidates = Array.instance_methods(true).collect{|m| m.to_s}
-	select_message(receiver, message, candidates)
-
-      when /^([^\}]*\})\.([^.]*)$/
-	# Proc or Hash
-puts "PH"
-	receiver = $1
-	message = Regexp.quote($2)
-
-	candidates = (Proc.instance_methods(true) | Hash.instance_methods(true)).collect{|m| m.to_s}
-	select_message(receiver, message, candidates)
-	
-      when /^(:[^:.]*)$/
- 	# Symbol
-puts "S"
-	if Symbol.respond_to?(:all_symbols)
-	  sym = $1
-	  candidates = Symbol.all_symbols.collect{|s| ":" + s.id2name}
-	  candidates.grep(/^#{sym}/)
-	else
-	  []
-	end
-
-      when /^::([A-Z][^:\.\(]*)$/
-	# Absolute Constant or class methods
-puts "AC/CM"
-	receiver = $1
-	candidates = Object.constants.collect{|v| v.to_s}
-	candidates.grep(/^#{receiver}/).collect{|e| "::" + e}
-
-#      when /^(((::)?[A-Z][^:.\(]*)+)::?([^:.]*)$/
-#      when /^[A-Z][^:.\(]*(::[A-Z][^:.\(]*)+$/
-      when /^([A-Z].*)::([^:.]+)*$/
-	# Constant or class methods
-puts "C/CM"
-	receiver = $1
-	if $2
-	  message = Regexp.quote($2)
-	else
-	  message = ""
-	end
-	
-	begin
-	  candidates = eval("#{receiver}.constants | #{receiver}.methods", bind).collect{|m| m.to_s}
-	rescue Exception
-	  candidates = []
-	end
-	candidates.grep(/^#{message}/).collect{|e| receiver + "::" + e}
-
-      when /^(:[^:.]+)\.([^.]*)$/
-	# Symbol
-puts "S2"
-	receiver = $1
-	message = Regexp.quote($2)
-
-	candidates = Symbol.instance_methods(true).collect{|m| m.to_s}
-	select_message(receiver, message, candidates)
-      #when /^([0-9_]+(\.[0-9_]+)?(e[0-9]+)?)\.([^.]*)$/
-
-      when /^(-?(0[dbo])?[0-9_]+(\.[0-9_]+)?([eE]-?[0-9]+)?)\.([^.]*)$/
-	# Numeric
-puts "N"
-	receiver = $1
-	message = Regexp.quote($5)
-
-	begin
-	  candidates = eval(receiver, bind).methods.collect{|m| m.to_s}
-	rescue Exception
-	  candidates = []
-	end
-	select_message(receiver, message, candidates)
-
-      when /^(-?0x[0-9a-fA-F_]+)\.([^.]*)$/
-	# Numeric(0xFFFF)
-puts "N2"
-	receiver = $1
-	message = Regexp.quote($2)
-
-	begin
-	  candidates = eval(receiver, bind).methods.collect{|m| m.to_s}
-	rescue Exception
-	  candidates = []
-	end
-	select_message(receiver, message, candidates)
-
-      when /^(\$[^.]*)$/
-puts "G"
-	candidates = global_variables.grep(Regexp.new(Regexp.quote($1)))
-
-#      when /^(\$?(\.?[^.]+)+)\.([^.]*)$/
-#      when /^((\.?[^.]+)+)\.([^.]*)$/
-      when /^([^."].*)\.([^.]*)$/
-	# variable
-puts "V"
-	receiver = $1
-	if $2
-	  message = Regexp.quote($2)
-	else
-	  message = ""
-	end
-
-	p receiver
-	p message
-
-	gv = eval("global_variables", bind).collect{|m| m.to_s}
-	lv = eval("local_variables", bind).collect{|m| m.to_s}
-	cv = eval("self.class.constants", bind).collect{|m| m.to_s}
-	
-	if (gv | lv | cv).include?(receiver)
-	  # foo.func and foo is local var.
-	  candidates = eval("#{receiver}.methods", bind).collect{|m| m.to_s}
-	elsif /^[A-Z]/ =~ receiver and /\./ !~ receiver
-	  # Foo::Bar.func
-	  begin
-	    candidates = eval("#{receiver}.methods", bind).collect{|m| m.to_s}
-	  rescue Exception
-	    candidates = []
-	  end
-	else
-	  # func1.func2
-	  candidates = []
-	  ObjectSpace.each_object(Module){|m|
-	    begin
-	      name = m.name
-	    rescue Exception
-	      name = ""
-	    end
-	    next if name != "IRB::Context" and 
-	      /^(IRB|SLex|RubyLex|RubyToken)/ =~ name
-	    candidates.concat m.instance_methods(false).collect{|x| x.to_s}
-	  }
-	  candidates.sort!
-	  candidates.uniq!
-	end
-	select_message(receiver, message, candidates)
-
-      when /^\.([^.]*)$/
-	# unknown(maybe String)
-puts "U"
-
-	receiver = ""
-	message = Regexp.quote($1)
-
-p message
-
-	candidates = String.instance_methods(true).collect{|m| m.to_s}
-	select_message(receiver, message, candidates)
-
-      else
-puts "E"
-	candidates = eval("methods | private_methods | local_variables | self.class.constants", bind).collect{|m| m.to_s}
-			  
-	(candidates|ReservedWords).grep(/^#{Regexp.quote(input)}/)
-      end
-    }
-
-    Operators = ["%", "&", "*", "**", "+",  "-",  "/",
-      "<", "<<", "<=", "<=>", "==", "===", "=~", ">", ">=", ">>",
-      "[]", "[]=", "^",]
-
-    def self.select_message(receiver, message, candidates)
-      candidates.grep(/^#{message}/).collect do |e|
-	case e
-	when /^[a-zA-Z_]/
-	  receiver + "." + e
-	when /^[0-9]/
-	when *Operators
-	  #receiver + " " + e
-	end
-      end
-    end
   end
-
 end
 
 if Readline.respond_to?("basic_word_break_characters=")
-  Readline.basic_word_break_characters= " \t\n\"\\'`><=;|&{("
+  Readline.basic_word_break_characters= " \t\n\"\\'`><=;|&{(.:$"
 end
 Readline.completion_append_character = nil
 #Readline.completion_proc = Reish::Completor.new(Reish::current_shell).completion_proc

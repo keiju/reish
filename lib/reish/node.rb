@@ -840,6 +840,17 @@ module Reish
       def_accept
     end
 
+    class VoidSimpleCommand<SimpleCommand
+      def_constructor
+
+      def initialize
+	@name = nil
+	@args = []
+	@block = nil
+	@pipeout = nil
+      end
+    end
+
     class DoBlock<Node
       def_constructor
 

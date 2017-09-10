@@ -1,3 +1,10 @@
+#
+#   compspec.rb - 
+#   	Copyright (C) 1996-2010 Keiju ISHITSUKA
+#				(Penta Advanced Labrabries, Co.,Ltd)
+
+require "reish/comp-module-spec"
+
 module Reish
 
   def Reish::CompSpec(receiver, name)
@@ -10,7 +17,7 @@ module Reish
     M2Spec = {}
 
     def CompSpec.def_command(name, spec)
-      N2Spec[n] = spec
+      N2Spec[name] = spec
     end
 
     def CompSpec.def_method(klass, name, spec)
@@ -18,18 +25,51 @@ module Reish
     end
 
     def CompSpec.spec(receiver, name)
+puts "CS#0"
+p receiver
+p name
       unless  /^\// =~ name
-	for cls in receiver.class.ancestors
-	  spec = M2Spec[[cls, name]]
-	  if spec
-	    puts "Match CompSpec for #{cls}##{name} spec: #{spec.inspect}"
-	    return spec
+	case receiver
+	when ModuleSpec, DescendantSpec
+puts "CS#1"
+
+	  mod = receiver.module
+p mod
+	  spec = nil
+	  mod.ancestors.find{|m| spec = M2Spec[[m, name]]}
+p spec
+	  if !spec && receiver.respond_to?(name)
+	    spec = DefaultRubyMethodCS
 	  end
+	  return spec if spec
+	when CompositeSpec
+puts "CS#2"
+	  specs = Set.new
+	  receiver.modules.each do |mod|
+	    spec = nil
+	    mod.ancestors.find{|m| spec = M2Spec[[m, name]]}
+	    if !spec && receiver.respond_to?(name)
+	      spec = DefaultRubyMethodCS
+	    end
+	    specs<<spec
+	  end
+	  return specs
+	else
+puts "CS#3"
+	  for mod in receiver.class.ancestors
+	    spec = M2Spec[[mod, name]]
+	    if spec
+	      puts "Match CompSpec for #{mod}##{name} spec: #{spec.inspect}"
+	      return spec
+	    end
+	  end
+	  return DefaultRubyMethodCS if receiver.respond_to?(name)
 	end
-	return RubyMethodCS if receiver.respond_to?(name)
       end
       spec = N2Spec[name]
-      rerurn spec if spec
+puts "CS#4"
+      return spec if spec
+puts "CS#5"
       DefaultSystemCommandCS
     end
 
@@ -49,7 +89,7 @@ module Reish
 
     def return_value(call)
       return @ret_proc.call call if @ret_proc
-      Object
+      Reish::DescendantSpec(Object)
     end
 
     def objects(call, filer=nil)
@@ -70,11 +110,12 @@ module Reish
 	pwd = Dir.pwd
       end
 
-      arg = nil
       if filter
 	arg = filter
       elsif call.last_arg
 	arg = call.last_arg.value
+      else
+	arg = nil
       end
 
       if arg
@@ -89,14 +130,32 @@ module Reish
       proc{|call| files(call)}
     end
 
+    def options(call, filter=nil, sopt = nil, lopts = [])
+
+# short opt も補完候補にする場合
+#      opts = sopt.split(//).collect{|c| "-" + c}
+#      opts.concat lopts
+
+      if filter && filter == "-" || call.last_arg && call.last_arg.value == "-"
+# short opy を表示のみする場合(表示はいまいち)
+#	puts "","-"+sopt
+	return ["-"]
+      end
+      filter(lopts, call, filter)
+    end
+
     def commands(call, filter=nil)
       exenv = eval("@exenv", call.bind)
       shell = exenv.shell
       filter shell.all_commands, call, filter
     end
 
-    def commands_arg_proc
+    def command_arg_proc
       proc{|call| commands(call)}
+    end
+    
+    def command_ret_proc
+      proc{|call| Reish::ModuleSpec(Enumerator::Lazy)}
     end
 
     def symbols(call, filter=nil)
@@ -108,69 +167,59 @@ module Reish
     end
 
     def filter(candidates, call, filter=nil)
-      arg = nil
+
       if filter
-	if filter == true
-	  arg = call.last_arg
-	else
-	  arg = filter
-	end
+	arg = filter
+      elsif call.last_arg
+	arg = call.last_arg.value
+      else 
+	arg = nil
       end
 
       if arg
-	candidates.select{|c| c[0..arg.size] == arg}
+	candidates.select{|c| c[0..arg.size-1] == arg}
       else
 	candidates
       end
     end
   end
-  
-  class CompCommandArg
-    def initialize(receiver, name, args, last_arg, bind)
-      @receiver = receiver
-      @name = name
-      @args = args
-      @last_arg = last_arg
-      @bind = bind
+
+  class CompositeCompSpec
+    def initialize
+      @specs = Set.new
     end
 
-    attr_reader :bind
-    attr_reader :receiver
-    attr_reader :compspec
-    attr_reader :args
-    attr_reader :last_arg
-
-    def candidates
-      case @name
-      when IDToken
-	n = @name.value
-      when SpecialToken
-	n = "Special#"+@name.value
-
-      when ReservedWordToken
-	n = "RESERVED#"+@name.token_id.to_s
-
-      when TestToken
-	n = "TEST#"+@name.token_id.to_s
-
-      else
-	raise "not implemented for token: #{@name.inspect}"
-      end
-      spec = Reish::CompSpec(@receiver, n)
-      spec.arg_candidates(self)
+    def <<(spec)
+      @specs<<spec
     end
-  end
 
-  class CompCommandCall
+    def return_value
+      @specs.inject{|ret, spec| ret |= spec.return_value}
+    end
   end
 
   DefaultRubyMethodCS = CompSpec.new
   DefaultRubyMethodCS.arg_proc = DefaultRubyMethodCS.objects_arg_proc
-  DefaultRubyMethodCS.ret_proc = proc{|call| Object}
+  DefaultRubyMethodCS.ret_proc = proc{|call| DescendantSpec(Object)}
+
+  DefaultNewCS = CompSpec.new
+  DefaultNewCS.arg_proc = DefaultRubyMethodCS.objects_arg_proc
+  DefaultNewCS.ret_proc = proc{|call| 
+    rec = call.receiver
+    case rec
+    when Class
+      ModuleSpec(rec)
+    when ModuleSpec, DescendantSpec, CompositeSpec
+      rec
+    else
+      raise "not implemented for: #{rec.inspect}"
+    end
+  }
+  CompSpec.def_method(Class, "new", DefaultNewCS)
 
   DefaultSystemCommandCS = CompSpec.new
   DefaultSystemCommandCS.arg_proc = DefaultSystemCommandCS.files_arg_proc
-  DefaultSystemCommandCS.ret_proc = proc{|call| SystemCommand}
+  DefaultSystemCommandCS.ret_proc = proc{|call| ModuleSpec(SystemCommand)}
 
   CompSpec.def_method Object, "Special#|", DefaultRubyMethodCS
   CompSpec.def_method Object, "Special#&", DefaultRubyMethodCS
@@ -190,7 +239,7 @@ module Reish
   CompSpec.def_method Object, "RESERVED#=", DefaultSystemCommandCS
 
   command_arg_cs = CompSpec.new
-  command_arg_cs.arg_proc = command_arg_cs.commands_arg_proc
+  command_arg_cs.arg_proc = command_arg_cs.command_arg_proc
   command_arg_cs.ret_proc = proc{|call| Object}
   CompSpec.def_method Object, "RESERVED#BANG", command_arg_cs
   CompSpec.def_method Object, "RESERVED#|", command_arg_cs
@@ -221,6 +270,49 @@ module Reish
     CompSpec.def_method Object, "TEST#"+sub, DefaultSystemCommandCS
   end
   #例外: -owner? fn user 
+
+  cs_grep = CompSpec.new
+  cs_grep.arg_proc = cs_grep.objects_arg_proc
+  cs_grep.ret_proc = proc{|call| call.args.size == 0 ? ModuleSpec(Enumerator) : ModuleSpec(Array)}
+  CompSpec.def_method(Enumerable, "grep", cs_grep)
+
+  cs_lzgrep = cs_grep.clone
+  cs_lzgrep.ret_proc = proc{|call| Enumerator::Lazy}
+  CompSpec.def_method(Enumerator::Lazy, "grep", cs_lzgrep)
+
+  # ls補完のサンプル
+  cs_ls = CompSpec.new
+  cs_ls.arg_proc = proc{|call|
+    if call.last_arg
+      case call.last_arg.value
+      when /^-/
+	cs_ls.options(call, nil, "aAbBcCdDfFgGgGikILmnNopqQrRsStTuUvwxXZ1", 
+		      ["--all", "--almost-all", "--author", "--escape", "--block-size", "--ignore-backups", "--color", "--directory", "--dired", "--classify", "--file-type", "--format=WORD", "--full-time", "--group-directories-first", "--no-group", "--human-readable", "--dereference-command-line", "--dereference-command-line-symlink-to-dir", "--hide", "--indicator-style", "--inode", "--ignore", "--kibibytes", "--dereference", "--numeric-uid-gid", "--literal", "--indicator-style", "--hide-control-chars", "--show-control-chars", "--quote-name", "--quoting-style", "--reverse", "--recursive", "--size", "--sort", "--time", "--time-style", "--tabsize", "--width", "--context", "--help", "--version"])
+      else
+	cs_ls.files(call)
+      end
+    else
+      cs_ls.files(call)
+    end
+  }
+  cs_ls.ret_proc = cs_ls.command_ret_proc
+  CompSpec.def_command "ls", cs_ls
+
+  cs_grep = CompSpec.new
+  cs_grep.arg_proc = proc{|call|
+    if call.last_arg
+      case call.last_arg.value
+      when /^-/
+	cs_grep.options(call, nil, "",
+			["--extended-regexp", "--fixed-strings", "--basic-regexp", "--perl-regexp", "--regexp", "--file", "--ignore-case", "--word-regexp", "--line-regexp", "--null-data", "--no-messages", "--invert-match", "--version", "--help", "--max-count=NUM", "--byte-offset", "--line-number", "--line-buffered", "--with-filename", "--no-filename", "--label=LABEL", "--only-matching", "--quiet", "--silent", "--binary-files", "--text", "--directories", "--devices", "--recursive", "--dereference-recursive", "--include", "--exclude", "--exclude-from", "--exclude-dir", "--files-without-match", "--files-with-matches", "--count", "--initial-tab", "--null", "--before-context", "--after-context", "--context", "--color", "--colour", "--binary", "--unix-byte-offsets"])
+      else
+	cs_grep.files(call)
+      end
+    else
+      cs_grep.files(call)
+    end
+  }
+  CompSpec.def_command "/grep", cs_grep
 
 end
 
