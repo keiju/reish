@@ -7,7 +7,7 @@
 require "io/console"
 
 module Reish
-  module Editor
+  class Reidline
     class KeyHandler
       
       def initialize(&block)

@@ -8,7 +8,7 @@ require "observer"
 require 'forwardable'
 module Reish
 
-  module Editor
+  class Reidline
     class Buffer
       extend Forwardable
 

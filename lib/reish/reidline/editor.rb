@@ -10,7 +10,7 @@ require "reish/reidline/key-handler"
 
 module Reish
 
-  module Editor
+  class Reidline
     class Editor
 
       def initialize(buffer = nil)
@@ -41,7 +41,7 @@ module Reish
       attr_reader :c_row
       attr_reader :c_col
 
-      def set_buffer(buffer)
+      def set_buffer(buffer = nil)
 	unless buffer
 	  buffer = Buffer.new
 	end
@@ -53,11 +53,12 @@ module Reish
 	@view.change_buffer
       end
 
-      def start
+      def gets
 	@exit = false
 	until @exit
 	  @handler.dispatch(STDIN)
 	end
+	@buffer.contents
       end
 
       def update_cursor
@@ -148,6 +149,7 @@ module Reish
 	@c_col = 0
 	cursor_down
 	update_cursor
+	@exit = true
       end
 
       def ctl_c(*args)

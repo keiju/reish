@@ -12,7 +12,7 @@ require "terminfo"
 require "reish/reidline/ti"
 
 module Reish
-  module Editor
+  class Reidline
     class TermView
       include TI
 

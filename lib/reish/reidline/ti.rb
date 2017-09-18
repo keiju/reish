@@ -8,7 +8,7 @@ require "io/console"
 require "terminfo"
 
 module Reish
-  module Editor
+  class Reidline
     module TI
 
       def ti_winsize
