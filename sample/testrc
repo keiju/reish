@@ -10,5 +10,8 @@ Reish.conf[:VERBOSE] = true
 #Reish.debug_function_on
 Reish.debug_cmpl_on
 Reish.debug_cmpl_yy_on
+Reish.debug_yy_on
+Reish.debug_lex_state_on
+
 
 #Reish::INSPECT_LEBEL = 2

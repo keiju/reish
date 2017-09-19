@@ -32,6 +32,8 @@
 ** ワイルドカード 文字列"..."の中でワイルドカードが使えない.
 ** 空文(;;)が不可
 ** 引数で $func.exe は? 今は, $func.exe()
+** if command[cr]then ができない
+   -> 他の問題が発生するのでとりあえず削除
 
 * code generation
 ** # command | if ... をもっとちゃんと対応したい(instance_evalを使わなく

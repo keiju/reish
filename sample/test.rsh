@@ -210,6 +210,10 @@ else
   echo "IF4"
 end
 
+if true
+  ls -l
+end
+
 echo "WHILE"
 ary=%[1 2 3]
 while e = $ary.shift

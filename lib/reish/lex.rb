@@ -744,6 +744,9 @@ module Reish
       @OP.def_rule("-", proc{|op, io| lex_state?(EXPR_BEG_ANY)}) do
 	|op, io|
 
+p "X"
+print_lex_state
+
 	if /\s/ =~ io.peek(0)
 	  self.lex_state = EXPR_ARG
 	  SpecialToken.new(self, op)
