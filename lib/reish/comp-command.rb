@@ -90,8 +90,8 @@ module Reish
       last_comm = @pipeline.commands.last
       
       @pipeline.commands.each do |com|
-puts "PIPE"
-p com
+#puts "PIPE"
+#p com
 	case com
 	when first_comm
 	  case com.name
@@ -101,12 +101,12 @@ p com
 	    if var
 	      receiver = eval(var.to_s, @bind)
 	    else
-puts "CALL"
+#puts "CALL"
 	      call = CompCommandCall.new(receiver,
 					 com.name,
 					 com.args,
 					 bind)
-p call
+#p call
 	      receiver = call.return_value
 	    end
 	  when SpecialToken, ReservedWordToken, PathToken
