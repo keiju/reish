@@ -158,8 +158,9 @@ module Reish
 	tictl("rin")
       end
 
-	
-
+      def ti_clear
+	tictl("clear")
+      end
     end
   end
 end

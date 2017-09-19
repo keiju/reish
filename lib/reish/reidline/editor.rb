@@ -33,6 +33,7 @@ module Reish
 #	  ["\t", method(:key_tab)],
 	  ["\r", method(:key_cr)],
 	  ["\u0003", method(:ctl_c)],
+	  ["\C-l", method(:clear)],
 	]
 	@handler.def_default method(:insert)
       end
@@ -59,6 +60,11 @@ module Reish
 	  @handler.dispatch(STDIN)
 	end
 	@buffer.contents
+      end
+
+      def message(str)
+	@view.message(str)
+	update_cursor
       end
 
       def update_cursor
@@ -158,6 +164,13 @@ module Reish
 	normalize_cursor
 	cursor_end_of_buffer
 	Process.kill :INT, $$
+      end
+
+      def clear(*args)
+	@c_raw = 0
+	@c_col = 0
+	@view.clear_display
+	update_cursor
       end
 
       def insert(io, chr)

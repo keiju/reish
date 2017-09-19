@@ -43,6 +43,17 @@ module Reish
 	
 	@ORG_H, dummy = ti_cursor_pos
 
+	redisplay
+
+      end
+
+      def clear_display
+	ti_clear
+	@ORG_H = 0
+	redisplay
+      end
+
+      def redisplay
 	@cache = []
 	@buffer.each do |line|
 	  @cache.push slice_width(line)
@@ -62,8 +73,8 @@ module Reish
 	if @ORG_H + text_height > @term_height
 	  @ORG_H = @term_height - text_height
 	end
-
       end
+
 
       def slice_width(str, width = @term_width)
 	str = str.dup
@@ -130,10 +141,15 @@ module Reish
       end
 
       def insert_line
-	if @ORG_H + text_height + @message_h < @term_height
+	if @ORG_H + text_height < @term_height
+#p "A"
+#p @ORG_H, text_height,  @message_h, @term_height
+	  ti_down
 	  ti_insert_line
 	else
+#p "B"
 	  ti_scroll_up
+#	  ti_up
 	  ti_insert_line
 	  @ORG_H -= 1
 	end
@@ -275,12 +291,12 @@ module Reish
 	  @cache.insert(row+1, [""])
 	  #insert_line; 
 	  ti_line_beg; 
-	  ti_down
+#	  ti_down
+	  insert_line
 	  ti_clear_eol; ti_up
 	  insert_string_sub(row+1, 0, sub)
 	end
       end
-
 
       def update(id, *args)
 	updater = "update_#{id.id2name}"
@@ -289,6 +305,21 @@ module Reish
 	else
 	  raise ArgumentError, "Unregistered id: #{id}"
 	end
+      end
+
+      def message(str)
+	ti_cursor_position(@ORG_H+text_height+1, 0)
+
+	lines = slice_width(str)
+	lines.each_index do |no|
+	  puts lines[no]
+	end
+	@message_h = lines.size + 1
+	
+	if @ORG_H + text_height + @message_h > @term_height
+	  @ORG_H = @term_height - text_height - @message_h
+	end
+
       end
     end
   end

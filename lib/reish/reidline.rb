@@ -9,8 +9,8 @@ require "reish/reidline/editor"
 module Reish
   class Reidline
     def initialize
-      @editor = Editor.new
-      @multi_line_mode = false
+#      @editor = Editor.new
+#      @multi_line_mode = false
 
       @call_backs = {}
 
@@ -44,6 +44,8 @@ module Reish
     end
 
     def gets
+      @editor = Editor.new
+      @multi_line_mode = false
       begin
 	line = @editor.gets
       rescue Interrupt
@@ -62,6 +64,9 @@ module Reish
       @completion_proc = block
     end
 
+    def message(str)
+      @editor.message(str)
+    end
 
     # call_caks:
     #   enter_mutiline_edit

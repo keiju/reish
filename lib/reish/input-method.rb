@@ -313,11 +313,16 @@ module Reish
 	  end
 	  
 	  @completion_checker = Thread.start{
+	    r = nil
 	    begin
 	      @parser.do_parse
+	      r = true
 	    rescue
-	      @queue.clear
+	      @reidline.message($!.message)
+#	      @queue.clear
+	      r = false
 	    end
+	    r
 	  }
 
 
@@ -325,7 +330,9 @@ module Reish
 	  until @queue.empty?
 	    sleep 0.01
 	  end
-	  ret = !@completion_checker.alive?
+	  if !@completion_checker.alive?
+	    ret = @completion_checker.value
+	  end
 # 	begin
 # 	  @completion_checker.value
 # 	rescue 
@@ -375,7 +382,7 @@ module Reish
 	  l
 	end
       rescue Interrupt
-	completion_cheker_reset
+#	completion_cheker_reset
 	raise
       end
     end
