@@ -46,6 +46,7 @@ module Reish
     def gets
       @editor = Editor.new
       @multi_line_mode = false
+      @editor.set_cmpl_proc(&@cmpl_proc)
       begin
 	line = @editor.gets
       rescue Interrupt
@@ -73,6 +74,10 @@ module Reish
     #   
     def call_back(event, &plock)
       @call_backs[event] = block
+    end
+
+    def set_cmpl_proc(&block)
+      @cmpl_proc = block
     end
 
   end

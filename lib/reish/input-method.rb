@@ -273,7 +273,9 @@ module Reish
       @line = []
       @eof = false
 
-      #	@completable = true
+      @completable = true
+
+      @completor = nil
 
       #        @stdin = IO.open(STDIN.to_i, :external_encoding => Reish.conf[:LOCALE].encoding, :internal_encoding => "-")
       #        @stdout = IO.open(STDOUT.to_i, 'w', :external_encoding => Reish.conf[:LOCALE].encoding, :internal_encoding => "-")
@@ -346,6 +348,8 @@ module Reish
 	ret
       end
     end
+
+    attr_accessor :completor
 
 #     def reset_completion_checker
 #       @rcc += 1
@@ -425,6 +429,7 @@ module Reish
       STDIN
     end
 
+    def_delegator :@reidline, :set_cmpl_proc
   end
 
 end

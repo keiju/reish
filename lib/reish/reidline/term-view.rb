@@ -308,19 +308,32 @@ module Reish
       end
 
       def message(str)
+	message_clear
 	ti_cursor_position(@ORG_H+text_height+1, 0)
 
-	lines = slice_width(str)
-	lines.each_index do |no|
-	  puts lines[no]
+	lines = str.split(/\n/)
+
+	h = 1
+	lines.each do |line|
+	  ll = slice_width(line)
+	  ll.each do |l|
+	      puts l
+	      h += 1
+	  end
 	end
-	@message_h = lines.size + 1
+	@message_h = h + 1
 	
 	if @ORG_H + text_height + @message_h > @term_height
 	  @ORG_H = @term_height - text_height - @message_h
 	end
-
       end
+
+      def message_clear
+	ti_cursor_position(@ORG_H+text_height+1, 0)
+	@message_h.times{ti_delete_line}
+	@message_h = 0
+      end
+
     end
   end
 end

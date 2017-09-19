@@ -30,7 +30,7 @@ module Reish
 	  ["\e[B", method(:cursor_down)],
 	  ["\e[D", method(:cursor_left)],
 	  ["\u007F", method(:key_bs)],
-#	  ["\t", method(:key_tab)],
+	  ["\t", method(:key_tab)],
 	  ["\r", method(:key_cr)],
 	  ["\u0003", method(:ctl_c)],
 	  ["\C-l", method(:clear)],
@@ -52,6 +52,10 @@ module Reish
 	@c_col = @buffer.last.size
 
 	@view.change_buffer
+      end
+
+      def set_cmpl_proc(&block)
+	@cmpl_proc = block
       end
 
       def gets
@@ -150,6 +154,7 @@ module Reish
       end
 
       def key_cr(*args)
+	@view.message_clear
 	normalize_cursor
 	@buffer.insert_cr(@c_row, @c_col)
 	@c_col = 0
@@ -178,6 +183,10 @@ module Reish
 	@buffer.insert(@c_row, @c_col, chr)
 	@c_col += chr.size
 	update_cursor
+      end
+
+      def key_tab(*args)
+	message @cmpl_proc.call(@buffer.contents).join("\n")
       end
     end
   end

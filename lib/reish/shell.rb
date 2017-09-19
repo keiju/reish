@@ -53,6 +53,7 @@ module Reish
 #    attr_reader :thread
     attr_reader :exenv
 
+    attr_reader :io
     attr_reader :lex
     attr_reader :job_controller
     attr_reader :codegen

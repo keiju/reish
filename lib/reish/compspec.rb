@@ -25,25 +25,17 @@ module Reish
     end
 
     def CompSpec.spec(receiver, name)
-puts "CS#0"
-p receiver
-p name
       unless  /^\// =~ name
 	case receiver
 	when ModuleSpec, DescendantSpec
-puts "CS#1"
-
 	  mod = receiver.module
-p mod
 	  spec = nil
 	  mod.ancestors.find{|m| spec = M2Spec[[m, name]]}
-p spec
 	  if !spec && receiver.respond_to?(name)
 	    spec = DefaultRubyMethodCS
 	  end
 	  return spec if spec
 	when CompositeSpec
-puts "CS#2"
 	  specs = Set.new
 	  receiver.modules.each do |mod|
 	    spec = nil
@@ -55,7 +47,6 @@ puts "CS#2"
 	  end
 	  return specs
 	else
-puts "CS#3"
 	  for mod in receiver.class.ancestors
 	    spec = M2Spec[[mod, name]]
 	    if spec
@@ -67,9 +58,7 @@ puts "CS#3"
 	end
       end
       spec = N2Spec[name]
-puts "CS#4"
       return spec if spec
-puts "CS#5"
       DefaultSystemCommandCS
     end
 
