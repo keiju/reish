@@ -186,20 +186,39 @@ module Reish
       end
 
       def key_tab(*args)
-	message @cmpl_proc.call(@buffer.contents).join("\n")
+	candidates = @cmpl_proc.call(@buffer.contents)
+	return if candidates.nil? || candidates.empty?
+
+	if candidates.size > 1
+	  message candidates.join("\n")
+	else
+	  word = candidates.first
+	  idx = -1
+	  while idx = @buffer[@c_row].rindex(word[0], idx)
+	    sublen = @buffer[@c_row].size - idx
+	    if @buffer[@c_row][idx..-1] == word[0, sublen]
+#	      sublen.times{@buffer.delete(@c_row, idx)}
+	      sublen.times{key_bs}
+	      @buffer.insert(@c_row, idx, word)
+	      @c_col += word.size
+	      update_cursor
+	      break
+	    else
+	      idx -= 1
+	    end
+	  end
+	end
       end
     end
   end
 end
-
-if $0 == __FILE__
 
 def ttyput(*args)
   str = args.collect{|arg| arg.inspect}.join("\n")
   system("echo '#{str}' > /dev/pts/0")
 end
 
-
+if $0 == __FILE__
 
   editor = Reish::Editor::Editor.new
 #  puts "START"
