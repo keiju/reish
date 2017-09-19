@@ -249,6 +249,18 @@ module Reish
     end
   end
 
+  class QueueInputMethod < InputMethod
+    def initialize(que)
+      super
+      @queue = que
+    end
+
+    def gets
+      @queue.shift
+    end
+  end
+    
+
   class ReidlineInputMethod < InputMethod
     extend Forwardable
 
@@ -269,42 +281,79 @@ module Reish
       #	@completor = nil
       #        Readline.completion_proc = nil
 
-      @lex = Lex.new
-      @parser = Parser.new(@lex)
-      @parser.cmpl_mode = true
+#      @lex = Lex.new
+#      @parser = Parser.new(@lex)
+#      @queue = Queue.new
+#      im = QueueInputMethod.new(@queue)
+#      @lex.initialize_input
+#      @lex.set_input(im) do
+# 	if l = im.gets
+# #	    print l  if Reish::debug_cmpl?
+# 	  else
+# #	    print "\n" if Reish::debug_cmpl?
+# 	  end
+# 	  l
+#    end
 
       @reidline.set_completion_proc do |line|
-	line.chomp!
-	im = StringInputMethod.new(line)
-
-	@lex.initialize_input
-	@lex.set_input(im) do
-	  if l = im.gets
-#	    print l  if Reish::debug_cmpl?
-	  else
-#	    print "\n" if Reish::debug_cmpl?
-	  end
-	  l
-	end
-
 	ret = nil
-	begin 
-	  input_unit = [@parser.yyparse(@lex, :racc_token_cmpl)]
-#	  puts "PARSE COMPLETED"  if Reish::debug_reid?
-	  
-	  ret = true
-	rescue ParserComplSupp
-	  if Reish::debug_cmpl?
-	    puts "PARSE IMCOMLETED" 
-	    require "pp"
-	    puts "TEST_CMPL:"
-	    pp @parser.cmpl_mode
+	begin
+	  @lex = Lex.new
+	  @parser = Parser.new(@lex)
+	  @queue = Queue.new
+	  im = QueueInputMethod.new(@queue)
+	  @lex.initialize_input
+	  @lex.set_input(im) do
+	    if l = im.gets
+#	    print l  if Reish::debug_cmpl?
+	    else
+#	    print "\n" if Reish::debug_cmpl?
+	    end
+	    l
 	  end
-	  ret = false
+	  
+	  @completion_checker = Thread.start{
+	    begin
+	      @parser.do_parse
+	    rescue
+	      @queue.clear
+	    end
+	  }
+
+
+	  @queue.push line
+	  until @queue.empty?
+	    sleep 0.01
+	  end
+	  ret = !@completion_checker.alive?
+# 	begin
+# 	  @completion_checker.value
+# 	rescue 
+	  
+# 	end
+	  ret
+	ensure
+	  @completion_checker.kill
+#	  reset_completion_checker
 	end
 	ret
       end
     end
+
+#     def reset_completion_checker
+#       @rcc += 1
+#       @completion_checker.kill
+#       @completion_checker = Thread.start{
+# begin
+# 	@queue.clear
+# 	@lex.initialize_input
+# 	@parser.do_parse
+# ensure
+# 	@queue.clear
+# p "OUT#{@rcc}"
+# end
+#       }
+#     end
 
     #      attr_accessor :completor
 
@@ -317,12 +366,17 @@ module Reish
 
       #	Readline.completion_proc = @completor.completion_proc if @completor
 
-      if l = @reidline.gets
-	#          HISTORY.push(l) if !l.empty?
-	@line[@line_no += 1] = l + "\n"
-      else
-	@eof = true
-	l
+      begin
+	if l = @reidline.gets
+	  #          HISTORY.push(l) if !l.empty?
+	  @line[@line_no += 1] = l + "\n"
+	else
+	  @eof = true
+	  l
+	end
+      rescue Interrupt
+	completion_cheker_reset
+	raise
       end
     end
 

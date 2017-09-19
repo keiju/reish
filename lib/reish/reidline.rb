@@ -49,6 +49,10 @@ module Reish
       rescue Interrupt
 	input_complete
 	raise
+      rescue
+	puts "reidline abort!!"
+	input_complete
+	raise
       end until @completion_proc.call(line)
       input_complete
       line
