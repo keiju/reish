@@ -157,8 +157,7 @@ module Reish
       def ctl_c(*args)
 	normalize_cursor
 	cursor_end_of_buffer
-	puts ""
-	@exit = true
+	Process.kill :INT, $$
       end
 
       def insert(io, chr)

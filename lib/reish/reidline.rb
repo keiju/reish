@@ -46,6 +46,9 @@ module Reish
     def gets
       begin
 	line = @editor.gets
+      rescue Interrupt
+	input_complete
+	raise
       end until @completion_proc.call(line)
       input_complete
       line
