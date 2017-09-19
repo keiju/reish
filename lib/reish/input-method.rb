@@ -4,6 +4,8 @@
 #   	Copyright (C) 2014-2017 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
+require "forwardable"
+
 require 'reish/src_encoding'
 require 'reish/magic-file'
 
@@ -248,9 +250,12 @@ module Reish
   end
 
   class ReidlineInputMethod < InputMethod
+    extend Forwardable
+
     # Creates a new input method object using Readline
     def initialize
       @reidline = Reidline.new
+      @reidline.multi_line_mode = true
 
       @line_no = 0
       @line = []
@@ -263,6 +268,42 @@ module Reish
 
       #	@completor = nil
       #        Readline.completion_proc = nil
+
+      @lex = Lex.new
+      @parser = Parser.new(@lex)
+      @parser.cmpl_mode = true
+
+      @reidline.set_completion_proc do |line|
+	line.chomp!
+	im = StringInputMethod.new(line)
+
+	@lex.initialize_input
+	@lex.set_input(im) do
+	  if l = im.gets
+#	    print l  if Reish::debug_cmpl?
+	  else
+#	    print "\n" if Reish::debug_cmpl?
+	  end
+	  l
+	end
+
+	ret = nil
+	begin 
+	  input_unit = [@parser.yyparse(@lex, :racc_token_cmpl)]
+#	  puts "PARSE COMPLETED"  if Reish::debug_reid?
+	  
+	  ret = true
+	rescue ParserComplSupp
+	  if Reish::debug_cmpl?
+	    puts "PARSE IMCOMLETED" 
+	    require "pp"
+	    puts "TEST_CMPL:"
+	    pp @parser.cmpl_mode
+	  end
+	  ret = false
+	end
+	ret
+      end
     end
 
     #      attr_accessor :completor
@@ -322,6 +363,7 @@ module Reish
     def real_io
       STDIN
     end
+
   end
 
 end

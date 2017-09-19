@@ -149,7 +149,9 @@ module Reish
 	@c_col = 0
 	cursor_down
 	update_cursor
-	@exit = true
+	if @c_row == @buffer.size - 1
+	  @exit = true
+	end
       end
 
       def ctl_c(*args)

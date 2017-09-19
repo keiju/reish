@@ -10,14 +10,27 @@ module Reish
   class Reidline
     def initialize
       @editor = Editor.new
+      @multi_line_mode = false
+
+      @call_backs = {}
 
       @history = []
 
       @auto_history = false
-      @continue = false
+
+      @multi_line_edit = false
+      @continue = true
+
+      @completion_proc = nil
     end
 
+    attr_accessor :multi_line_mode
+    alias multi_line_mode? multi_line_mode
+
     attr_reader :history
+
+    attr_reader :multi_line_edit
+    alias multi_line_edit? multi_line_edit
 
     attr_accessor :auto_history
     alias auto_history? auto_history
@@ -25,16 +38,32 @@ module Reish
     attr_accessor :continue
     alias continue? continue
 
+    def input_complete
+      @history.push @editor.buffer if auto_history?
+      @editor.set_buffer
+    end
+
     def gets
-      unless continue?
-	@history.push @editor.buffer if auto_history?
-	@editor.set_buffer
-      end
-
-      @editor.gets
+      begin
+	line = @editor.gets
+      end until @completion_proc.call(line)
+      input_complete
+      line
     end
 
+    def set_completion_proc(&block)
+      @completion_proc = block
     end
+
+
+    # call_caks:
+    #   enter_mutiline_edit
+    #   
+    def call_back(event, &plock)
+      @call_backs[event] = block
+    end
+
+  end
 end
 
 
