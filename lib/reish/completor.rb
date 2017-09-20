@@ -248,7 +248,7 @@ module Reish
       for p in path.reverse
 	case p
 	when *ARGUMENTABLE_ELEMENT
-puts "FAE PATH: #{p.inspect}"
+#puts "FAE PATH: #{p.inspect}"
 	  return p
 	when Node::SimpleCommand
 	  com = p
@@ -260,42 +260,42 @@ puts "FAE PATH: #{p.inspect}"
       end
       return com if com
 
-puts "FAE: search in INPUT_UNIT: #{input_unit.inspect}"
+#puts "FAE: search in INPUT_UNIT: #{input_unit.inspect}"
 
       next_simplecommand = nil
       next_pipeline = nil
       input_unit.flatten.reverse.each do |n|
 	case n
 	when *ARGUMENTABLE_ELEMENT
-puts "FAE IU: #{n.inspect}"
+#puts "FAE IU: #{n.inspect}"
 	  return n
 	when Node::SimpleCommand
-puts "X1"
+#puts "X1"
 	  com = n
-p com
+#p com
 	  return com if next_simplecommand
 	when Node::PipelineCommand
-puts "X2"
+#puts "X2"
 	  if com && p.commands.last == com
-puts "X3"
+#puts "X3"
 	    return n
 	  elsif  next_pipeline
 	    n.commands.push Node::VoidSimpleCommand()
 	    return n
 	  end
 	when SimpleToken, ReservedWordToken
-puts "X4"
+#puts "X4"
 	  case n.token_id
 	  when "|", ".", :COLON2
-puts "X5"
+#puts "X5"
 	    next_pipeline = true if n == token
 	  when :LPARLEN_ARG
-puts "X6"
+#puts "X6"
 	    next_simplecommand = true if n == token
 	  end
 	end
       end
-puts "X7"
+#puts "X7"
       com
     end
 
@@ -364,10 +364,10 @@ puts "X7"
 
       when Node::SimpleCommand
 	candidates = eval("methods | private_methods | local_variables | self.class.constants(true) | Object.constants", @shell.exenv.binding).collect{|m| m.to_s} | @shell.all_commands
-puts "XXXXXXXXXX"
-puts candidates
+#puts "XXXXXXXXXX"
+#puts candidates
 	filter = command&.name&.value
-puts filter	
+#puts filter	
 	if filter
 	  candidates.grep(/^#{filter}/)
 	else

@@ -388,7 +388,7 @@ module Reish
 
       commands.sort!.uniq!
       commands
-      []
+#      []
     end
 
     def send_with_redirection(receiver, method, args, reds, &block)
