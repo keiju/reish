@@ -192,7 +192,7 @@ module Reish
   class CompositeSpec
     #spec1とspec2はお互いに素
     def initialize(spec1, spec2)
-      @specs = Set.new(spec1, spec2)
+      @specs = Set.new [spec1, spec2]
     end
 
     attr_reader :specs
@@ -259,7 +259,7 @@ module Reish
 	  specs_n = nil
 	  @specs.each do |spec|
 	    if spec.superset?(other)
-	      specs_n = Set.new(@specs) unless specs_n
+	      specs_n = Set.new @specs unless specs_n
 	      specs_n.delete(spec)
 	      specs_n << other
 	    end
@@ -290,7 +290,7 @@ module Reish
     def instance_methods
       methods = Set.new
       @specs.each do |spec|
-	mehotds.merge spec.instance_methods
+	methods.merge spec.instance_methods
       end
       methods
     end
