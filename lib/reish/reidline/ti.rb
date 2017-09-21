@@ -16,37 +16,37 @@ module Reish
 #      [tictl("li"), tictl("cols")]
       end
 
-      # VT100 only!!
-      def ti_cursor_pos
-#puts "CP IN"
-	STDIN.noecho do
-	  STDOUT.write "\e[6n"
-	  pos = []
-	  tmp = ""
-	  while c = STDIN.getch
-#puts "I"
-	    case c
-	    when /[0-9]/
-	      tmp.concat c
-	    when "R", ";"
-	      pos.push tmp.to_i - 1
-	      tmp = ""
-	      break if c == "R"
-	    end
-	  end
-#puts "CP OUT"
-#puts pos
-	  return *pos
-	end
-      end
+#       # VT100 only!!
+#       def ti_cursor_pos
+# #puts "CP IN"
+# 	STDIN.noecho do
+# 	  STDOUT.write "\e[6n"
+# 	  pos = []
+# 	  tmp = ""
+# 	  while c = STDIN.getch
+# #puts "I"
+# 	    case c
+# 	    when /[0-9]/
+# 	      tmp.concat c
+# 	    when "R", ";"
+# 	      pos.push tmp.to_i - 1
+# 	      tmp = ""
+# 	      break if c == "R"
+# 	    end
+# 	  end
+# #puts "CP OUT"
+# #puts pos
+# 	  return *pos
+# 	end
+#       end
 
       def tictl(*args)
 	TermInfo.control(*args)
       end
 
-      def ti_cursor_position(row, col)
-	tictl("cup", row, col)
-      end
+#      def ti_cursor_position(row, col)
+#	tictl("cup", row, col)
+#      end
      
       def ti_up(c = 1)
 	if c == 1
@@ -106,10 +106,11 @@ module Reish
       def ti_save_position(&block)
 	tictl("sc")
 	if block
+	  restore = true
 	  begin
-	    block.call
+	    restore = block.call
 	  ensure
-	    tictl("rc")
+	    tictl("rc") if restore
 	  end
 	end
       end
@@ -126,9 +127,9 @@ module Reish
 	end
       end
 
-      def ti_insert_line
-	tictl("il1")
-      end
+#      def ti_insert_line
+#	tictl("il1")
+#      end
 
       def ti_delete_line
 	tictl("dl")
@@ -150,13 +151,13 @@ module Reish
 	tictl("dch")
       end
 
-      def ti_scroll_up
-	tictl("indn")
-      end
+#      def ti_scroll_up
+#	tictl("indn")
+#      end
 
-      def ti_scroll_down
-	tictl("rin")
-      end
+#      def ti_scroll_down
+#	tictl("rin")
+#      end
 
       def ti_clear
 	tictl("clear")
