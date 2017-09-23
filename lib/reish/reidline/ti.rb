@@ -58,7 +58,9 @@ module Reish
 
       def ti_down(c = 1)
 	if c == 1
-	  tictl("cud1")
+# terminfo記述ミス?
+#	  tictl("cud1", c)
+	  tictl("cud", c)
 	else
 	  tictl("cud", c)
 	end
@@ -74,11 +76,12 @@ module Reish
       alias ti_forw ti_right
 
       def ti_left(c = 1)
-	if c == 1
-	  tictl("cub1")
-	else
-	  tictl("cub", c)
-	end
+ 	if c == 1
+ 	  tictl("cub1")
+ 	else
+# 	  tictl("cub", c)
+	  c.times{tictl("cub1")}
+ 	end
       end
       alias ti_back ti_left
 
@@ -92,10 +95,14 @@ module Reish
 
       def ti_hmove(c)
 	if c > 0
-	  ti_forw(c)
+	  ti_right(c)
 	elsif c < 0
-	  ti_back(-c)
+	  ti_left(-c)
 	end
+      end
+
+      def ti_hpos(c)
+	tictl("hpa", c)
       end
 
       def ti_move(h, w)

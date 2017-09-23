@@ -9,10 +9,24 @@ require "io/console"
 module Reish
   class Reidline
     class KeyHandler
+
+      class UnboundKey<StandardError
+	def initialize(op)
+	  super
+	  @op = op
+	end
+
+	attr_reader :op
+
+	def message
+	  "#{op.inspect} not dedined."
+	end
+
+      end
       
       def initialize(&block)
-	@head = Node.new
-	@handler = block
+	@head = Node.new(root: true)
+	@default = block
       end
 
       def def_key(key, method_id = nil, &block)
@@ -42,7 +56,7 @@ module Reish
 	  block = method_id
 	end
 
-	@handler = block
+	@default = block
       end
       
       def dispatch(io)
@@ -57,7 +71,7 @@ module Reish
 	when Node
 	  node.handler.call(io, node.key)
 	else
-	  @handler.call(io, node.join)
+	  @default.call(io, node.join)
 	end
       end
       
@@ -66,7 +80,9 @@ module Reish
 #    end
 
       class Node
-	def initialize(key = nil, &block)
+	def initialize(key = nil, root: false, &block)
+	  @root = root
+
 	  @key = key
 	  @nodes = {}
 	  @handler = block
@@ -74,6 +90,10 @@ module Reish
 
 	attr_reader :key
 	attr_reader :handler
+
+	def root?
+	  @root
+	end
 
 	def leaf?
 	  @nodes.empty?
@@ -114,6 +134,10 @@ module Reish
 	      node.match(io, op)
 	    end
 	  else
+	    unless root? && /[[:print:]]/ =~ op.join
+	      exc = UnboundKey.new(op.join)
+	      raise exc
+	    end
 	    op
 	  end
 	end
