@@ -73,11 +73,11 @@ module Reish
 	@cmpl_proc = block
       end
 
-      def reset_cursor_position
-	@c_row = @buffer.size - 1
-	@c_col = @buffer.last.size
-	return @c_row, @c_col
-      end
+#      def sync_cursor_position
+#	@c_row = @buffer.size - 1
+#	@c_col = @buffer.last.size
+#	return @c_row, @c_col
+#      end
 
       def gets
 	@exit = false

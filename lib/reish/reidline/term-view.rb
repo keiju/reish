@@ -35,8 +35,7 @@ module Reish
       def reset_cursor_position
 	@t_row = text_height - 1
 	@t_col = @cache.last.last.size
-
-	@controller.reset_cursor_position
+	cursor_reposition
       end
 
       def text_height
@@ -64,22 +63,30 @@ module Reish
       end
 
       def redisplay(from: 0, cache_update: false)
+#ttyput "redisplay:0"
 	if cache_update
 	  @cache = []
 	  @buffer.each do |line|
 	    @cache.push slice_width(line)
 	  end
 	end
+#ttyput "redisplay:1"
 
 	i = 0
 	line_last = @cache.last.last
 	@cache.each do |lines|
+#ttyput "redisplay:2"
 	  lines.each do |line|
-	    next if from > i
+#ttyput "redisplay:3"
+	    i += 1
+	    next if from >= i
+#ttyput "redisplay:4"
 
 	    if line.equal?(line_last)
+#ttyput "redisplay:5"
 	      print line
 	    else
+#ttyput "redisplay:6"
 	      puts line 
 	    end
 	  end
@@ -288,8 +295,12 @@ module Reish
       def update_insert_line(row)
 	t_row, t_col = term_pos(row, @buffer[row].size)
 	cursor_move(t_row, t_col)
+#ttyput "update_insert_line"
+#ttyput row, t_row, t_col
 	@cache.insert(row+1, [""])
+#ttyput @cache
 	print "\n"
+	ti_clear_eol
 	redisplay(from: row+1)
       end
 
