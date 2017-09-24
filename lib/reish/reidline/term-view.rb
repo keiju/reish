@@ -63,31 +63,23 @@ module Reish
       end
 
       def redisplay(from: 0, cache_update: false)
-#ttyput "redisplay:0"
 	if cache_update
 	  @cache = []
 	  @buffer.each do |line|
 	    @cache.push slice_width(line)
 	  end
 	end
-#ttyput "redisplay:1"
 
 	i = 0
 	line_last = @cache.last.last
 	@cache.each do |lines|
-#ttyput "redisplay:2"
 	  lines.each do |line|
-#ttyput "redisplay:3"
 	    i += 1
 	    next if from >= i
-#ttyput "redisplay:4"
 
-	    if line.equal?(line_last)
-#ttyput "redisplay:5"
-	      print line
-	    else
-#ttyput "redisplay:6"
-	      puts line 
+	    print_eol line
+	    if !line.equal?(line_last)
+	      print "\n"
 	    end
 	  end
 	end
@@ -120,6 +112,18 @@ module Reish
 	  i += 1
 	end
 	return i, col
+      end
+
+      def cache_col2t_row(row, sub_row)
+	i = 0
+	line_last = @cache[row][sub_row]
+	@cache.each do |lines|
+	  lines.each do |line|
+	    return i if line.equal?(line_last)
+	    i += 1
+	  end
+	end
+	return i
       end
 
       def term_pos(row, col)
@@ -213,7 +217,7 @@ module Reish
 	end
       end
 
-      def insert_string_sub(row, col, str)
+      def insert_string_sub(row, col, str, redisplay: false)
 #ttyput "ISS:0"
 	insert_line_row = nil
 
@@ -224,7 +228,12 @@ module Reish
 	ti_ins_mode do
 	  sub_row, sub_col = cache_col(row, col)
 	  @cache[row][sub_row].insert(sub_col, str)
-	  print str
+	  
+	  if redisplay
+	    insert_line_row = [row, sub_row]
+	  else
+	    print str
+	  end
 	  until @cache[row][sub_row].bytesize <= @term_width
 	    split = slice_width(@cache[row][sub_row])
 	    @cache[row][sub_row] = split.shift
@@ -254,18 +263,16 @@ module Reish
 	      insert_line_row = row, sub_row
 	    end
 	  end
-	  redisplay(from: insert_line_row) if insert_line_row
+	  redisplay(from: cache_col2t_row(*insert_line_row)) if insert_line_row
 	end
 	insert_line_row
       end
 
       def update_delete(row, col)
-#ttyput row, col
 	ti_save_position do
 	  t_row, t_col = term_pos(row, col)
 
 	  cursor_move(t_row, t_col)
-#ttyput t_row, t_col
 	  sub_row, sub_col = cache_col(row, col)
 	  @cache[row][sub_row].slice!(col, 1)
 	  ti_del
@@ -295,10 +302,7 @@ module Reish
       def update_insert_line(row)
 	t_row, t_col = term_pos(row, @buffer[row].size)
 	cursor_move(t_row, t_col)
-#ttyput "update_insert_line"
-#ttyput row, t_row, t_col
 	@cache.insert(row+1, [""])
-#ttyput @cache
 	print "\n"
 	ti_clear_eol
 	redisplay(from: row+1)
@@ -326,11 +330,8 @@ module Reish
 	  sub.concat @cache[row].slice!(sub_row+1..-1).join
 	end
 	@cache.insert(row+1, [""])
-	cursor_down
-	tictl("il1")
-#	ti_ins_mode{print "\n"}
-	insert_string_sub(row+1, 0, sub)
-	redisplay(from: row)
+#	print_eol "\n"
+	insert_string_sub(row+1, 0, sub, redisplay: true)
       end
 
       def update(id, *args)
@@ -408,6 +409,12 @@ module Reish
 #ttyput "MCS:", text_height, @message_h, b_row, b_col
 	reset_cursor_position
       end
+
+      def print_eol(str)
+	print str
+	ti_clear_eol
+      end
+      
     end
   end
 end
