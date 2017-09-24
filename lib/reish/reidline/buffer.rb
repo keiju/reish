@@ -76,10 +76,11 @@ module Reish
 	@buffer.slice!(row)
 
 	changed
-	notify_observers(:delete_line, row)
-	changed
+	notify_observers(:join_line, row-1, col, len)
+#	notify_observers(:delete_line, row)
+#	changed
 #ttyput "INSERT", row-1, col
-	notify_observers(:insert, row-1, col, len)
+#	notify_observers(:insert, row-1, col, len)
       end
     end
   end

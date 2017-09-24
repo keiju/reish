@@ -194,6 +194,7 @@ module Reish
 	  @buffer.join_line(@c_row)
 	  @c_row -= 1
 	  @c_col = c_col
+	  cursor_reposition
 	else
 	  cursor_left
 	  cursor_reposition

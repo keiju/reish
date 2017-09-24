@@ -168,7 +168,7 @@ module Reish
 	w = t_col - @t_col
 	@t_row = t_row
 	@t_col = t_col
-#ttyput h, w
+ttyput h, w
 	ti_move(h, w)
       end
 
@@ -179,6 +179,17 @@ module Reish
 	@t_row = t_row
 	@t_col = t_col
 	ti_move(dh, dw)
+      end
+
+      def cursor_save_position(&block)
+	b_row = @t_row
+	b_col = @t_col
+	begin
+	  ti_save_position &block
+	ensure
+	  @t_row = b_row
+	  @t_col = b_col
+	end
       end
 
       def cursor_up(c=1)
@@ -212,7 +223,8 @@ module Reish
       end
 
       def update_insert(row, col, len)
-	ti_save_position do
+#	ti_save_position do
+	cursor_save_position do
 	  !insert_string_sub(row, col, @buffer[row][col, len])
 	end
       end
@@ -269,17 +281,18 @@ module Reish
       end
 
       def update_delete(row, col)
-	ti_save_position do
-	  t_row, t_col = term_pos(row, col)
+	t_row, t_col = term_pos(row, col)
 
-	  cursor_move(t_row, t_col)
-	  sub_row, sub_col = cache_col(row, col)
-	  @cache[row][sub_row].slice!(col, 1)
-	  ti_del
+	cursor_move(t_row, t_col)
+	sub_row, sub_col = cache_col(row, col)
+	@cache[row][sub_row].slice!(col, 1)
+	ti_del
+	
 
-	  until @cache[row][sub_row+1].nil? 
-	    if @cache[row][sub_row].bytesize + @cache[row][sub_row+1][0].bytesize <= @term_width
-	      cursor_col(@cache[row][sub_row].bytesize)
+	until @cache[row][sub_row+1].nil? 
+	  if @cache[row][sub_row].bytesize + @cache[row][sub_row+1][0].bytesize <= @term_width
+	    cursor_col(@cache[row][sub_row].bytesize)
+	    cursor_save_positon do
 	      ti_ins_mode do
 		print @cache[row][sub_row+1][0]
 		@cache[row][sub_row].concat @cache[row][sub_row+1].slice!(0,1)
@@ -293,9 +306,9 @@ module Reish
 	      end
 	    end
 	  end
-	  if @cache[row].empty? && @cache.size > 0
-	    @cache.slice!(row)
-	  end
+	end
+	if @cache[row].empty? && @cache.size > 0
+	  @cache.slice!(row)
 	end
       end
 
@@ -309,7 +322,7 @@ module Reish
       end
 
       def update_delete_line(row)
-	ti_save_position do
+	cursor_save_position do
 	  t_row, t_col = term_pos(row, 0)
 	  cursor_move(t_row, t_col)
 	  n = @cache[t_row].size
@@ -332,6 +345,13 @@ module Reish
 	@cache.insert(row+1, [""])
 #	print_eol "\n"
 	insert_string_sub(row+1, 0, sub, redisplay: true)
+      end
+
+      def update_join_line(row, col, len)
+	update_delete_line(row+1)
+	cursor_save_position do
+	  update_insert(row, col, len)
+	end
       end
 
       def update(id, *args)
