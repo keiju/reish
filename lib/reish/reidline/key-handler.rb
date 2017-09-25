@@ -19,9 +19,21 @@ module Reish
 	attr_reader :op
 
 	def message
-	  "#{op.inspect} not dedined."
+#	  s = op.gsub(/[\x00-\x1A]/){|s| '\C-'+(s.codepoints.first+0x60).chr}
+	  s = op.each_char.collect{|c|
+	    case c
+	    when "\e"
+	      '\e-'
+	    when /[\x00-\x1f]/
+	      '\C-' + (c.ord+0x60).chr
+	    when /[\u007f-\u00ff]/
+	      '\M-'+(c.ord & 0x7f).chr
+	    else
+	      c
+	    end
+	  }.join
+	  "#{s} not dedined."
 	end
-
       end
       
       def initialize(&block)
@@ -134,7 +146,7 @@ module Reish
 	      node.match(io, op)
 	    end
 	  else
-	    unless root? && /[[:print:]]/ =~ op.join
+	    unless root? && /[[:print:]]/ =~ op.join && /[\u0080-\u00ff]/ !~ op.join
 	      exc = UnboundKey.new(op.join)
 	      raise exc
 	    end
