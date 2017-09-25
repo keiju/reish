@@ -45,6 +45,7 @@ module Reish
 	  ["\C-i", method(:key_tab)],
 	  ["\C-l", method(:clear)],
 	  ["\C-n", method(:cursor_down)],
+	  ["\C-o", method(:open_line)],
 	  ["\C-p", method(:cursor_up)],
 	  ["\C-m", method(:key_cr)],
 
@@ -213,6 +214,11 @@ module Reish
 	if @c_row == @buffer.size - 1
 	  @exit = true
 	end
+      end
+
+      def open_line(*args)
+	key_cr
+	cursor_left
       end
 
       def ctl_c(*args)
