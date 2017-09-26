@@ -21,7 +21,7 @@ module Reish
       @multi_line_edit = false
       @continue = true
 
-      @completion_proc = nil
+      @closed_proc = nil
     end
 
     attr_accessor :multi_line_mode
@@ -38,7 +38,7 @@ module Reish
     attr_accessor :continue
     alias continue? continue
 
-    def input_complete
+    def input_closed
       @history.push @editor.buffer if auto_history?
       @editor.set_buffer
     end
@@ -50,19 +50,19 @@ module Reish
       begin
 	line = @editor.gets
       rescue Interrupt
-	input_complete
+	input_closed
 	raise
       rescue
 	puts "reidline abort!!"
-	input_complete
+	input_closed
 	raise
-      end until @completion_proc.call(line)
-      input_complete
+      end until @closed_proc.call(line)
+      input_closed
       line
     end
 
-    def set_completion_proc(&block)
-      @completion_proc = block
+    def set_closed_proc(&block)
+      @closed_proc = block
     end
 
     def message(str)
