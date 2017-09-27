@@ -45,9 +45,9 @@ module Reish
 
       def delete(row, col)
 	@buffer[row].slice!(col, 1)
-	if @buffer[row].size == 0 && @buffer.size > 1
-	  @buffer.slice!(row)
-	end
+#	if @buffer[row].size == 0 && @buffer.size > 1
+#	  @buffer.slice!(row)
+#	end
 	changed
 	notify_observers(:delete, row, col)
       end
