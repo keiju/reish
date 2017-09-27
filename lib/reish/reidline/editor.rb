@@ -43,6 +43,7 @@ module Reish
 	  ["\C-e", method(:cursor_end_of_line)],
 	  ["\C-f", method(:cursor_right)],
 	  ["\C-i", method(:key_tab)],
+	  ["\C-k", method(:kill_line)],
 	  ["\C-l", method(:clear)],
 	  ["\C-n", method(:cursor_down)],
 	  ["\C-o", method(:open_line)],
@@ -219,6 +220,10 @@ module Reish
       def open_line(*args)
 	key_cr
 	cursor_left
+      end
+
+      def kill_line(*args)
+	@buffer.kill_line(@c_row, @c_col)
       end
 
       def ctl_c(*args)

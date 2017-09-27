@@ -354,6 +354,19 @@ module Reish
 	end
       end
 
+      def update_delete_eol(row, col)
+	t_row, t_col = term_pos(row, col)
+
+	cursor_move(t_row, t_col)
+	
+	sub_row, sub_col = cache_col(row, col)
+	sub = @cache[row][sub_row].slice!(sub_col .. -1)
+	ti_clear_eol
+	if sub_row < @cache[row].size
+	  @cache[row].slice!(sub_row+1..-1)
+	end
+      end
+
       def update(id, *args)
 	updater = "update_#{id.id2name}"
 	if respond_to?(updater)

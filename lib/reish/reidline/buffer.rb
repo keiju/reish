@@ -82,6 +82,18 @@ module Reish
 #ttyput "INSERT", row-1, col
 #	notify_observers(:insert, row-1, col, len)
       end
+
+      def kill_line(row, col)
+	if @buffer[row] == ""
+	  @buffer.slice!(row, 1)
+	  changed
+	  notify_observers(:delete_line, row)
+	else
+	  @buffer[row].slice!(col..-1)
+	  changed
+	  notify_observers(:delete_eol, row, col)
+	end
+      end
     end
   end
 end
