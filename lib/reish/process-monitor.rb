@@ -106,6 +106,7 @@ module Reish
 
 	loop do
 	  @monitor_queue.pop
+	  puts "ProcessMonitor: event arrived" if Reish::debug_jobctl?
 	  
 	  begin
 	    loop do

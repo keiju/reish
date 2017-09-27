@@ -1016,12 +1016,14 @@ end
   def initialize(lex)
     @yydebug = nil
     @cmpl_mode = nil
+    @input_closed = nil
 
     @lex = lex
   end
 
   attr_accessor :yydebug
   attr_accessor :cmpl_mode
+  attr_accessor :input_closed
 
   def next_token
     @lex.racc_token
@@ -1042,12 +1044,19 @@ end
 	puts "VAULE_STACK: \n#{value_stack.pretty_inspect}"
 #      puts "_VAULES: \n#{self.pretty_inspect}"
 #      yyerrok
-
       end
-      super unless @cmpl_mode
-
-      @cmpl_mode = value_stack
-      Reish::Fail ParserComplSupp
+      
+      case
+      when @cmpl_mode
+	@cmpl_mode = value_stack
+	Reish::Fail ParserComplSupp
+      when @input_closed && token.kind_of?(EOFToken)
+	Reish::Fail ParserClosingEOFSupp
+#      when @input_closed
+#	Reish::Fail ParserClosingSupp
+      else
+	super
+      end
     end
 
   def yyerror(token, msg)

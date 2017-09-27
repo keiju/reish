@@ -534,6 +534,8 @@ module Reish
       trap(:TTOU, :IGNORE)
 
       trap(:SIGCHLD) do
+	puts "caught SIGCHLD" if Reish::debug_jobctl?
+
 	@process_monitor.accept_sigchild
       end
     end

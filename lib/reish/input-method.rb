@@ -261,7 +261,7 @@ module Reish
   end
     
 
-  class ReidlineInputMethod_OLD < InputMethod
+  class ReidlineInputMethod < InputMethod
     extend Forwardable
 
     # Creates a new input method object using Readline
@@ -434,7 +434,7 @@ module Reish
     def_delegator :@reidline, :set_cmpl_proc
   end
 
-  class ReidlineInputMethod < InputMethod
+  class ReidlineInputMethod2 < InputMethod
     extend Forwardable
 
     # Creates a new input method object using Readline
@@ -458,90 +458,60 @@ module Reish
       #	@completor = nil
       #        Readline.completion_proc = nil
 
-#      @lex = Lex.new
-#      @parser = Parser.new(@lex)
-#      @queue = Queue.new
-#      im = QueueInputMethod.new(@queue)
-#      @lex.initialize_input
-#      @lex.set_input(im) do
-# 	if l = im.gets
-# #	    print l  if Reish::debug_cmpl?
-# 	  else
-# #	    print "\n" if Reish::debug_cmpl?
-# 	  end
-# 	  l
-#    end
+      @lex = Lex.new
+      @parser = Parser.new(@lex)
+      @parser.input_closed = true
+      @in_queue = Queue.new
+      @out_queue = Queue.new
+      @im = QueueInputMethod.new(@in_queue)
+      @lex.set_input(@im){@im.gets}
+      @closing_checker = Thread.start{
+	loop do 
+	  begin
+	    @in_queue.clear
+	    @lex.initialize_input
+ttyput "P.IN"
+	    @parser.do_parse
+ttyput "P.OUT"
+	    @out_queue.push true
+
+	  rescue ParserClosingSupp, ParserClosingEOFSupp
+ttyput "P.1"
+	    @out_queue.push false
+
+	  rescue
+ttyput "P.2"
+	    @reidline.message($!.message)
+	    @out_queue.push false
+	  ensure
+ttyput "P.E"
+	  end
+	end
+      }
 
       @reidline.set_closed_proc do |line|
 	ret = nil
+ttyput "CP.0"
 	begin
-	  @lex = Lex.new
-	  @parser = Parser.new(@lex)
-	  @queue = Queue.new
-	  im = QueueInputMethod.new(@queue)
-	  @lex.initialize_input
-	  @lex.set_input(im) do
-	    if l = im.gets
-#	    print l  if Reish::debug_cmpl?
-	    else
-#	    print "\n" if Reish::debug_cmpl?
-	    end
-	    l
+ttyput "CP.1"
+	  @in_queue.push line
+	  until @in_queue.empty?
+	    sleep 0.02
 	  end
-	  
-	  @closing_checker = Thread.start{
-	    r = nil
-	    begin
-	      @parser.do_parse
-	      r = true
-	    rescue
-	      @reidline.message($!.message)
-#	      @queue.clear
-	      r = false
-	    end
-	    r
-	  }
-
-
-	  @queue.push line
-	  until @queue.empty?
-	    sleep 0.01
-	  end
-	  if !@closing_checker.alive?
-	    ret = @closing_checker.value
-	  end
-# 	begin
-# 	  @completion_checker.value
-# 	rescue 
-	  
-# 	end
-	  ret
+	  @in_queue.push nil
+#	  @closing_checker.raise ParserClosingSupp
+ttyput "CP.2"
+	  ret = @out_queue.pop
+ttyput "CP.3"
+	  @in_queue.clear
+	  @out_queue.clear
 	ensure
-	  @closing_checker.kill
-#	  reset_completion_checker
 	end
 	ret
       end
     end
 
     attr_accessor :completor
-
-#     def reset_completion_checker
-#       @rcc += 1
-#       @completion_checker.kill
-#       @completion_checker = Thread.start{
-# begin
-# 	@queue.clear
-# 	@lex.initialize_input
-# 	@parser.do_parse
-# ensure
-# 	@queue.clear
-# p "OUT#{@rcc}"
-# end
-#       }
-#     end
-
-    #      attr_accessor :completor
 
     # Reads the next line from this input method.
     #

@@ -168,7 +168,7 @@ module Reish
 	w = t_col - @t_col
 	@t_row = t_row
 	@t_col = t_col
-ttyput h, w
+#ttyput h, w
 	ti_move(h, w)
       end
 
@@ -418,16 +418,18 @@ ttyput h, w
 	b_row = @t_row
 	b_col = @t_col
 
-	t_row, t_col = term_pos(text_height - 1, @buffer[text_height - 1].size - 1)
+	t_row, t_col = term_pos(text_height - 1, @cache[text_height - 1].size - 1)
 	cursor_move(t_row, t_col)
 	print "\n"
 	
 	block.call
 	
-	cursor_up(text_height+@message_h-b_row)
-	cursor_col(b_col)
+	ti_up(text_height+@message_h-b_row)
+	ti_hpos(b_col)
+	@t_row = b_row
+	@t_col = b_col
 #ttyput "MCS:", text_height, @message_h, b_row, b_col
-	reset_cursor_position
+#	reset_cursor_position
       end
 
       def print_eol(str)

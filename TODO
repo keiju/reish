@@ -49,6 +49,7 @@
 * jobctl
 **  TTOUTの処理は必要ない?
 ** fg/bgでのjobの選択アルゴリズム
+** Process.spawn, IO.popenからの独立
 
 * コンプレーション機能
 ** 完全なCompSystemCommand - パイプライン, リダイレクションの処理
