@@ -44,27 +44,27 @@ module Reish
     end
 
     def gets
-ttyput "G.0"
+#ttyput "G.0"
       @editor = Editor.new
       @multi_line_mode = false
       @editor.set_cmpl_proc(&@cmpl_proc)
       begin
-ttyput "G.1"
+#ttyput "G.1"
 	line = @editor.gets
-ttyput "G.2"
+#ttyput "G.2"
       rescue Interrupt
-ttyput "G.3"
+#ttyput "G.3"
 	input_closed
 	raise
       rescue
-ttyput "G.4"
+#ttyput "G.4"
 	puts "reidline abort!!"
 	input_closed
 	raise
       end until @closed_proc.call(line)
-ttyput "G.5"
+#ttyput "G.5"
       input_closed
-ttyput "G.6"
+#ttyput "G.6"
       line
     end
 
