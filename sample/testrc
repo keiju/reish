@@ -3,7 +3,7 @@ Reish.conf[:COMPLETION] = true
 Reish.conf[:ECHO] = true
 Reish.conf[:PROMPT] = $Reish::PromptSet[:IRB]
 Reish.conf[:DISPLAY_COMP] = true
-Reish.conf[:VERBOSE] = true
+#Reish.conf[:VERBOSE] = true
 
 #Reish.debug_jobctl_on
 #Reish.debug_input_on
