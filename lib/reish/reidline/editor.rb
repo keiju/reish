@@ -223,7 +223,9 @@ module Reish
       end
 
       def kill_line(*args)
-	@buffer.kill_line(@c_row, @c_col)
+	unless @buffer.kill_line(@c_row, @c_col)
+	  message("end of buffer")
+	end
       end
 
       def ctl_c(*args)

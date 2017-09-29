@@ -5,7 +5,7 @@ Reish.conf[:PROMPT] = $Reish::PromptSet[:IRB]
 Reish.conf[:DISPLAY_COMP] = true
 Reish.conf[:VERBOSE] = true
 
-$(Reish.comp[:INPUT_METHOD][:TTY] = Reish::ReidlineInputMethod)
+$(Reish.comp[:INPUT_METHOD][:TTY] = Reish::ReidlineInputMethod2)
 
 #Reish.debug_jobctl_on
 #Reish.debug_input_on

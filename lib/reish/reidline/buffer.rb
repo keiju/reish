@@ -85,14 +85,19 @@ module Reish
 
       def kill_line(row, col)
 	if @buffer[row] == ""
-	  @buffer.slice!(row, 1)
-	  changed
-	  notify_observers(:delete_line, row)
+	  if @buffer.size > row + 1
+	    @buffer.slice!(row, 1)
+	    changed
+	    notify_observers(:delete_line, row)
+	  else
+	    return false
+	  end
 	else
 	  @buffer[row].slice!(col..-1)
 	  changed
 	  notify_observers(:delete_eol, row, col)
 	end
+	true
       end
     end
   end
