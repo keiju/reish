@@ -523,6 +523,7 @@ module Reish
 	  io.ungetc
 	  identify_wildcard(io)
 	else
+	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(self,:LBLACK_I)
 	end
       end
