@@ -37,6 +37,10 @@ module Reish
 	@buffer[row].size == col
       end
 
+      def end_of_buffer?(row, col)
+	@buffer.size - 1 == row && @buffer.last.size == col
+      end
+
       def insert(row, col, str)
 	@buffer[row][col,0] = str
 	changed

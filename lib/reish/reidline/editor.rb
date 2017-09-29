@@ -39,7 +39,7 @@ module Reish
 	  ["\C-a", method(:cursor_beginning_of_line)],
 	  ["\C-b", method(:cursor_left)],
 	  ["\C-c", method(:ctl_c)],
-	  ["\C-d", method(:ctl_d)],
+	  ["\C-d", method(:delete_char)],
 	  ["\C-e", method(:cursor_end_of_line)],
 	  ["\C-f", method(:cursor_right)],
 	  ["\C-i", method(:key_tab)],
@@ -204,6 +204,19 @@ module Reish
 	end
       end
 
+      def delete_char(io, chr)
+	if @buffer.empty?
+	  insert(io, chr)
+	  @exit = true
+	elsif @buffer.end_of_buffer?(@c_row, @c_col)
+	  message("end of buffer")
+	elsif @c_col == @buffer[@c_row].size
+	  @buffer.join_line(@c_row + 1)
+	else
+	  @buffer.delete(@c_row, @c_col)
+	end
+      end
+
       def key_cr(*args)
 	normalize_cursor
 	message_clear
@@ -235,15 +248,6 @@ module Reish
 	cursor_reposition
 #	puts "\ninput abort!"
 	Process.kill :INT, $$
-      end
-
-      def ctl_d(io, chr)
-	if @buffer.empty?
-	  insert(io, chr)
-	  @exit = true
-	else
-	  @buffer.delete(@c_row, @c_col)
-	end
       end
 
       def clear(*args)
