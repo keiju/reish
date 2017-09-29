@@ -1,4 +1,6 @@
 * parser
+** 大文字から始まるコマンド/メソッド
+   -> 今は定数になってしまう...
 ** キーワード引数
 ** 関数定義
    * アクセサ foo=
@@ -30,6 +32,8 @@
 ** ワイルドカード 文字列"..."の中でワイルドカードが使えない.
 ** 空文(;;)が不可
 ** 引数で $func.exe は? 今は, $func.exe()
+** if command[cr]then ができない
+   -> 他の問題が発生するのでとりあえず削除
 
 * code generation
 ** # command | if ... をもっとちゃんと対応したい(instance_evalを使わなく
@@ -47,6 +51,7 @@
 ** fg/bgでのjobの選択アルゴリズム
 
 * コンプレーション機能
+** 完全なCompSystemCommand - パイプライン, リダイレクションの処理
 ** CompSpecでパイプライン処理できるものとできないものを区別し, それを, 
   実際のコマンド検索にも用いる
   stdinを利用する/stdoutに吐き出す等
@@ -68,4 +73,4 @@
 * ビルトイン関数
 
 * 拡張機能
-* shell server/shell client
+** shell server/shell client

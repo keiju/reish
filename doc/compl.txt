@@ -1,47 +1,47 @@
 コンプレーションパターン
 
 # PARSE LEX_STATE LAST_TOKEN SPECE_SEEN
-o* ls
+oo* ls
   C ARG ID NOSP
-o* ls_
+oo* ls_
   C ARG ID SP
-o* ls_-l
+oo* ls_-l
   C ARG WORD NOSP
-o* ls_-l_
+oo* ls_-l_
   C ARG WORD SP
-o* ls(
+oo* ls(
   I ARG ( NOSP (INPUT UNIT ls "(")
-o* ls(_
+oo* ls(_
   I ARG ( SP (INPUT UNIT ls "(")
-o* ls(-
+oo* ls(-
   I ARG - NOSP (INPUT UNIT ls "(")
-o* ls(-l
+oo* ls(-l
   I ARG -l NOSP (INPUT UNIT ls "(" (EL WORD))
-o* ls(-l_
+oo* ls(-l_
   I ARG -l SP (INPUT UNIT ls "(" (EL WORD))
-n* ls(-l)
+nn* ls(-l)
   C END ) NOSP (IU ...)
-o* ls|
+oo* ls|
   I BEG | NOSP 
-o* ls|_
+oo* ls|_
   I BEG | SP 
-o* ls|c
+oo* ls|c
   C ARG ID NOSP
-o* ls|cat_
+oo* ls|cat_
   C ARG ID SP
-o* ls|cat_-
+oo* ls|cat_-
   C ARG WORD SP
-o* ls "
+oo* ls "
   C END STR NOSP    # 下と区別つかないためidentiry_string要修正
-n* ls ""
+nn* ls ""
   C END STR NOSP 
-o* if
+oo* if
   I BEG IF NOSP
-o* if_
+oo* if_
   I BEG IF SP
-o* if -f
+oo* if -f
   I ARG -F NOSP (INPUT UNIT IF (PL -F))
-o* if -f_
+oo* if -f_
   I ARG -F SP (INPUT UNIT IF (PL -F))
 
 

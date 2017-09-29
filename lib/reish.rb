@@ -11,7 +11,7 @@
 require "reish/locale"
 require "reish/init-reish"
 require "reish/shell"
-require "reish/completion"
+require "reish/completor"
 
 module Reish
 

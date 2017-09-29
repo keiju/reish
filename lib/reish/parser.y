@@ -590,7 +590,7 @@ class Reish::Parser
 
   then: THEN
 	| opt_terms
-	| opt_terms THEN
+#	| opt_terms THEN
 
   unless_command: UNLESS opt_nl logical_command then {@lex.indent_push(:UNLESS)} compound_list opt_else indent_pop END
 	    {
