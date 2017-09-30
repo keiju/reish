@@ -343,7 +343,11 @@ module Reish
 	  sub.concat @cache[row].slice!(sub_row+1..-1).join
 	end
 	@cache.insert(row+1, [""])
-#	print_eol "\n"
+	if @cache.size - 1 <= row + 1
+	  print_eol "\n"
+	  @t_row += 1
+	  @t_col = 0
+	end
 	insert_string_sub(row+1, 0, sub, redisplay: true)
       end
 
@@ -381,7 +385,7 @@ module Reish
 	message_cursor_save do
 	  m_buffer = []
 
-	  lines = str.split(/\n/)
+	  lines = str.lstrip.split(/\n/)
 	
 	  lines.each do |line|
 	    ll = slice_width(line)
@@ -389,10 +393,14 @@ module Reish
 	      m_buffer.push l
 	    end
 	  end
-
+#ttyput m_buffer
 	  if m_buffer.size + text_height < @term_height
 	    m_buffer.each do |l|
-	      puts l
+	      if l == m_buffer.last
+		print l
+	      else
+		puts l
+	      end
 	    end
 	    @message_h = m_buffer.size
 	  else
@@ -417,14 +425,10 @@ module Reish
 	return if @message_h == 0
 
 	message_cursor_save do
-	  return if @message_h == 0
-	  move_to_message_frame
 	  @message_h.times{ti_delete_line}
-	  @message_h = 0
+	  @message_h = 1
 	end
-      end
-
-      def move_to_message_frame
+	@message_h = 0
       end
 
       def message_cursor_save(&block)
@@ -437,7 +441,7 @@ module Reish
 	
 	block.call
 	
-	ti_up(text_height+@message_h-b_row)
+	ti_up(text_height + @message_h - b_row - 1)
 	ti_hpos(b_col)
 	@t_row = b_row
 	@t_col = b_col

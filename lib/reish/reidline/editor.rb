@@ -90,7 +90,11 @@ module Reish
 	    message(exc.message)
 	  end
 	end
-	@buffer.contents
+	c = @buffer.contents
+	if c[-1] != "\n"
+	  c.concat "\n"
+	end
+	c
       end
 
       def message(str)

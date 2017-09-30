@@ -52,6 +52,7 @@ module Reish
 #ttyput "G.1"
 	line = @editor.gets
 #ttyput "G.2"
+#ttyput line
       rescue Interrupt
 #ttyput "G.3"
 	input_closed

@@ -33,7 +33,7 @@ module Reish
 	}
 
 	Readline.completion_proc = @completion_proc
-      when ReidlineInputMethod
+      when ReidlineInputMethod, ReidlineInputMethod2
 	@completion_proc = proc{|expr|
 	  candidate(expr)
 	}
