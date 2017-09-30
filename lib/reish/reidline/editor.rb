@@ -18,6 +18,9 @@ module Reish
 
 	@in_move_cursor = nil
 
+	@closed_proc = nil
+	@cmpl_proc = nil
+
 	@exit = nil
 
 	init_keys
@@ -71,6 +74,10 @@ module Reish
 	@view.change_buffer
       end
 
+      def set_closed_proc(&block)
+	@closed_proc = block
+      end
+
       def set_cmpl_proc(&block)
 	@cmpl_proc = block
       end
@@ -82,19 +89,22 @@ module Reish
 #      end
 
       def gets
-	@exit = false
-	until @exit
-	  begin
-	    @handler.dispatch(STDIN)
-	  rescue Reidline::KeyHandler::UnboundKey=>exc
-	    message(exc.message)
+	contents = nil
+	begin
+	  @exit = false
+	  until @exit
+	    begin
+	      @handler.dispatch(STDIN)
+	    rescue Reidline::KeyHandler::UnboundKey=>exc
+	      message(exc.message)
+	    end
 	  end
-	end
-	c = @buffer.contents
-	if c[-1] != "\n"
-	  c.concat "\n"
-	end
-	c
+	  contents = @buffer.contents
+	  if contents[-1] != "\n"
+	    contents.concat "\n"
+	  end
+	end until @closed_proc.call(contents)
+	contents
       end
 
       def message(str)
@@ -266,7 +276,13 @@ module Reish
 
       def dynamic_complete(*args)
 	message_clear
-	candidates = @cmpl_proc.call(@buffer.contents)
+
+	unless @cmpl_proc
+	  message("not defined completion procedure")
+	  return
+	end
+
+	candidates = @cmpl_proc.call(@buffer.contents) 
 	return if candidates.nil? || candidates.empty?
 
 	if candidates.size > 1
