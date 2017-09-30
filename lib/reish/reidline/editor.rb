@@ -183,7 +183,6 @@ module Reish
       end
       alias cursor_bob cursor_beginning_of_buffer
 
-
       def cursor_end_of_buffer(*args, update: true)
 	@c_row = @buffer.size - 1
 	@c_col = @buffer.last.size
@@ -191,6 +190,13 @@ module Reish
 	cursor_reposition if update
       end
       alias cursor_eob cursor_end_of_buffer
+
+      def insert(io, chr)
+	normalize_cursor
+	@buffer.insert(@c_row, @c_col, chr)
+	@c_col += chr.size
+	cursor_reposition
+      end
 
       def backspace(*args)
 	normalize_cursor
@@ -221,6 +227,17 @@ module Reish
 	end
       end
 
+      def open_line(*args)
+	key_cr
+	cursor_left
+      end
+
+      def kill_line(*args)
+	unless @buffer.kill_line(@c_row, @c_col)
+	  message("end of buffer")
+	end
+      end
+
       def key_cr(*args)
 	normalize_cursor
 	message_clear
@@ -231,17 +248,6 @@ module Reish
 	
 	if @c_row == @buffer.size - 1
 	  @exit = true
-	end
-      end
-
-      def open_line(*args)
-	key_cr
-	cursor_left
-      end
-
-      def kill_line(*args)
-	unless @buffer.kill_line(@c_row, @c_col)
-	  message("end of buffer")
 	end
       end
 
@@ -256,13 +262,6 @@ module Reish
 
       def clear(*args)
 	@view.clear_display
-      end
-
-      def insert(io, chr)
-	normalize_cursor
-	@buffer.insert(@c_row, @c_col, chr)
-	@c_col += chr.size
-	cursor_reposition
       end
 
       def dynamic_complete(*args)
