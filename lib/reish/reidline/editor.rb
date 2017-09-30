@@ -42,7 +42,7 @@ module Reish
 	  ["\C-d", method(:delete_char)],
 	  ["\C-e", method(:cursor_end_of_line)],
 	  ["\C-f", method(:cursor_right)],
-	  ["\C-i", method(:key_tab)],
+	  ["\C-i", method(:dynamic_complete)],
 	  ["\C-k", method(:kill_line)],
 	  ["\C-l", method(:clear)],
 	  ["\C-n", method(:cursor_down)],
@@ -50,7 +50,7 @@ module Reish
 	  ["\C-p", method(:cursor_up)],
 	  ["\C-m", method(:key_cr)],
 
-	  ["\u007F", method(:key_bs)],
+	  ["\u007F", method(:backspace)],
 	]
 	@handler.def_default method(:insert)
       end
@@ -192,7 +192,7 @@ module Reish
       end
       alias cursor_eob cursor_end_of_buffer
 
-      def key_bs(*args)
+      def backspace(*args)
 	normalize_cursor
 	if @c_col == 0 && @c_row > 0
 	  c_col = @buffer[@c_row-1].size
@@ -265,7 +265,7 @@ module Reish
 	cursor_reposition
       end
 
-      def key_tab(*args)
+      def dynamic_complete(*args)
 	message_clear
 	candidates = @cmpl_proc.call(@buffer.contents)
 	return if candidates.nil? || candidates.empty?
@@ -279,7 +279,7 @@ module Reish
 	    sublen = @buffer[@c_row].size - idx
 	    if @buffer[@c_row][idx..-1] == word[0, sublen]
 		#	      sublen.times{@buffer.delete(@c_row, idx)}
-	      sublen.times{key_bs}
+	      sublen.times{backspace}
 	      @buffer.insert(@c_row, idx, word)
 	      @c_col += word.size
 	      cursor_reposition
