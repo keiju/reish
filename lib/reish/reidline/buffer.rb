@@ -17,12 +17,24 @@ module Reish
 
       def initialize(lines = ["\n"])
 	@buffer = lines.collect{|l| l[-1] = ""}
+
+	@prompts = []
+100.times{|i| @prompts.push i.to_s+"> "}
       end
+
+      attr_reader :prompts
 
       def_delegator :@buffer, :size
       def_delegator :@buffer, :[]
       def_delegator :@buffer, :each
       def_delegator :@buffer, :last
+
+      def each_with_prompt(&block)
+	@buffer.zip(@prompts) do |l, p|
+	  p = "" unless p
+	  block.call(l, p)
+	end
+      end
 
       def contents
 	@buffer.join("\n")
@@ -63,6 +75,8 @@ module Reish
 	  @buffer.insert(row + 1, "")
 	  changed
 	  notify_observers(:insert_line, row)
+	  changed
+	  notify_observers(:prompt, row+1)
 	else
 #ttyput "IC:2"
 	  sub = @buffer[row].slice!(col..-1)
@@ -102,6 +116,12 @@ module Reish
 	  notify_observers(:delete_eol, row, col)
 	end
 	true
+      end
+
+      def set_prompt(idx, prompt)
+	@prompt[idx] = prompt
+	changed
+	notify_observers(:prompt, idx)
       end
     end
   end

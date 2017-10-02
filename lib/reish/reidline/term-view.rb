@@ -23,6 +23,7 @@ module Reish
 
 	@buffer = nil
 	@cache = nil
+	@cache_prompts = []
 
 	@t_row = nil
 	@t_col = nil
@@ -34,12 +35,20 @@ module Reish
 
       def reset_cursor_position
 	@t_row = text_height - 1
-	@t_col = @cache.last.last.size
+	@t_col = @cache.last.last.bytesize + (@cache_prompts[@cache.size-1]&.bytesize || 0)
 	cursor_reposition
       end
 
       def text_height
 	@cache.inject(0){|r, lines| r += lines.size}
+      end
+
+      def offset(row, sub_row = 0)
+	if sub_row == 0
+	  offset = @cache_prompts[row]&.bytesize || 0
+	else
+	  0
+	end
       end
 
       def change_buffer
@@ -65,18 +74,25 @@ module Reish
       def redisplay(from: 0, cache_update: false)
 	if cache_update
 	  @cache = []
-	  @buffer.each do |line|
-	    @cache.push slice_width(line)
+	  @cache_prompts = []
+	  @buffer.each_with_prompt do |line, prompt|
+	    @cache_prompts.push prompt
+	    @cache.push slice_width(line, offset: prompt.bytesize)
 	  end
 	end
 
 	i = 0
 	line_last = @cache.last.last
-	@cache.each do |lines|
+	@cache.zip(@cache_prompts) do |lines, prompt|
+	  top = lines.first
 	  lines.each do |line|
 	    i += 1
+#ttyput @cache
+#ttyput prompt
+#ttyput @cache_prompts
 	    next if from >= i
 
+	    print prompt if top.equal?(line)
 	    print_eol line
 	    if !line.equal?(line_last)
 	      print "\n"
@@ -86,12 +102,12 @@ module Reish
 	reset_cursor_position
       end
 
-      def slice_width(str, width = @term_width)
+      def slice_width(str, width = @term_width, offset: 0)
 	str = str.dup
 	split = []
 	until str.size == 0
-	  s0 = str.slice!(0, width)
-	  until s0.bytesize <= width
+	  s0 = str.slice!(0, width - offset)
+	  until s0.bytesize <= width - offset
 	    str.prepend s0.slice!(-1)
 	  end
 	  split.push s0
@@ -101,14 +117,14 @@ module Reish
       end
 
       def cache_col(row, col)
-	line = @cache[row]
+	lines = @cache[row]
 	i = 0
-	until col <= line[i].size
-	  col -= line[i].size
+	until col <= lines[i].size
+	  col -= lines[i].size
 	  i += 1
 	end
-	if col == line[i].size && line[i+1]
-	  col -= line[i].size
+	if col == lines[i].size && lines[i+1]
+	  col -= lines[i].size
 	  i += 1
 	end
 	return i, col
@@ -147,13 +163,13 @@ module Reish
 	end
 
 	sub_row, sub_col = cache_col(row, col)
-	if sub_col > 0
-	  w = @cache[row][sub_row][0..sub_col-1].bytesize
+	if sub_col == 0
+	  w = offset(row, sub_row)
 	else
-	  w = 0
+	  w = offset(row, sub_row)+@cache[row][sub_row][0..sub_col-1].bytesize
 	end
-#ttyput h+sub_row, w
 
+#ttyput h+sub_row, w
 	return h+sub_row, w
       end
 
@@ -163,6 +179,7 @@ module Reish
 #      end
 
       def cursor_reposition
+#ttyput "CURSOR_REPOSITON"
 	t_row, t_col = term_pos(@controller.c_row, @controller.c_col)
 	h = t_row - @t_row
 	w = t_col - @t_col
@@ -230,12 +247,10 @@ module Reish
       end
 
       def insert_string_sub(row, col, str, redisplay: false)
-#ttyput "ISS:0"
 	insert_line_row = nil
 
 	t_row, t_col = term_pos(row, col)
 	cursor_move(t_row, t_col)
-#ttyput "ISS:1"
 
 	ti_ins_mode do
 	  sub_row, sub_col = cache_col(row, col)
@@ -246,8 +261,8 @@ module Reish
 	  else
 	    print str
 	  end
-	  until @cache[row][sub_row].bytesize <= @term_width
-	    split = slice_width(@cache[row][sub_row])
+	  until @cache[row][sub_row].bytesize <= @term_width - offset(row, sub_row)
+	    split = slice_width(@cache[row][sub_row], offset: offset(row, sub_row))
 	    @cache[row][sub_row] = split.shift
 	    until split.size <= 2
 	      sub = split.shift
@@ -266,7 +281,7 @@ module Reish
 	    @cache[row][sub_row] = "" if @cache[row][sub_row].nil?
 	    @cache[row][sub_row].insert(0, sub)
 	  end
-	  if @cache[row][sub_row].bytesize == @term_width
+	  if @cache[row][sub_row].bytesize == @term_width - offset(row, sub_row)
 	    @cache[row].push ""
 	    unless insert_line_row
 #	      insert_line
@@ -290,8 +305,8 @@ module Reish
 	
 
 	until @cache[row][sub_row+1].nil? 
-	  if @cache[row][sub_row].bytesize + @cache[row][sub_row+1][0].bytesize <= @term_width
-	    cursor_col(@cache[row][sub_row].bytesize)
+	  if @cache[row][sub_row].bytesize + @cache[row][sub_row+1][0].bytesize <= @term_width - offset(row, sub_row)
+	    cursor_col(@cache[row][sub_row].bytesize+offset(row, sub_row))
 	    cursor_save_positon do
 	      ti_ins_mode do
 		print @cache[row][sub_row+1][0]
@@ -368,6 +383,32 @@ module Reish
 	ti_clear_eol
 	if sub_row < @cache[row].size
 	  @cache[row].slice!(sub_row+1..-1)
+	end
+      end
+
+      def update_prompt(row)
+	return if @buffer.prompts[row] == @cache_prompts[row]
+
+	cursor_save_position do
+	  t_row, t_col = term_pos(row, 0)
+	  cursor_move(t_row, t_col)
+
+	  prompt = @buffer.prompts[row]
+	  if slice_width(@cache[row].first, offset: prompt.bytesize).size > 1
+	    @cashe_prompts[row] = prompt
+	    redisplay(row, cache_update: true)
+	  else
+	    diff = prompt.bytesize - (@cache_prompts[row]&.bytesize || 0)
+	    @cache_prompts[row] = prompt
+	    if diff > 0
+	      print " "*diff
+	    else
+	      diff.times{ti_del}
+	    end
+	    ti_line_beg
+	    print prompt
+	    @t_col += prompt.bytesize
+	  end
 	end
       end
 

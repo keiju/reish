@@ -470,39 +470,30 @@ module Reish
 	  begin
 	    @in_queue.clear
 	    @lex.initialize_input
-#ttyput "P.IN"
 	    @parser.do_parse
-#ttyput "P.OUT"
 	    @out_queue.push true
 
 	  rescue ParserClosingSupp, ParserClosingEOFSupp
-#ttyput "P.1"
 	    @out_queue.push false
 
 	  rescue
-#ttyput "P.2"
 	    @reidline.message($!.message)
 	    @out_queue.push false
 	  ensure
-#ttyput "P.E"
 	  end
 	end
       }
 
       @reidline.set_closed_proc do |line|
 	ret = nil
-#ttyput "CP.0"
 	begin
-#ttyput "CP.1"
 	  @in_queue.push line
 	  until @in_queue.empty?
 	    sleep 0.02
 	  end
 	  @in_queue.push nil
 #	  @closing_checker.raise ParserClosingSupp
-#ttyput "CP.2"
 	  ret = @out_queue.pop
-#ttyput "CP.3"
 	  @in_queue.clear
 	  @out_queue.clear
 	ensure
