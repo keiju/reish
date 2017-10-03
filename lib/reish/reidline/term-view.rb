@@ -83,16 +83,17 @@ module Reish
 
 	i = 0
 	line_last = @cache.last.last
-	@cache.zip(@cache_prompts) do |lines, prompt|
+	@cache.each_with_index do |lines, row|
+#	@cache.zip(@cache_prompts) do |lines, prompt|
 	  top = lines.first
 	  lines.each do |line|
 	    i += 1
-#ttyput @cache
-#ttyput prompt
-#ttyput @cache_prompts
 	    next if from >= i
 
-	    print prompt if top.equal?(line)
+	    if top.equal?(line)
+	      prompt = @cache_prompts[row] = @buffer.prompts[row]
+	      print prompt
+	    end
 	    print_eol line
 	    if !line.equal?(line_last)
 	      print "\n"
@@ -100,6 +101,37 @@ module Reish
 	  end
 	end
 	reset_cursor_position
+      end
+
+      def reprompt(from)
+	i = 0
+	line_last = @cache.last.last
+	@cache.each_with_index do |lines, row|
+	  top = lines.first
+	  lines.each do |line|
+	    i += 1
+	    next if from >= i
+	    if top.equal?(line)
+	      prompt = @cache_prompts[row] = @buffer.prompts[row]
+	      if slice_width(@cache[row].first, offset: prompt.bytesize).size > 1
+		@cashe_prompts[row] = prompt
+		return redisplay(row, cache_update: true)
+	      else
+		diff = prompt.bytesize - (@cache_prompts[row]&.bytesize || 0)
+		@cache_prompts[row] = prompt
+		if diff > 0
+		  print " "*diff
+		else
+		  diff.times{ti_del}
+		end
+		ti_line_beg
+		print prompt
+	      end
+	    end
+	    cursor_bol
+	    cursor_down
+	  end
+	end
       end
 
       def slice_width(str, width = @term_width, offset: 0)
@@ -142,7 +174,7 @@ module Reish
 	return i
       end
 
-      def term_pos(row, col)
+      def term_pos(row, col, offset: true)
 #	if @buffer[row].size < col
 #	  col = @buffer[row].size
 #	end
@@ -163,10 +195,15 @@ module Reish
 	end
 
 	sub_row, sub_col = cache_col(row, col)
-	if sub_col == 0
-	  w = offset(row, sub_row)
+	if offset
+	  of =  offset(row, sub_row) 
 	else
-	  w = offset(row, sub_row)+@cache[row][sub_row][0..sub_col-1].bytesize
+	  of = 0
+	end
+	if sub_col == 0
+	  w = of
+	else
+	  w = of+@cache[row][sub_row][0..sub_col-1].bytesize
 	end
 
 #ttyput h+sub_row, w
@@ -290,7 +327,10 @@ module Reish
 	      insert_line_row = row, sub_row
 	    end
 	  end
-	  redisplay(from: cache_col2t_row(*insert_line_row)) if insert_line_row
+	end
+	if insert_line_row
+	  ti_line_beg
+	  redisplay(from: cache_col2t_row(*insert_line_row)) 
 	end
 	insert_line_row
       end
@@ -343,6 +383,7 @@ module Reish
 	  n = @cache[t_row].size
 	  @cache.slice!(t_row)
 	  n.times{ti_delete_line}
+	  reprompt(t_row)
 	end
       end
 

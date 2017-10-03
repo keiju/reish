@@ -19,7 +19,7 @@ module Reish
 	@buffer = lines.collect{|l| l[-1] = ""}
 
 	@prompts = []
-100.times{|i| @prompts.push i.to_s+"> "}
+100.times{|i| @prompts.push "#{i}:#{2**rand(10)}> "}
       end
 
       attr_reader :prompts
