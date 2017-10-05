@@ -86,12 +86,16 @@ module Reish
 	@completor = Reish::comp[:COMPLETOR].new(self) 
 	@io.completor = @completor
       end
+      if @io.respond_to?(:promptor)
+	@io.promptor = proc{|line_no, indent, ltype, continue| @exenv.prompt.call(@exenv, line_no, indent, ltype, continue)}
+      end
 
     end
 
     def start
       @lex.set_prompt do |ltype, indent, continue, line_no|
 	
+	@io.line_no = line_no if @io.kind_of?(ReidlineInputMethod)
 	@io.prompt = @exenv.prompt.call(@exenv, line_no, indent, ltype, continue)
       end
 

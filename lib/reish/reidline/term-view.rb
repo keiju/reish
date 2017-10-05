@@ -429,6 +429,10 @@ module Reish
 
       def update_prompt(row)
 	return if @buffer.prompts[row] == @cache_prompts[row]
+	unless @cache[row]
+	  @cache_prompts[row] = @buffer.prompts[row]
+	  return
+	end
 
 	cursor_save_position do
 	  t_row, t_col = term_pos(row, 0)
@@ -442,7 +446,9 @@ module Reish
 	    diff = prompt.bytesize - (@cache_prompts[row]&.bytesize || 0)
 	    @cache_prompts[row] = prompt
 	    if diff > 0
-	      print " "*diff
+	      ti_ins_mode do
+		print " "*diff
+	      end
 	    else
 	      diff.times{ti_del}
 	    end

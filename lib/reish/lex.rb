@@ -338,6 +338,11 @@ module Reish
       @exp_line_no = @line_no
     end
 
+    def set_line_no(line_no)
+      @exp_line_no = @line_no = line_no
+      @ruby_scanner.instance_eval{@line_no = line_no}
+    end
+
     attr_accessor :continue
     alias continue? continue
 

@@ -19,10 +19,11 @@ module Reish
 	@buffer = lines.collect{|l| l[-1] = ""}
 
 	@prompts = []
-100.times{|i| @prompts.push "#{i}:#{2**rand(10)}> "}
+#100.times{|i| @prompts.push "#{i}:#{2**rand(10)}> "}
       end
 
       attr_reader :prompts
+      attr_reader :buffer
 
       def_delegator :@buffer, :size
       def_delegator :@buffer, :[]
@@ -119,7 +120,7 @@ module Reish
       end
 
       def set_prompt(idx, prompt)
-	@prompt[idx] = prompt
+	@prompts[idx] = prompt
 	changed
 	notify_observers(:prompt, idx)
       end

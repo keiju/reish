@@ -43,13 +43,17 @@ module Reish
       @editor.set_buffer
     end
 
-    def gets
+    def init_editor
       @editor = Editor.new
       @multi_line_mode = false
       @editor.set_closed_proc(&@closed_proc)
       @editor.set_cmpl_proc(&@cmpl_proc)
+    end
+
+    def get_lines(prompt = nil)
+      init_editor unless @editor
       begin
-	line = @editor.gets
+	line = @editor.get_lines(prompt)
       rescue Interrupt
 	input_closed
 	raise
@@ -68,6 +72,10 @@ module Reish
 
     def message(str)
       @editor.message(str)
+    end
+
+    def set_prompt(line_no, prompt)
+      @editor.set_prompt(line_no, prompt)
     end
 
     # call_caks:

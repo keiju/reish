@@ -261,7 +261,7 @@ module Reish
   end
     
 
-  class ReidlineInputMethod < InputMethod
+  class ReidlineInputMethod0 < InputMethod
     extend Forwardable
 
     # Creates a new input method object using Readline
@@ -434,7 +434,7 @@ module Reish
     def_delegator :@reidline, :set_cmpl_proc
   end
 
-  class ReidlineInputMethod2 < InputMethod
+  class ReidlineInputMethod < InputMethod
     extend Forwardable
 
     # Creates a new input method object using Readline
@@ -451,6 +451,7 @@ module Reish
       @completable = true
 
       @completor = nil
+      @promptor = nil
 
       #        @stdin = IO.open(STDIN.to_i, :external_encoding => Reish.conf[:LOCALE].encoding, :internal_encoding => "-")
       #        @stdout = IO.open(STDOUT.to_i, 'w', :external_encoding => Reish.conf[:LOCALE].encoding, :internal_encoding => "-")
@@ -464,11 +465,29 @@ module Reish
       @in_queue = Queue.new
       @out_queue = Queue.new
       @im = QueueInputMethod.new(@in_queue)
+
+      @lex.set_prompt do |ltype, indent, continue, line_no|
+	if @promptor
+	  @reidline.set_prompt(line_no - @line_no, @promptor.call(line_no, indent, ltype, continue))
+	end
+      end
+
       @lex.set_input(@im){@im.gets}
+
+      @gets_start = false
+      @gets_mx = Mutex.new
+      @gets_cv = ConditionVariable.new
+
       @closing_checker = Thread.start{
 	loop do 
 	  begin
-	    @in_queue.clear
+	    @gets_mx.synchronize do
+	      until @gets_start
+		@gets_cv.wait(@gets_mx)
+	      end
+	      @gets_start = false
+	    end
+	    @lex.set_line_no(@line_no)
 	    @lex.initialize_input
 	    @parser.do_parse
 	    @out_queue.push true
@@ -476,24 +495,46 @@ module Reish
 	  rescue ParserClosingSupp, ParserClosingEOFSupp
 	    @out_queue.push false
 
-	  rescue
+	  rescue Racc::ParseError
 	    @reidline.message($!.message)
 	    @out_queue.push false
+
+	  rescue
+	    bak = $!
+	    begin
+	      @reidline.message([$!.message, *$!.backtrace].join("\n"))
+	    rescue
+	      puts "Reidline abort on exeption!!"
+	      puts "Original Exception"
+	      p bak
+	      puts "Reidline Exception"
+	      p $!
+	    end
+	    @out_queue.push false
 	  ensure
+	    @in_queue.clear
 	  end
 	end
       }
 
-      @reidline.set_closed_proc do |line|
+      @reidline.set_closed_proc do |lines|
 	ret = nil
 	begin
-	  @in_queue.push line
-	  until @in_queue.empty?
-	    sleep 0.02
+	  @gets_mx.synchronize do
+	    @gets_start = true
+	    @gets_cv.broadcast
 	  end
+	  
+	  lines.each do |line| 
+	    @in_queue.push line+"\n"
+	  end
+#	  until @in_queue.empty?
+#	    sleep 0.02
+#	  end
 	  @in_queue.push nil
 #	  @closing_checker.raise ParserClosingSupp
 	  ret = @out_queue.pop
+#	  @lex.reset_input
 	  @in_queue.clear
 	  @out_queue.clear
 	ensure
@@ -503,6 +544,15 @@ module Reish
     end
 
     attr_accessor :completor
+    attr_accessor :promptor
+
+    def line_no=(no)
+      @line_no = no
+    end
+
+#    def prompt=(prompt)
+#      @prompt0 = prompt
+#    end
 
     # Reads the next line from this input method.
     #
@@ -513,10 +563,19 @@ module Reish
 
       #	Readline.completion_proc = @completor.completion_proc if @completor
 
+      @reidline.init_editor
+
+#      @gets_mx.synchronize do
+#	@gets_start = true
+#	@gets_cv.broadcast
+#      end
+
       begin
-	if l = @reidline.gets
+	if l = @reidline.get_lines(@prompt)
 	  #          HISTORY.push(l) if !l.empty?
-	  @line[@line_no += 1] = l + "\n"
+	  #@line[@line_no += 1] = l + "\n"
+#	  @line[@line_no + 1] =  l + "\n"
+	  l
 	else
 	  @eof = true
 	  l

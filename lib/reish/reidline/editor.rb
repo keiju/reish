@@ -82,13 +82,19 @@ module Reish
 	@cmpl_proc = block
       end
 
+      def set_prompt(line_no, prompt)
+	@buffer.set_prompt(line_no, prompt)
+	cursor_reposition
+      end
+
 #      def sync_cursor_position
 #	@c_row = @buffer.size - 1
 #	@c_col = @buffer.last.size
 #	return @c_row, @c_col
 #      end
 
-      def gets
+      def get_lines(prompt = nil)
+	set_prompt(0, prompt) if prompt
 	contents = nil
 	begin
 	  @exit = false
@@ -99,11 +105,11 @@ module Reish
 	      message(exc.message)
 	    end
 	  end
-	  contents = @buffer.contents
-	  if contents[-1] != "\n"
-	    contents.concat "\n"
-	  end
-	end until @closed_proc.call(contents)
+	end until @closed_proc.call(@buffer.buffer)
+	contents = @buffer.contents
+	if contents[-1] != "\n"
+	  contents.concat "\n"
+	end
 	contents
       end
 
@@ -258,6 +264,8 @@ module Reish
 	
 	if @c_row == @buffer.size - 1
 	  @exit = true
+	else
+	  @closed_proc.call(@buffer.buffer)
 	end
       end
 
