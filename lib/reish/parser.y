@@ -48,11 +48,11 @@ class Reish::Parser
 	| simple_list1 '&'
 	    {
 		result.last_command_to_async
-		result.pipeout = :RESULT
+#		result.pipeout = :RESULT
 	    } 
 	| simple_list1 ';'
 	    {
-		result.pipeout = :RESULT
+#		result.pipeout = :RESULT
 	    } 
 
   simple_list1:	logical_command
@@ -113,6 +113,8 @@ class Reish::Parser
 	| return_command
 	| yield_command
 	| assgin_command
+        | def_command
+	| alias_command
 
   pipeline_command: pipeline
 
@@ -146,7 +148,19 @@ class Reish::Parser
 	| strict_pipeline
         | trivial_command
 
-  strict_pipeline: strict_pipeline '.' opt_nl strict_command
+  strict_pipeline: strict_pipeline1
+        | strict_pipeline1 '.' opt_nl simple_command
+      	    {
+	       result = val[0]
+  	       result.pipe_command(:DOT, val[3])
+	    }
+        | strict_pipeline1 COLON2 opt_nl simple_command
+	    {
+	       result = val[0]
+  	       result.pipe_command(:COLON2, val[3])
+	    }
+
+  strict_pipeline1: strict_pipeline1 '.' opt_nl strict_command
       	    {
 	       result = val[0]
   	       result.pipe_command(:DOT, val[3])
@@ -156,7 +170,7 @@ class Reish::Parser
 #	       result = Node::PipelineCommand(val[0])
 #  	       result.pipe_command(:COLON2, val[3])
 #	    }
-	| strict_pipeline COLON2 opt_nl strict_command
+	| strict_pipeline1 COLON2 opt_nl strict_command
 	    {
 	       result = val[0]
   	       result.pipe_command(:COLON2, val[3])
@@ -411,7 +425,7 @@ class Reish::Parser
 #	       result = Node::IndexAssginCommand(val[0][0], val[0][1], val[3])
 #	    }
 
-  assginable: strict_pipeline
+  assginable: strict_pipeline1
 
   index_ref_command: index_ref
 	    {
@@ -423,7 +437,7 @@ class Reish::Parser
 		result = [val[0], val[3]]
 	    }
 
-  referenceable: strict_pipeline
+  referenceable: strict_pipeline1
 #	| literal_command
 #	| group_command
 #	    {
@@ -439,7 +453,45 @@ class Reish::Parser
 #        | for_command
 #	| strict_pipeline
 
-  begin_command: BEGIN {@lex.indent_push(:BEGIN)} body_list indent_pop END
+#   alias_command: ALIAS ID lex_beg opt_nl pipeline_command
+#   	    {
+# 		val[4].pipeout = :NONE
+#   		result = Node::AliasCommand(val[1], val[4])
+#   	    }
+
+  def_command: DEF ID opt_terms {@lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG} body_list indent_pop END
+	    {
+		body = Node::BeginCommand(*val[4])
+		result = Node::DefCommand(val[1], nil, body)
+	    }
+	|  DEF ID func_arg_list {@lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG} body_list indent_pop END
+	    {
+		arg = val[2]
+		body = Node::BeginCommand(*val[4])
+		result = Node::DefCommand(val[1], arg, body)
+	    }
+
+  func_arg_list: LPARLEN_ARG func_arg_list0 ')'
+	    {
+	      result = val[1]
+	    }
+
+  func_arg_list0: lex_beg 
+    	    {
+	       result = []
+	    }
+	| func_arg_list0 opt_nl lex_beg ID
+	    {
+	      result = val[0]
+	      result.push val[3]
+	    }
+
+  alias_command: ALIAS ID  lex_beg opt_nl ID
+	    {
+     		result = Node::AliasCommand(val[1], val[4])
+   	    }
+
+  begin_command: BEGIN {@lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG} body_list indent_pop END
 	    {
 		result = Node::BeginCommand(*val[2])
 		result.space_seen = val[0].space_seen
@@ -498,7 +550,8 @@ class Reish::Parser
 
   do: NL
 	| ';'
-	| DO_COND
+	| ';' DO_COND
+        | DO_COND
 
   until_command: UNTIL cond_push opt_nl logical_command do {@lex.indent_push(:UNTIL)} cond_pop lex_beg compound_list indent_pop END
 	    {
@@ -537,15 +590,18 @@ class Reish::Parser
 
   then: THEN
 	| opt_terms
+#	| opt_terms THEN
 
   unless_command: UNLESS opt_nl logical_command then {@lex.indent_push(:UNLESS)} compound_list opt_else indent_pop END
 	    {
 		result = Node::IfCommand(val[2], val[6], val[5])
 	    }
 
-  for_command: FOR opt_nl for_arg opt_nl IN lex_arg simple_command_element do {@lex.indent_push(:FOR)} lex_beg compound_list indent_pop END
+#  for_command: FOR cond_push opt_nl for_arg opt_nl IN lex_arg simple_command_element do {@lex.indent_push(:FOR)} cond_pop lex_beg compound_list indent_pop END
+#  for_command: FOR cond_push opt_nl for_arg opt_nl IN lex_arg simple_command_element lex_beg do {@lex.indent_push(:FOR)} cond_pop lex_beg compound_list indent_pop END
+  for_command: FOR cond_push opt_nl for_arg opt_nl IN lex_beg logical_command lex_beg do {@lex.indent_push(:FOR)} cond_pop lex_beg compound_list indent_pop END
 	    {
-		result = Node::ForCommand(val[2], val[6], val[10])
+		result = Node::ForCommand(val[3], val[7], val[13])
             }
 
   for_arg: ID
@@ -559,12 +615,15 @@ class Reish::Parser
 	      result.push val[2]
 	    }
 
-  case_command: CASE simple_command_element opt_terms {@lex.indent_push(:CASE)} case_body indent_pop END
+#  case_command: CASE simple_command_element opt_terms {@lex.indent_push(:CASE)} case_body indent_pop END
+  case_command: CASE logical_command opt_terms {@lex.indent_push(:CASE)} case_body indent_pop END
 	    {
 		result = Node::CaseCommand(val[1], val[4])
 	    }
 
   case_body: WHEN simple_command_element_list then compound_list cases
+# case_body: WHEN logical_command then compound_list cases
+# case_body: WHEN when_list then compound_list cases
             {
 		case val[4]
 		when Array
@@ -576,8 +635,29 @@ class Reish::Parser
 		  result = [Node::WhenCommand(val[1], val[3]), val[4]]
 		end
 	    }
+
+#        | WHEN simple_command_element_list then compound_list cases
+
   cases:  opt_else
 	| case_body
+
+#   when_list: logical_command
+# 	    {
+# 	        result = Node::Sequence(val[0])
+# 	    }
+#         | WORD
+# 	    {
+# 	        result = Node::Sequence(val[0])
+# 	    }
+# 	| WILDCARD
+# 	    {
+# 	        result = Node::Sequence(val[0])
+# 	    }
+#         | when_list "," lex_beg logical_command
+# 	    {
+# 		val[0].add_command(val[3])
+# 		result = val[0]
+# 	    }
 
   break_command: BREAK simple_command_element_list
 	    {
@@ -620,7 +700,7 @@ class Reish::Parser
 	        result = Node::Group(val[2])
 	    }
 
-  xstring_command: XSTRING_BEG {@lex.indent_push(:BACK_QUOTE)} compound_list XSTRING_END indent_pop lex_arg
+  xstring_command: XSTRING_BEG {@lex.indent_push(:BACK_QUOTE); @lex.lex_state = Lex::EXPR_BEG} compound_list XSTRING_END indent_pop lex_arg
 	    {
 	        result = Node::XString(val[2])
 	    }
@@ -665,7 +745,7 @@ class Reish::Parser
 		result = val[2]
 	    }
 
-  trivial_command0: strict_pipeline
+  trivial_command0: strict_pipeline1
  	    {         
  	       result.pipeout = :RESULT
  	    }

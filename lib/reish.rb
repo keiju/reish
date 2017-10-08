@@ -11,7 +11,7 @@
 require "reish/locale"
 require "reish/init-reish"
 require "reish/shell"
-require "reish/completion"
+require "reish/completor"
 
 module Reish
 
@@ -112,7 +112,7 @@ module Reish
     end
   end
 
-  debug_category = [:GENERAL, :SYSTEM_COMMAND, :INPUT, :YY, :CMPL, :CMPL_YY, :JOBCTL, :LEX_STATE]
+  debug_category = [:GENERAL, :SYSTEM_COMMAND, :INPUT, :YY, :CMPL, :CMPL_YY, :JOBCTL, :FUNCTION, :LEX_STATE]
   f = 1
   debug_category.each do |cat|
     c = "DEBUG_"+cat.id2name

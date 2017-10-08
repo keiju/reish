@@ -94,21 +94,21 @@ module Reish
     PreservedWordH = {
 #      "rescue"	=> :RESCUE, 
 #      "ensure"	=> :ENSURE, 
-      "end"	=> :END, 
-      "then"	=> :THEN, 
-      "elsif"	=> :ELSIF, 
-      "else"	=> :ELSE, 
-      "when"	=> :WHEN, 
+#      "end"	=> :END, 
+#      "then"	=> :THEN, 
+#      "elsif"	=> :ELSIF, 
+#      "else"	=> :ELSE, 
+#      "when"	=> :WHEN, 
 #      "break"	=> :BREAK, 
 #      "next"	=> :NEXT, 
 #      "redo"	=> :REDO, 
 #      "retry"	=> :RETRY, 
-      "in"	=> :IN, 
-      "do"	=> :DO, 
+#      "in"	=> :IN, 
+#      "do"	=> :DO, 
 #      "return"	=> :RETURN, 
 #      "yield"	=> :YIELD, 
 #      "super"	=> :SUPER, 
-      "self"	=> :SELF, 
+#      "self"	=> :SELF, 
       "nil"	=> :NIL, 
       "true"	=> :TRUE, 
       "false"	=> :FALSE, 
@@ -142,8 +142,9 @@ module Reish
       :THEN => EXPR_BEG,
       :ELSIF => EXPR_BEG,
       :ELSE => EXPR_BEG,
-      :CASE => EXPR_ARG,
+      :CASE => EXPR_BEG,
       :WHEN => EXPR_ARG,
+#      :WHEN => EXPR_BEG,
       :WHILE => EXPR_BEG,
       :MOD_WHILE => EXPR_BEG,
       :UNTIL => EXPR_BEG,
@@ -168,7 +169,7 @@ module Reish
       :AND => EXPR_BEG,
       :OR => EXPR_BEG,
       :NOT => EXPR_BEG,
-      :ALIAS => EXPR_FNAME,
+      :ALIAS => EXPR_BEG, #EXPR_FNAME,
       :DEFINED => EXPR_END,
       :BEGIN => EXPR_END,
       :L_END => EXPR_END,
@@ -389,9 +390,14 @@ module Reish
 	    @space_seen = @token.kind_of?(SpaceToken)
 	  end
 	  last_nl = (@token.token_id == :NL)
+	rescue NoMethodError
+	  # $OP.def_rule("--"... がらみのエラー回避のため
+	  raise unless $!.name == :call
+	  @space_seen = false
+	  @token = WordToken.new(self, "--")
 	rescue SyntaxError
 	  raise if @exception_on_syntax_error
-	  @token= ErrorToken.new(self)
+	  @token = ErrorToken.new(self)
 	end
 
 #	puts "Tk: #{@token.inspect}"
@@ -517,6 +523,7 @@ module Reish
 	  io.ungetc
 	  identify_wildcard(io)
 	else
+	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(self,:LBLACK_I)
 	end
       end
@@ -527,7 +534,7 @@ module Reish
 	if lex_state?(EXPR_BEG_ANY)
 	  self.lex_state = EXPR_ARG
 	  SimpleToken.new(self, :LBRACE_H)
-	elsif !@space_seen && lex_state?(EXPR_ARG | EXPR_END)
+	elsif lex_state?(EXPR_ARG | EXPR_END)
 	  self.lex_state = EXPR_DO_BEG
 	  SimpleToken.new(self, :LBRACE_I)
 	else
@@ -608,11 +615,11 @@ module Reish
 	SimpleToken.new(self, ';')
       end
 
-#      @OP.def_rule(",") do
-#	|op, io|
-#	SimpleToken.new(self, ',')
-#      end
-
+#       @OP.def_rule(",") do
+# 	|op, io|
+# #	self.lex_state = EXPR_BEG
+# 	SimpleToken.new(self, ',')
+#       end
 
       @OP.def_rule("&") do
 	|op, io|
@@ -673,7 +680,7 @@ module Reish
 	identify_compstmt(io, RubyToken::TkRPAREN)
       end
 
-      @OP.def_rule("$begin") do
+      @OP.def_rule("$begin", proc{|op, io| /\s|;/ =~ io.peek(0)}) do
 	|op, io|
 	"begin".split(//).reverse.each{|c| io.ungetc c}
 	identify_compstmt(io, RubyToken::TkEND)
@@ -701,6 +708,23 @@ module Reish
 	end
       end
 
+      @OP.def_rule("$do", proc{|op, io| /\s|;/ =~ io.peek(0)}) do
+	|op, io|
+	if cond?
+	  tid = :DO_COND
+	else
+	  tid = :DO
+	end
+	self.lex_state = TransState[tid]
+	ReservedWordToken.new(self, tid)
+      end
+
+      @OP.def_rule("--do", proc{|op, io| lex_state?(EXPR_ARG)}) do
+	tid = :DO
+	self.lex_state = TransState[tid]
+	ReservedWordToken.new(self, tid)
+      end
+
       @OP.def_rule("$") do
 	|op, io|
 	self.lex_state = EXPR_BEG
@@ -720,6 +744,9 @@ module Reish
 
       @OP.def_rule("-", proc{|op, io| lex_state?(EXPR_BEG_ANY)}) do
 	|op, io|
+
+p "X"
+print_lex_state
 
 	if /\s/ =~ io.peek(0)
 	  self.lex_state = EXPR_ARG
@@ -775,7 +802,7 @@ module Reish
     def identify_id(io)
       token = ""
 
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;\(\)<>\[\{\}\]\`\$\"\']/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;,\(\)<>\[\{\}\]\`\$\"\'\*]/ !~ ch
 	print ":", ch, ":" if Debug
 
 	if /[\/\-\+]/ =~ ch
@@ -795,7 +822,7 @@ module Reish
     end
 
     def identify_path(io, token = "")
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>]/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;,\(\)<>\*]/ !~ ch
 	print ":", ch, ":" if Debug
 
 	token.concat ch
@@ -853,7 +880,7 @@ module Reish
 
     def identify_wildcard(io, token = "")
       
-      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\"\']/ !~ ch
+      while /[[:graph:]]/ =~ (ch = io.getc) && /[\|&;\(\)<>\"\'\$]/ !~ ch
 	print ":", ch, ":" if Debug
 	token.concat ch
       end

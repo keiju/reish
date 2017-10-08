@@ -55,6 +55,7 @@ module Reish
 
     attr_reader :lex
     attr_reader :job_controller
+    attr_reader :codegen
 
     attr_reader :completor
 
@@ -129,7 +130,7 @@ module Reish
 	  input = @lex.reset_readed
 	  if Reish::debug_input?
 	    puts "input: #{input}"
-	    puts "input_unit: #{@current_input_unit}"
+	    puts "input_unit: #{@current_input_unit.pretty_inspect}"
 	  end
 	rescue ParseError => exc
 	  puts exc.message
@@ -366,6 +367,7 @@ module Reish
 
       commands.sort!.uniq!
       commands
+#      []
     end
 
     def send_with_redirection(receiver, method, args, reds, &block)

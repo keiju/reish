@@ -8,7 +8,7 @@ ls -l -F
 echo "括弧付きシンプルコマンド"
 ls(-l)
 ls(-l -F)
-ls(-l, -F)
+#ls(-l, -F)	#<= サポートしていない
 /ls(-l)
 
 echo "コンポジット"
@@ -19,13 +19,18 @@ echo "論理コマンド"
 true
 false
 true && ls
+false && ls
+true || ls
 false || ls
+-f TODO && ls
+
 
 echo "パイプライン"
 ls | cat
 ls -l | grep %/TODO/
 ls -l | /grep TODO
 
+echo "strictパイプライン"
 ls.cat
 ls(-l).cat
 ls(-l).grep(%/TODO/)
@@ -36,6 +41,12 @@ ls(-l)::cat
 ls(-l)::grep(%/TODO/)
 ls(-l)::/grep(TODO)
 
+ls::grep %/TODO/
+ls(-l)::grep %/TODO/
+ls.grep %/TODO/
+ls(-l).grep %/TODO/
+
+echo "パイプライン結合"
 ls | grep %/TODO/ | cat
 ls | /grep TODO | cat
 
@@ -46,7 +57,7 @@ ls [a-z]*
 #ls ~
 
 echo "イテレータ"
-ls | each do |l| p $l end
+ls | each $do |l| p $l; end
 ls | each{|l| p $l}
 ls.each{|l| p $l}
 ls::each{|l| p $l}
@@ -84,11 +95,21 @@ p $(1 + 2)
 echo "アサインコマンド"
 foo = foo
 bar = 100
+
+foo = (true || "string")
+foo = (true && "string")
+foo = (false || "string")
+foo = (false && "string")
+foo = (/true || "string")
+foo = (/true && "string")
+foo = (/false || "string")
+foo = (/false && "string")
+
+
+echo "インデックスアサインコマンド"
 baz = %[1 2 foo]
 
 baz[2] = zoo
-
-echo "インデックスアサインコマンド"
 baz[2] = bar
 
 echo "インデックスレフ"
@@ -189,6 +210,10 @@ else
   echo "IF4"
 end
 
+if true
+  ls -l
+end
+
 echo "WHILE"
 ary=%[1 2 3]
 while e = $ary.shift
@@ -276,6 +301,7 @@ echo `ls`foo
 echo `ls`foo`ls`
 echo `ls`foo`ls`bar
 
+
 echo foo-$ls
 echo foo-$ls()
 echo foo-$ls()bar
@@ -290,6 +316,25 @@ echo *"foo"
 echo *"foo"*
 echo *"foo"*"bar"
 
+foo=R
+echo *$foo
+echo *$foo*
 
+echo "関数定義"
+def foo(a)
+  ls $a
+end
+foo -l
+foo -l | cat
 
+def bar(a b)
+  ls $a
+  ls -b
+end
+bar -l -a
 
+def baz
+  cat
+end
+ls -l | baz
+foo -l | baz

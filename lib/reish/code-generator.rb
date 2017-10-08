@@ -13,6 +13,7 @@
 
 
 require "reish/node-visitor"
+require "reish/function"
 
 module Reish
 
@@ -37,6 +38,26 @@ module Reish
     def visit_index_ref_command(command)
       super do |var, idx|
 	"#{var}[#{idx}]"
+      end
+    end
+
+    def visit_def_command(command)
+      super do |name, args, body|
+
+	ags = args && args.join(", ")
+
+	fclass = Reish::define_function(UserFunctionSpace, name, args, body, self)
+	%{Reish::UserFunctionSpace.module_eval %{
+	  def #{name}(#{ags})
+	    #{fclass.name}.new(self#{ags && ", #{ags}" || ""})
+	  end
+        }}
+      end
+    end
+
+    def visit_alias_command(command)
+      super do |id, pl|
+	"alias #{id} #{pl}"
       end
     end
 
@@ -239,11 +260,13 @@ module Reish
       super do |s|
 	case seq.pipeout
 	when :BAR, :COLON2, :DOT
-	  "Reish::ConcatCommand.new(#{s.join(", ")})"
+	  "(#{s.join("; ")})"
 	when :TO_A
 	  "Reish::ConcatCommand.new(#{s.join(", ")}).resish_result"
-	when :RESULT
-	  "(#{s.join("; ")}).reish_result"
+	when :RESULT, :RESULTL
+	  "(#{s.join("; ")})"
+	when :NONE
+	  "(#{s.join("; ")})"
 	else
 	  s.join("; ")
 	end
@@ -274,41 +297,47 @@ module Reish
 	command.commands.zip(list) do |com, s|
 	  script.concat s
 
-	  unless com.kind_of?(Node::SimpleCommand)
-	    case com.pipeout
-	    when :BAR, :DOT
-	      script.concat "."
-	    when :COLON2
-	      script.concat "::"
-	    when :TO_A
-	      script.concat ".to_a"
-	    when :RESULT
-	      script.concat ".reish_result"
-	    when nil, :NONE
-	      # do nothing
-	    else
-	      raise NoImplementError
-	    end
-	  end
-	end
+  	  unless [Node::SimpleCommand].find{|klass| com.kind_of?(klass)}
+  	    case com.pipeout
+  	    when :BAR, :DOT
+  	      script.concat "."
+  	    when :COLON2
+  	      script.concat "::"
+  	    when :TO_A
+  	      script.concat ".to_a"
+  	    when :RESULT
+  	      script.concat ".reish_result"
+  	    when nil, :NONE
+  	      # do nothing
+  	    when :XNULL
+  	      script.concat ".reish_xnull"
+  	    when :RESULTL
+  	      script.concat ".reish_resultl"
+  	    else
+  	      raise NoImplementError
+  	    end
+  	  end
+ 	end
 
-	case command.pipeout
-	when :BAR, :DOT
-	  script.concat "."
-	when :COLON2
-	  script.concat "::"
-	when :TO_A
-	  script.concat ".to_a"
-	when :RESULT
-	  script.concat ".reish_result"
-	when :NONE
-	  # do nothing
-	when nil
-	  script.concat ".reish_term"
-	else
-	  p command
-	  raise NoImplementError
-	end
+#   	case command.pipeout
+#   	when :BAR, :DOT
+#   	  script.concat "."
+#   	when :COLON2
+#   	  script.concat "::"
+#   	when :TO_A
+#   	  script.concat ".to_a"
+#   	when :RESULT
+#   	  script.concat ".reish_result"
+#   	when :NONE
+#   	  # do nothing
+#   	when nil
+#   	  script.concat ".reish_term"
+#   	when :XNULL
+#   	  script.concat ".reish_xnull"
+#   	else
+#   	  p command
+#   	  raise NoImplementError
+#   	end
 	script
       end
     end
@@ -358,8 +387,15 @@ module Reish
 	  script.concat ".to_a"
 	when :RESULT
 	  script.concat ".reish_result"
-	when nil
+	when :RESULTL
+	  script.concat ".reish_resultl"
+	when :XNULL
+	  script.concat ".reish_xnull"
+	when :NONE
 	  # do nothing
+	when nil
+	  script.concat ".reish_term"
+
 	else
 	  raise NoImplementError
 	end
@@ -369,8 +405,29 @@ module Reish
 
     def visit_simple_command_with_redirection(command)
       super do |name, args, blk, reds|
-	"reish_send_with_redirection('#{name}', [#{args.join(", ")}], [#{reds.join(", ")}])#{command.block || ""}"
+	script = "reish_send_with_redirection('#{name}', [#{args.join(", ")}], [#{reds.join(", ")}])#{command.block || ""}"
+
+	case command.pipeout
+	when :BAR, :DOT
+	  script.concat "."
+	when :COLON2
+	  script.concat "::"
+	when :TO_A
+	  script.concat ".to_a"
+	when :RESULT
+	  script.concat ".reish_result"
+	when :XNULL
+	  script.concat ".reish_xnull"
+	when :NONE
+	  # do nothing
+	when nil
+	  script.concat ".reish_term"
+
+	else
+	  raise NoImplementError
 	end
+
+      end
     end
 
     def visit_do_block(command)
@@ -394,7 +451,7 @@ module Reish
 	  script.concat ".to_a"
 	when :RESULT
 	  script.concat ".reish_result"
-	when nil
+	when nil, :NONE
 	  # do nothing
 	else
 	  raise NoImplementError
@@ -406,7 +463,7 @@ module Reish
 
     def visit_redirector(command)
       super do |code, reds|
-	"reish_shell_command_with_redirection(\'#{code}\', [#{reds.join(",")}], binding).reish_term"
+	"reish_shell_command_with_redirection(\'#{code}\', [#{reds.join(",")}], binding)"
       end
     end
 

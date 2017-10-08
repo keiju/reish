@@ -108,6 +108,20 @@ module Reish
       attr_accessor :space_seen
       alias space_seen? space_seen
 
+      def pipeout=(val)
+	case val
+	when :BAR, :COLON2, :BAR_AND, :DOT, :NONE, :RESULT, :RESULTL
+	  @first.pipeout = :RESULTL
+	  @second.pipeout = :RESULTL
+	when :XNULL
+	  @first.pipeout = :XNULL
+	  @second.pipeout = :XNULL
+	when nil
+	  @first.pipeout = nil
+	  @second.pipeout = nil
+	end
+      end
+
       def_accept
     end
 
@@ -156,7 +170,7 @@ module Reish
 
       def pipeout=(val)
 	@pipeout = val
-#	@commands.last.pipeout = val
+	@commands.last.pipeout = val
       end
       
       def pipe_command(attr, com)
@@ -245,6 +259,36 @@ module Reish
       def_accept
     end
 
+    class DefCommand<Command
+      def_constructor
+
+      def initialize(id, args, body)
+	@id = id
+	@args = args
+	@body = body
+      end
+
+      attr_reader :id
+      attr_reader :args
+      attr_reader :body
+
+      def_accept
+    end
+
+    class AliasCommand<Command
+      def_constructor
+
+      def initialize(id, pipeline)
+	@id = id
+	@pipeline = pipeline
+      end
+
+      attr_reader :id
+      attr_reader :pipeline
+
+      def_accept
+    end
+
     class BeginCommand<Command
       def_constructor
       
@@ -253,12 +297,32 @@ module Reish
 	@res = res
 	@els = els
 	@ens = ens
+
+#	@seq.pipeout= :XNULL
+#	@seq.last.pipeout= nil
       end
 
       attr_reader :seq
       attr_reader :res
       attr_reader :els
       attr_reader :ens
+
+      def pipeout=(val)
+	@pipeout = val
+
+	@seq.pipeout= val
+	case val
+	when :BAR, :COLON2, :BAR_AND, :DOT, :RESULT, :XNULL, :NONE, :RESULTL
+	  @res.each{|r| r.pipeout = :XNULL} if @res
+	  @els.pipeout = :XNULL if @els
+	  @ens.pipeout = :XNULL if @ens
+	when nil
+	  @seq.last.pipeout = nil
+	  @res.each{|r| r.pipeout = nil} if @res
+	  @els.pipeout = nil if @els
+	  @ens.pipeout = nil if @ens
+	end
+      end
 
       def_accept
     end
@@ -276,6 +340,10 @@ module Reish
       attr_reader :exc_var
       attr_reader :seq
 
+      def pipeout=(val)
+	@seq.pipeout = val
+      end
+
       def_accept
     end
       
@@ -285,6 +353,7 @@ module Reish
 
       def initialize(cond, then_list=nil, else_list=nil)
 	@cond = cond
+	@cond.pipeout = :XNULL
 	@then_list = then_list
 	@else_list = else_list
       end
@@ -295,24 +364,29 @@ module Reish
 
       def pipeout=(val)
 	@pipeout = val
-	@then_list.last.pipeout = val if @then_list
-	@else_list.last.pipeout = val if @else_list
+	@then_list.pipeout = val if @then_list
+	@else_list.pipeout = val if @else_list
       end
 
       def_accept
     end
-
 
     class WhileCommand<Command
       def_constructor
 
       def initialize(cond, node)
 	@cond = cond
+	@cond.pipeout = :XNULL
 	@node = node
       end
 
       attr_reader :cond
       attr_reader :node
+
+      def pipeout=(val)
+	@pipeout = val
+	@node.pipeout = val
+      end
 
       def_accept
     end
@@ -322,11 +396,17 @@ module Reish
 
       def initialize(cond, node)
 	@cond = cond
+	@cond.pipeout = :XNULL
 	@node = node
       end
 
       attr_reader :cond
       attr_reader :node
+
+      def pipeout=(val)
+	@pipeout = val
+	@node.pipeout = val
+      end
 
       def_accept
     end
@@ -334,15 +414,27 @@ module Reish
     class ForCommand<Command
       def_constructor
 
+#       def initialize(vars, enum, seq)
+# 	@vars = vars
+# 	@enum = enum
+# 	@seq = seq
+#       end
+
       def initialize(vars, enum, seq)
-	@vars = vars
-	@enum = enum
-	@seq = seq
+ 	@vars = vars
+ 	@enum = enum
+	@enum.pipeout = :RESULT
+ 	@seq = seq
       end
 
       attr_reader :vars
       attr_reader :enum
       attr_reader :seq
+
+      def pipeout=(val)
+	@pipeout = val
+	@seq.pipeout = val
+      end
 
       def_accept
     end
@@ -352,11 +444,17 @@ module Reish
 
       def initialize(cond, body)
 	@cond = cond
+	@cond.pipeout = :RESULT
 	@body = body
       end
 
       attr_reader :cond
       attr_reader :body
+
+      def pipeout=(val)
+	@pipeout = val
+	@body.each{|w| w.pipeout=val}
+      end
 
       def_accept
     end
@@ -366,11 +464,18 @@ module Reish
 
       def initialize(cond, seq)
 	@cond = cond
+#	@cond = cond.nodes
+#	@cond.each{|c| c.pipeout = :RESULT}
 	@seq = seq
       end
 
       attr_reader :cond
       attr_reader :seq
+
+      def pipeout=(val)
+	@pipeout = val
+	@seq.pipeout = val
+      end
 
       def_accept
     end
@@ -480,6 +585,7 @@ module Reish
       def initialize(com, cond)
 	@com = com
 	@cond = cond
+	@cond.pipeout = :XNULL
       end
 
       attr_reader :com
@@ -494,6 +600,7 @@ module Reish
       def initialize(com, cond)
 	@com = com
 	@cond = cond
+	@cond.pipeout = :XNULL
       end
 
       attr_reader :cond
@@ -508,6 +615,7 @@ module Reish
       def initialize(com, cond)
 	@com = com
 	@cond = cond
+	@cond.pipeout = :XNULL
       end
 
       attr_reader :cond
@@ -522,6 +630,7 @@ module Reish
       def initialize(com, cond)
 	@com = com
 	@cond = cond
+	@cond.pipeout = :XNULL
       end
 
       attr_reader :cond
@@ -550,6 +659,8 @@ module Reish
       def initialize(node)
 	super()
 	@nodes = node.nodes
+#	@nodes[0..-2].each{|n| n.pipeout = :XNULL}
+
 	@space_seen = !@nodes.empty? && @nodes.first.space_seen
       end
       
@@ -559,9 +670,15 @@ module Reish
 	@pipeout = val
 	case val
 	when :BAR, :COLON2, :BAR_AND, :DOT
+	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
 	  @nodes.last.pipeout = :RESULT
-	else
+	when :XNULL
+	  @nodes.each{|n| n.pipeout = :XNULL}
+	when :NONE, :RESULT, :RESULTL
+	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
 	  @nodes.last.pipeout = val
+	when nil
+	  @nodes.last.pipeout = nil
 	end
       end
 
@@ -605,7 +722,16 @@ module Reish
       def pipeout=(val)
 	@pipeout = val
 	
-	@nodes.each{|com| com.pipeout=val}
+	case val
+	when :RESULT, :RESULTL
+	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
+	  @nodes.last.pipeout = val
+	when :BAR, :COLON2, :BAR_AND, :DOT, :NONE
+	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
+	  @nodes.last.pipeout = :NONE
+	when :XNULL, nil
+	  @nodes.each{|n| n.pipeout = val}
+	end
       end
 
       def add_command(com)
@@ -712,6 +838,17 @@ module Reish
       end
 
       def_accept
+    end
+
+    class VoidSimpleCommand<SimpleCommand
+      def_constructor
+
+      def initialize
+	@name = nil
+	@args = []
+	@block = nil
+	@pipeout = nil
+      end
     end
 
     class DoBlock<Node
@@ -939,7 +1076,9 @@ module Reish
       def_accept
     end
      
-    class EOFNode<Node;end
+    class EOFNode<Node
+      def_accept "EOF"
+    end
     EOF = EOFNode.new
 
     class NOPNode<Node

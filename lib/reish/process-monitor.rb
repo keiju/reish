@@ -95,6 +95,10 @@ module Reish
 	end
       end
 
+#      Thread.start do
+#	sleep 10
+#      end
+
       @monitor = Thread.start{
 #	Thread.abort_on_exception = true
 
