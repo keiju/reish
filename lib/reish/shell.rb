@@ -499,7 +499,7 @@ module Reish
       end
 
       @process_monitor = ProcessMonitor.new(@term_ctl)
-      @process_monitor.start_monitor
+#      @process_monitor.start_monitor
 
       trap(:SIGINT) do
 	signal_handle
@@ -513,7 +513,10 @@ module Reish
       trap(:TTOU, :IGNORE)
 
       trap(:SIGCHLD) do
-	@process_monitor.accept_sigchild
+	puts "caught SIGCHLD" if Reish::debug_jobctl?
+#	Thread.start do
+	  @process_monitor.accept_sigchild
+#	end
       end
     end
 
