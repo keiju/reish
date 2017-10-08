@@ -524,7 +524,6 @@ module Reish
 	    @gets_start = true
 	    @gets_cv.broadcast
 	  end
-	  
 	  lines.each do |line| 
 	    @in_queue.push line+"\n"
 	  end

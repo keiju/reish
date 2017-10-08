@@ -240,7 +240,11 @@ module Reish
 	opts[-1][:pgroup] = true if term_ctl?
 	ProcessMonitor.Monitor.spawn_exe(exe, *opts) do
 	  #Reish.tcsetpgrp(STDOUT, exe.pid) if @foreground
-	  set_ctlterm if @foreground
+	  begin
+	    set_ctlterm if @foreground
+	  rescue Errno::ESRCH
+	    # ignore
+	  end
 	end
       ensure
 	#Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground

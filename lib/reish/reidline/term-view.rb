@@ -481,7 +481,6 @@ module Reish
 	      m_buffer.push l
 	    end
 	  end
-#ttyput m_buffer
 	  if m_buffer.size + text_height < @term_height
 	    m_buffer.each do |l|
 	      if l == m_buffer.last
@@ -533,7 +532,6 @@ module Reish
 	ti_hpos(b_col)
 	@t_row = b_row
 	@t_col = b_col
-#ttyput "MCS:", text_height, @message_h, b_row, b_col
 #	reset_cursor_position
       end
 

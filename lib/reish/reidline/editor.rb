@@ -334,9 +334,11 @@ module Reish
   end
 end
 
+TTY0 = File.open("/dev/pts/0", "w")
 def ttyput(*args)
   str = args.collect{|arg| arg.inspect}.join("\n")
-  system("echo '#{str}' > /dev/pts/0")
+  TTY0.puts str
+#  system("echo '#{str}' > /dev/pts/0")
 end
 
 if $0 == __FILE__
