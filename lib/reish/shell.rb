@@ -210,13 +210,13 @@ module Reish
       case signal
       when :INT
 	unless @exenv.ignore_sigint?
-	  print "\nabort!!\n" if verbose?
+	  STDERR.syswrite "\nabort!!\n" if verbose?
 	  exit
 	end
 
 	case @signal_status
 	when :IN_INPUT
-	  print "^C\n"
+	  STDERR.syswrite "^C\n"
 	  raise Interrupt
 	when :IN_EVAL
 	  reish_abort(self)
@@ -230,7 +230,7 @@ module Reish
       when :TSTP
 	case @signal_status
 	when :IN_EVAL
-	  print "^Z"
+	  STDERR.syswrite "^Z\n"
 	  reish_tstp(self)
 	when :IN_INPUT, :IN_EVAL, :IN_LOAD, :IN_IRB
 	  # ignore
@@ -513,7 +513,10 @@ module Reish
       trap(:TTOU, :IGNORE)
 
       trap(:SIGCHLD) do
-	@process_monitor.accept_sigchild
+	STDERR.syswrite "caught SIGCHLD\n" if Reish::debug_jobctl?
+#	Thread.start do
+	  @process_monitor.accept_sigchild
+#	end
       end
     end
 
