@@ -89,28 +89,28 @@ module Reish
       end
     end
 
-#     def start_monitor
+    def start_monitor
 
-# # ruby's Bug#13768
-    Thread.start do
-      loop do
-	sleep 100
+      # ruby's Bug#13768
+      Thread.start do
+	loop do
+	  sleep 100
+	end
       end
+      
+#       Thread.start do
+# 	sleep 10
+#       end
+      @monitor = Thread.start{
+ 	Thread.abort_on_exception = true
+ 	loop do
+ 	  puts "ProcessMonitor: event waiting" if Reish::debug_jobctl?
+ 	  @monitor_queue.pop
+	  #	  Thread.stop
+	  child_handle
+ 	end
+      }
     end
-
-# #       Thread.start do
-# # 	sleep 10
-# #       end
-#       @monitor = Thread.start{
-# 	Thread.abort_on_exception = true
-# 	loop do
-# 	  puts "ProcessMonitor: event waiting" if Reish::debug_jobctl?
-# 	  @monitor_queue.pop
-# #	  Thread.stop
-#	  child_handle
-# 	end
-#       }
-#     end
 
     WAIT_FLAG = Process::WNOHANG|Process::WUNTRACED|Reish::WCONTINUED
     def child_handle
@@ -172,12 +172,12 @@ module Reish
     end
 
     def accept_sigchild
-puts "ACCEPT_SIGCHILD: IN" if Reish::debug_jobctl?
-#      @monitor_queue.push self
-      Thread.start do
-	child_handle
-      end
-puts "ACCEPT_SIGCHILD: OUT" if Reish::debug_jobctl?
+STDOUT.syswrite "ACCEPT_SIGCHILD: IN\n" if Reish::debug_jobctl?
+      @monitor_queue.push self
+#      Thread.start do
+#	child_handle
+#      end
+STDOUT.syswrite "ACCEPT_SIGCHILD: OUT\n" if Reish::debug_jobctl?
     end
 
   end
