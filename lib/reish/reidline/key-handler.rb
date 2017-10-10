@@ -47,7 +47,8 @@ module Reish
 	  block = method_id
 	end
 	
-	@head.place key.chars, Node.new(key, &block)
+	chrs = key.force_encoding("ASCII-8bit").chars.collect{|c| c.ord}
+	@head.place chrs, Node.new(key, &block)
       end
 
       def def_keys(*keys, &block)
@@ -139,8 +140,8 @@ module Reish
 	  end
 
 	  op.push ch
-#	  if node = @nodes[ch.force_encoding("ASCII-8bit")]
-	  if node = @nodes[ch]
+	  if node = @nodes[ch.ord]
+#	  if node = @nodes[ch]
 	    if node.leaf?
 	      node
 	    else
@@ -173,7 +174,8 @@ require "pp"
   handler.def_key("\e[5~"){puts "ROLL UP"}
   handler.def_key("\e[6~"){puts "ROLL DOWN"}
 
-  handler.def_key("\M-p"){puts "M-p"}
+  handler.def_key("\M-p"){puts "META<p>"}
+  handler.def_key("\M-n"){puts "META<n>"}
 
   handler.def_key("\r"){puts "CR"}
   
