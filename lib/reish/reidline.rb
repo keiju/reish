@@ -1,4 +1,4 @@
-#
+1#
 #   reidline.rb - 
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
@@ -45,6 +45,7 @@ module Reish
 
     def init_editor
       @editor = Editor.new
+      @editor.history = @history
       @multi_line_mode = false
       @editor.set_closed_proc(&@closed_proc)
       @editor.set_cmpl_proc(&@cmpl_proc)
@@ -53,7 +54,7 @@ module Reish
     def get_lines(prompt = nil)
       init_editor unless @editor
       begin
-	line = @editor.get_lines(prompt)
+	lines = @editor.get_lines(prompt)
       rescue Interrupt
 	input_closed
 	raise
@@ -61,9 +62,10 @@ module Reish
 	puts "reidline abort!!"
 	input_closed
 	raise
-      end #until @closed_proc.call(line)
+      end #until @closed_proc.call(lines)
       input_closed
-      line
+      @history << lines unless /^\s+$/ =~ lines
+      lines
     end
 
     def set_closed_proc(&block)

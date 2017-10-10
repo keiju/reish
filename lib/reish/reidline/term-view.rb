@@ -52,7 +52,9 @@ module Reish
       end
 
       def change_buffer
+	old_height = nil
 	if @buffer 
+	  old_height = text_height
 	  @buffer.delete_observer(self)
 	end
 
@@ -61,8 +63,8 @@ module Reish
 	
 #	@ORG_H, dummy = ti_cursor_pos
 
-	redisplay cache_update: true
-
+	cursor_bol
+	redisplay cache_update: true, height: old_height
       end
 
       def clear_display
@@ -71,7 +73,7 @@ module Reish
 	redisplay(cache_update: true)
       end
 
-      def redisplay(from: 0, cache_update: false)
+      def redisplay(from: 0, cache_update: false, height: nil)
 	if cache_update
 	  @cache = []
 	  @cache_prompts = []
@@ -99,6 +101,11 @@ module Reish
 	      print "\n"
 	    end
 	  end
+	end
+	if height && i < height
+	  ti_down
+	  (height-i).times{ti_delete_line}
+	  ti_up
 	end
 	reset_cursor_position
       end

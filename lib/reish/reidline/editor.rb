@@ -16,6 +16,9 @@ module Reish
       def initialize(buffer = nil)
 	@view = TermView.new(self)
 
+	@history = nil
+	@current_history = 0
+
 	@in_move_cursor = nil
 
 	@closed_proc = nil
@@ -38,6 +41,8 @@ module Reish
 	  ["\e[D", method(:cursor_left)],
 	  ["\e<", method(:cursor_bob)],
 	  ["\e>", method(:cursor_eob)],
+	  ["\ep", method(:history_prev)],
+	  ["\en", method(:history_next)],
 
 	  ["\C-a", method(:cursor_beginning_of_line)],
 	  ["\C-b", method(:cursor_left)],
@@ -53,6 +58,12 @@ module Reish
 	  ["\C-p", method(:cursor_up)],
 	  ["\C-m", method(:key_cr)],
 
+	  ["\M-<", method(:cursor_bob)],
+	  ["\M->", method(:cursor_eob)],
+	  ["\M-p", method(:history_prev)],
+	  ["\M-n", method(:history_next)],
+
+
 	  ["\u007F", method(:backspace)],
 	]
 	@handler.def_default method(:insert)
@@ -62,11 +73,17 @@ module Reish
       attr_reader :c_row
       attr_reader :c_col
 
+      attr_accessor :history
+
       def set_buffer(buffer = nil)
-	unless buffer
-	  buffer = Buffer.new
+	case buffer
+	when nil
+	  @buffer = Buffer.new
+	when String
+	  @buffer = Buffer.new(buffer.split(/\n/).collect{|l| l+"\n"})
+	else
+	  @buffer = buffer
 	end
-	@buffer = buffer
 
 	@c_row = @buffer.size - 1
 	@c_col = @buffer.last.size
@@ -137,6 +154,7 @@ module Reish
 	@c_row -= 1
 	if @c_row < 0
 	  @c_row = 0
+	  history_prev
 	end
 	cursor_reposition if update
       end
@@ -144,7 +162,8 @@ module Reish
       def cursor_down(*args, update: true)
 	@c_row += 1
 	if @c_row >= @buffer.size
-	  @c_row = @buffer.size - 1
+	  @c_row = 0
+	  history_next
 	end
 	cursor_reposition if update
       end
@@ -312,6 +331,28 @@ module Reish
 	    end
 	  end
 	end
+      end
+
+      def history_prev(*args)
+	@current_history -= 1
+	if @history.size + @current_history < 0
+	  @current_history += 1
+	end
+	lines = @history[@current_history]
+	cursor_beginning_of_buffer
+	set_buffer(lines)
+	@closed_proc.call(@buffer.buffer)
+      end
+
+      def history_next(*args)
+	@current_history += 1
+	if @current_history > 0
+	  @current_history -= 1
+	end
+	lines = @history[@current_history]
+	cursor_beginning_of_buffer
+	set_buffer(lines)
+	@closed_proc.call(@buffer.buffer)
       end
 
 #       def init_more_keys

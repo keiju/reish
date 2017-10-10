@@ -139,6 +139,7 @@ module Reish
 	  end
 
 	  op.push ch
+#	  if node = @nodes[ch.force_encoding("ASCII-8bit")]
 	  if node = @nodes[ch]
 	    if node.leaf?
 	      node
@@ -162,7 +163,7 @@ if $0 == __FILE__
 
 require "pp"
   
-  handler = Reish::Editor::KeyHandler.new
+  handler = Reish::Reidline::KeyHandler.new
   handler.def_key("\e[A"){puts "UP"}
   handler.def_key("\e[C"){puts ">>"}
   handler.def_key("\e[B"){puts "DOWN"}
@@ -171,6 +172,8 @@ require "pp"
   handler.def_key("\e[3~"){puts "DEL"}
   handler.def_key("\e[5~"){puts "ROLL UP"}
   handler.def_key("\e[6~"){puts "ROLL DOWN"}
+
+  handler.def_key("\M-p"){puts "M-p"}
 
   handler.def_key("\r"){puts "CR"}
   
@@ -185,6 +188,8 @@ require "pp"
   handler.def_default do |io, ch|
     puts "DEF##{ch.inspect}"
   end
+
+  p handler
 
   STDIN.noecho do
     STDIN.raw do

@@ -4,13 +4,7 @@
 #   	Copyright (C) 2014-2017 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
-require "forwardable"
-
-require 'reish/src_encoding'
-require 'reish/magic-file'
-
 require "reish/reidline"
-
 
 module Reish
   begin

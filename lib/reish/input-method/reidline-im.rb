@@ -301,10 +301,6 @@ module Reish
       @line_no = no
     end
 
-#    def prompt=(prompt)
-#      @prompt0 = prompt
-#    end
-
     # Reads the next line from this input method.
     #
     # See IO#gets for more information.

@@ -16,7 +16,7 @@ module Reish
       include Observable
 
       def initialize(lines = ["\n"])
-	@buffer = lines.collect{|l| l[-1] = ""}
+	@buffer = lines.collect{|l| l.chomp}
 
 	@prompts = []
 #100.times{|i| @prompts.push "#{i}:#{2**rand(10)}> "}
