@@ -254,7 +254,8 @@ module Reish
 	  rescue
 	    bak = $!
 	    begin
-	      @reidline.message([$!.message, *$!.backtrace].join("\n"))
+	      @reidline.message($!.message)
+	      @reidline.message($!.backtrace.join("\n"), append: true)
 	    rescue
 	      puts "Reidline abort on exeption!!"
 	      puts "Original Exception"

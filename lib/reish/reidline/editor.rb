@@ -130,8 +130,8 @@ module Reish
 	contents
       end
 
-      def message(str)
-	@view.message(str)
+      def message(str, append: false)
+	@view.message(str, append: append)
       end
 
       def message_clear

@@ -475,9 +475,11 @@ module Reish
 	end
       end
 
-      def message(str)
-	message_clear if @message_h > 0
-	message_cursor_save do
+      def message(str, append: false)
+	unless append
+	  message_clear if @message_h > 0
+	end
+	message_cursor_save(append: append) do
 	  m_buffer = []
 
 	  lines = str.lstrip.split(/\n/)
@@ -488,7 +490,7 @@ module Reish
 	      m_buffer.push l
 	    end
 	  end
-	  if m_buffer.size + text_height < @term_height
+	  if text_height + @message_h + m_buffer.size < @term_height
 	    m_buffer.each do |l|
 	      if l == m_buffer.last
 		print l
@@ -496,13 +498,13 @@ module Reish
 		puts l
 	      end
 	    end
-	    @message_h = m_buffer.size
+	    @message_h += m_buffer.size
 	  else
 	    message_more(m_buffer)
 	  end
 	end
       end
-
+      
       def message_more(m_buffer)
 	m_height = @term_height - text_height - 2
 
@@ -525,12 +527,15 @@ module Reish
 	@message_h = 0
       end
 
-      def message_cursor_save(&block)
+      def message_cursor_save(append: false, &block)
 	b_row = @t_row
 	b_col = @t_col
 
 	t_row, t_col = term_pos(text_height - 1, @cache[text_height - 1].size - 1)
 	cursor_move(t_row, t_col)
+	if append
+	  ti_down(@message_h)
+	end
 	print "\n"
 	
 	block.call

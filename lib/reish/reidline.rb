@@ -1,4 +1,4 @@
-1#
+#
 #   reidline.rb - 
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
@@ -72,8 +72,8 @@ module Reish
       @closed_proc = block
     end
 
-    def message(str)
-      @editor.message(str)
+    def message(str, append: false)
+      @editor.message(str, append: append)
     end
 
     def set_prompt(line_no, prompt)
