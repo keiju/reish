@@ -225,7 +225,91 @@ module Reish
       end
 
       @lex.set_input(@im){@im.gets}
+      start_closing_checker
+      @reidline.set_closed_proc &method(:closed?)
+    end
 
+    attr_accessor :completor
+    attr_accessor :promptor
+
+    def line_no=(no)
+      @line_no = no
+    end
+
+    # Reads the next line from this input method.
+    #
+    # See IO#gets for more information.
+    def gets
+      #        Readline.input = @stdin
+      #        Readline.output = @stdout
+
+      #	Readline.completion_proc = @completor.completion_proc if @completor
+
+      @reidline.init_editor
+
+#      @gets_mx.synchronize do
+#	@gets_start = true
+#	@gets_cv.broadcast
+#      end
+
+      begin
+	if l = @reidline.get_lines(@prompt)
+	  #          HISTORY.push(l) if !l.empty?
+	  #@line[@line_no += 1] = l + "\n"
+#	  @line[@line_no + 1] =  l + "\n"
+	  l
+	else
+	  @eof = true
+	  l
+	end
+      rescue Interrupt
+#	completion_cheker_reset
+	raise
+      end
+    end
+
+
+    # Whether the end of this input method has been reached, returns +true+
+    # if there is no more data to read.
+    #
+    # See IO#eof? for more information.
+    def eof?
+      @eof
+    end
+
+    # Whether this input method is still readable when there is no more data to
+    # read.
+    #
+    # See IO#eof for more information.
+    def readable_after_eof?
+      true
+    end
+
+    # Returns the current line number for #io.
+    #
+    # #line counts the number of times #gets is called.
+    #
+    # See IO#lineno for more information.
+    def line(line_no)
+      @line[line_no]
+    end
+
+    # The external encoding for standard input.
+    def encoding
+      @stdin.external_encoding
+    end
+
+    def tty?
+      STDIN.tty?
+    end 
+
+    def real_io
+      STDIN
+    end
+
+    def_delegator :@reidline, :set_cmpl_proc
+
+    def start_closing_checker
       @gets_start = false
       @gets_mx = Mutex.new
       @gets_cv = ConditionVariable.new
@@ -270,108 +354,30 @@ module Reish
 	end
       }
 
-      @reidline.set_closed_proc do |lines|
-	ret = nil
-	begin
-	  @gets_mx.synchronize do
-	    @gets_start = true
-	    @gets_cv.broadcast
-	  end
-	  lines.each do |line| 
-	    @in_queue.push line+"\n"
-	  end
-#	  until @in_queue.empty?
-#	    sleep 0.02
-#	  end
-	  @in_queue.push nil
-#	  @closing_checker.raise ParserClosingSupp
-	  ret = @out_queue.pop
-#	  @lex.reset_input
-	  @in_queue.clear
-	  @out_queue.clear
-	ensure
-	end
-	ret
-      end
     end
 
-    attr_accessor :completor
-    attr_accessor :promptor
-
-    def line_no=(no)
-      @line_no = no
-    end
-
-    # Reads the next line from this input method.
-    #
-    # See IO#gets for more information.
-    def gets
-      #        Readline.input = @stdin
-      #        Readline.output = @stdout
-
-      #	Readline.completion_proc = @completor.completion_proc if @completor
-
-      @reidline.init_editor
-
-#      @gets_mx.synchronize do
-#	@gets_start = true
-#	@gets_cv.broadcast
-#      end
-
+    def closed?(lines)
+      ret = nil
       begin
-	if l = @reidline.get_lines(@prompt)
-	  #          HISTORY.push(l) if !l.empty?
-	  #@line[@line_no += 1] = l + "\n"
-#	  @line[@line_no + 1] =  l + "\n"
-	  l
-	else
-	  @eof = true
-	  l
+	@gets_mx.synchronize do
+	  @gets_start = true
+	  @gets_cv.broadcast
 	end
-      rescue Interrupt
-#	completion_cheker_reset
-	raise
+	lines.each do |line| 
+	  @in_queue.push line+"\n"
+	end
+#	until @in_queue.empty?
+#	  sleep 0.02
+#	end
+	@in_queue.push nil
+#	@closing_checker.raise ParserClosingSupp
+	ret = @out_queue.pop
+#	@lex.reset_input
+	@in_queue.clear
+	@out_queue.clear
+      ensure
       end
+      ret
     end
-
-    # Whether the end of this input method has been reached, returns +true+
-    # if there is no more data to read.
-    #
-    # See IO#eof? for more information.
-    def eof?
-      @eof
-    end
-
-    # Whether this input method is still readable when there is no more data to
-    # read.
-    #
-    # See IO#eof for more information.
-    def readable_after_eof?
-      true
-    end
-
-    # Returns the current line number for #io.
-    #
-    # #line counts the number of times #gets is called.
-    #
-    # See IO#lineno for more information.
-    def line(line_no)
-      @line[line_no]
-    end
-
-    # The external encoding for standard input.
-    def encoding
-      @stdin.external_encoding
-    end
-
-    def tty?
-      STDIN.tty?
-    end 
-
-    def real_io
-      STDIN
-    end
-
-    def_delegator :@reidline, :set_cmpl_proc
   end
 end
