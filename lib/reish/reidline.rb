@@ -22,6 +22,7 @@ module Reish
       @continue = true
 
       @closed_proc = nil
+      @prompt_proc = nil
     end
 
     attr_accessor :multi_line_mode

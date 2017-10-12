@@ -325,25 +325,28 @@ module Reish
 	    end
 	    @lex.set_line_no(@line_no)
 	    @lex.initialize_input
+	    @exc = nil
 	    @parser.do_parse
 	    @out_queue.push true
 
 	  rescue ParserClosingSupp, ParserClosingEOFSupp
+	    @exc = $!
 	    @out_queue.push false
 
 	  rescue Racc::ParseError
+	    @exc = $!
 	    @reidline.message($!.message)
 	    @out_queue.push false
 
 	  rescue
-	    bak = $!
+	    @exc = $!
 	    begin
 	      @reidline.message($!.message)
 	      @reidline.message($!.backtrace.join("\n"), append: true)
 	    rescue
 	      puts "Reidline abort on exeption!!"
 	      puts "Original Exception"
-	      p bak
+	      p @exc
 	      puts "Reidline Exception"
 	      p $!
 	    end
@@ -356,23 +359,30 @@ module Reish
 
     end
 
+    def resume_closing_checker
+      @gets_mx.synchronize do
+	@gets_start = true
+	@gets_cv.broadcast
+      end
+    end
+
     def closed?(lines)
       ret = nil
       begin
-	@gets_mx.synchronize do
-	  @gets_start = true
-	  @gets_cv.broadcast
-	end
+	resume_closing_checker
+
 	lines.each do |line| 
 	  @in_queue.push line+"\n"
 	end
-#	until @in_queue.empty?
-#	  sleep 0.02
-#	end
 	@in_queue.push nil
-#	@closing_checker.raise ParserClosingSupp
 	ret = @out_queue.pop
-#	@lex.reset_input
+	if !ret && @exc && @parser.err_token
+	  rest = ttyput lines.size - @parser.err_token.line_no
+	  for l in @parser.err_token.line_no + 1 .. lines.size do
+	    @reidline.set_prompt(l - 1, @promptor.call(l, "", nil, nil))
+	  end
+	end
+
 	@in_queue.clear
 	@out_queue.clear
       ensure

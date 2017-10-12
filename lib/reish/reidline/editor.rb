@@ -91,6 +91,10 @@ module Reish
 	@view.change_buffer
       end
 
+      def closed?
+	@closed_proc.call(@buffer.buffer)
+      end
+
       def set_closed_proc(&block)
 	@closed_proc = block
       end
@@ -122,7 +126,7 @@ module Reish
 	      message(exc.message)
 	    end
 	  end
-	end until @closed_proc.call(@buffer.buffer)
+	end until closed?
 	contents = @buffer.contents
 	if contents[-1] != "\n"
 	  contents.concat "\n"
@@ -284,7 +288,7 @@ module Reish
 	if @c_row == @buffer.size - 1
 	  @exit = true
 	else
-	  @closed_proc.call(@buffer.buffer)
+	  closed?
 	end
       end
 
@@ -341,7 +345,7 @@ module Reish
 	lines = @history[@current_history]
 	cursor_beginning_of_buffer
 	set_buffer(lines)
-	@closed_proc.call(@buffer.buffer)
+	closed?
       end
 
       def history_next(*args)
@@ -352,7 +356,7 @@ module Reish
 	lines = @history[@current_history]
 	cursor_beginning_of_buffer
 	set_buffer(lines)
-	@closed_proc.call(@buffer.buffer)
+	closed?
       end
 
 #       def init_more_keys
