@@ -323,13 +323,13 @@ class Reish::Parser
 	       @lex.lex_state = Lex::EXPR_DO_BEG
 	       result = []
 	    }
-	| block_arg opt_nl ID
+	| block_arg opt_nl id
 	    {
 	      result = val[0]
 	      result.push val[2]
 	    }
 
-  simple_command_header: ID
+  simple_command_header: id
 	    {
       	       result = Node::SimpleCommand(val[0])
 	    }
@@ -404,7 +404,7 @@ class Reish::Parser
 	      result = Node::Symbol(val[2])
 	    }
 
-  sym: ID
+  sym: id
 	| VARIABLE
 	| STRING
 
@@ -459,12 +459,12 @@ class Reish::Parser
 #   		result = Node::AliasCommand(val[1], val[4])
 #   	    }
 
-  def_command: DEF ID opt_terms {@lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG} body_list indent_pop END
+  def_command: DEF id opt_terms {@lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG} body_list indent_pop END
 	    {
 		body = Node::BeginCommand(*val[4])
 		result = Node::DefCommand(val[1], nil, body)
 	    }
-	|  DEF ID func_arg_list {@lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG} body_list indent_pop END
+	|  DEF id func_arg_list {@lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG} body_list indent_pop END
 	    {
 		arg = val[2]
 		body = Node::BeginCommand(*val[4])
@@ -486,7 +486,7 @@ class Reish::Parser
 	      result.push val[3]
 	    }
 
-  alias_command: ALIAS ID  lex_beg opt_nl ID
+  alias_command: ALIAS id lex_beg opt_nl id
 	    {
      		result = Node::AliasCommand(val[1], val[4])
    	    }
@@ -521,7 +521,7 @@ class Reish::Parser
 	    {
 		result = nil
 	    }
-	| ASSOC lex_beg opt_nl ID
+	| ASSOC lex_beg opt_nl id
 	    {
 		result = val[3]
 	    }
@@ -982,6 +982,9 @@ class Reish::Parser
 
   redirection_element: command_element_base
 	| WILDCARD
+
+  id: ID
+	| ID2
 
   simple_list_terminator:	NL
 	| EOF

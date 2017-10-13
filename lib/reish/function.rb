@@ -39,11 +39,10 @@ module Reish
       @name = name
       @args = args
       @body = body
-      
+
       @visitor = visitor
 
       @function_class = make_function_class
-
     end
 
     attr_reader :function_class
@@ -100,7 +99,7 @@ module Reish
     end
 
     def class_name(klass = @klass, fn = @name)
-      klass.name.sub("::", "_")+"_"+ fn.split("_").collect{|e|e.capitalize}.join
+      klass.name.sub("::", "_")+"_"+ fn.split("_").collect{|e|e.capitalize}.join.tr("-", "_")
     end
 
     def arg_form(args = @args)
@@ -115,7 +114,11 @@ module Reish
     end
 
     def real_fn(name)
-      "__reish_impl_#{@name}__#{name}"
+      "__reish_impl_#{escape(@name)}__#{name}"
+    end
+
+    def escape(str)
+      str.gsub("_", "__").gsub("-", "_")
     end
   end
 
