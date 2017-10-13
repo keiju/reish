@@ -304,6 +304,7 @@ module Reish
       val.value
     end
     alias visit_id visit_value
+    alias visit_id2 visit_value
     alias visit_test visit_value
     alias visit_path visit_value
     alias visit_number visit_value
