@@ -453,12 +453,6 @@ class Reish::Parser
 #        | for_command
 #	| strict_pipeline
 
-#   alias_command: ALIAS ID lex_beg opt_nl pipeline_command
-#   	    {
-# 		val[4].pipeout = :NONE
-#   		result = Node::AliasCommand(val[1], val[4])
-#   	    }
-
   def_command: DEF id opt_terms {@lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG} body_list indent_pop END
 	    {
 		body = Node::BeginCommand(*val[4])
@@ -490,6 +484,14 @@ class Reish::Parser
 	    {
      		result = Node::AliasCommand(val[1], val[4])
    	    }
+
+#   alias_command: ALIAS ID lex_beg opt_nl pipeline_command
+#   	    {
+# 		val[4].pipeout = :NONE
+#   		result = Node::AliasCommand(val[1], val[4])
+#   	    }
+
+
 
   begin_command: BEGIN {@lex.indent_push(:BEGIN); @lex.lex_state = Lex::EXPR_BEG} body_list indent_pop END
 	    {
