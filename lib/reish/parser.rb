@@ -18,12 +18,17 @@ module_eval(<<'...end parser.y/module_eval...', 'parser.y', 1015)
   def initialize(lex)
     @yydebug = nil
     @cmpl_mode = nil
+    @input_closed = nil
+    @err_token = nil
 
     @lex = lex
   end
 
   attr_accessor :yydebug
   attr_accessor :cmpl_mode
+  attr_accessor :input_closed
+  
+  attr_reader :err_token
 
   def next_token
     @lex.racc_token
@@ -44,12 +49,20 @@ module_eval(<<'...end parser.y/module_eval...', 'parser.y', 1015)
 	puts "VAULE_STACK: \n#{value_stack.pretty_inspect}"
 #      puts "_VAULES: \n#{self.pretty_inspect}"
 #      yyerrok
-
       end
-      super unless @cmpl_mode
-
-      @cmpl_mode = value_stack
-      Reish::Fail ParserComplSupp
+      
+      case
+      when @cmpl_mode
+	@cmpl_mode = value_stack
+	Reish::Fail ParserComplSupp
+      when @input_closed && token.kind_of?(EOFToken)
+	Reish::Fail ParserClosingEOFSupp
+#      when @input_closed
+#	#Reish::Fail ParserClosingSupp
+      else
+	@err_token = token
+	super
+      end
     end
 
   def yyerror(token, msg)
