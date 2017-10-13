@@ -801,14 +801,18 @@ module Reish
     end
 
     def identify_id(io)
+      id_class = IDToken
       token = ""
 
       while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;,\(\)<>\[\{\}\]\`\$\"\'\*]/ !~ ch
 	print ":", ch, ":" if Debug
 
-	if /[\/\-\+]/ =~ ch
+	if /[\/]/ =~ ch
 	  io.ungetc
 	  return identify_path(io, token)
+	end
+	if /[\+\-]/ =~ ch
+	  id_class = ID2Token
 	end
 	token.concat ch
       end
@@ -818,7 +822,7 @@ module Reish
 	identify_reserved_word(io, token, tid)
       else
 	self.lex_state = EXPR_ARG
-	IDToken.new(self, token)
+	id_class.new(self, token)
       end
     end
 

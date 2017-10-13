@@ -189,7 +189,7 @@ module Reish
 	  sub = @lex.pretoken.value
 	  (class<<Test; TestMap.keys; end).grep(/^#{sub}/).collect{|sub| "-"+sub}
 
-	when IDToken
+	when IDToken, ID2Token
 	  puts "CANDIDATE: ID(#{@lex.pretoken.value})" if Reish::debug_cmpl?
 	  command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
 
