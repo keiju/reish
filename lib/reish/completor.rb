@@ -22,15 +22,23 @@ module Reish
       @parser.cmpl_mode = true
       @parser.yydebug = Reish::debug_cmpl_yy?
 
-      @completion_proc = proc{|input|
-	puts "input: #{input}" if @debug
-	expr = @shell.lex.readed + Readline.line_buffer
-	puts "input all: #{expr}" if @debug
+      case shell.io
+      when ReadlineInputMethod
+	@completion_proc = proc{|input|
+	  puts "input: #{input}" if @debug
+	  expr = @shell.lex.readed + Readline.line_buffer
+	  puts "input all: #{expr}" if @debug
 
-	candidate(expr)
-      }
+	  candidate(expr)
+	}
 
-      Readline.completion_proc = @completion_proc
+	Readline.completion_proc = @completion_proc
+      when ReidlineInputMethod, ReidlineInputMethod2
+	@completion_proc = proc{|expr|
+	  candidate(expr)
+	}
+	shell.io.set_cmpl_proc &@completion_proc
+      end
     end
 
     attr_reader :completion_proc

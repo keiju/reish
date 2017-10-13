@@ -338,6 +338,11 @@ module Reish
       @exp_line_no = @line_no
     end
 
+    def set_line_no(line_no)
+      @exp_line_no = @line_no = line_no
+      @ruby_scanner.instance_eval{@line_no = line_no}
+    end
+
     attr_accessor :continue
     alias continue? continue
 
@@ -744,10 +749,6 @@ module Reish
 
       @OP.def_rule("-", proc{|op, io| lex_state?(EXPR_BEG_ANY)}) do
 	|op, io|
-
-p "X"
-print_lex_state
-
 	if /\s/ =~ io.peek(0)
 	  self.lex_state = EXPR_ARG
 	  SpecialToken.new(self, op)

@@ -28,7 +28,6 @@ module Reish
   def_exception :CommandNotFound, "Command not found(%s)"
 
   def_exception :ParserComplSupp, "Parser completion support exception."
+  def_exception :ParserClosingSupp, "Parser closing support exception."
+  def_exception :ParserClosingEOFSupp, "Parser closing support exception."
 end
-
-
-

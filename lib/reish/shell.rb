@@ -53,6 +53,7 @@ module Reish
 #    attr_reader :thread
     attr_reader :exenv
 
+    attr_reader :io
     attr_reader :lex
     attr_reader :job_controller
     attr_reader :codegen
@@ -85,11 +86,16 @@ module Reish
 	@completor = Reish::comp[:COMPLETOR].new(self) 
 	@io.completor = @completor
       end
+      if @io.respond_to?(:promptor)
+	@io.promptor = proc{|line_no, indent, ltype, continue| @exenv.prompt.call(@exenv, line_no, indent, ltype, continue)}
+      end
+
     end
 
     def start
       @lex.set_prompt do |ltype, indent, continue, line_no|
 	
+	@io.line_no = line_no if @io.kind_of?(ReidlineInputMethod)
 	@io.prompt = @exenv.prompt.call(@exenv, line_no, indent, ltype, continue)
       end
 
@@ -126,23 +132,18 @@ module Reish
 	@lex.lex_state = Lex::EXPR_BEG
 	@current_input_unit = nil
 	begin
-	  @current_input_unit = @parser.do_parse
-	  input = @lex.reset_readed
-	  if Reish::debug_input?
-	    puts "input: #{input}"
-	    puts "input_unit: #{@current_input_unit.pretty_inspect}"
-	  end
+	  @current_input_unit = input_unit
 	rescue ParseError => exc
 	  puts exc.message
 	  @lex.reset_input
 	rescue Interrupt => exc
-	  
+      
 	rescue => exc
 	  handle_exception(exc)
 	end
 
 	next unless @current_input_unit
-	break if Node::EOF == @current_input_unit 
+	break if Node::EOF == @current_input_unit
 	if Node::NOP == @current_input_unit 
 	  puts "<= (NL)" if @exenv.display_comp
 	  next
@@ -155,6 +156,30 @@ module Reish
 	end
 
       end
+    end
+
+    def input_unit
+#      loop do
+#	catch(:REIDLINE_TAG) do 
+
+	  @current_input_unit = @parser.do_parse
+#	  if @io.kind_of?(ReidlineInputMethod)
+#	    @io.input_complete
+#	  end
+	  input = @lex.reset_readed
+	  if Reish::debug_input?
+	    puts "input: #{input}"
+	    puts "input_unit: #{@current_input_unit.pretty_inspect}"
+	  end
+          @current_input_unit
+#	end
+
+#	if ret
+#	  return @current_input_unit
+#	else
+#	  @lex.reset_input
+#	end
+#      end
     end
 
     def start_job(fg, exp, &block)
@@ -210,13 +235,13 @@ module Reish
       case signal
       when :INT
 	unless @exenv.ignore_sigint?
-	  print "\nabort!!\n" if verbose?
+	  STDERR.syswrite "\nabort!!\n" if verbose?
 	  exit
 	end
 
 	case @signal_status
 	when :IN_INPUT
-	  print "^C\n"
+	  STDERR.syswrite "^C\n"
 	  raise Interrupt
 	when :IN_EVAL
 	  reish_abort(self)
@@ -230,7 +255,7 @@ module Reish
       when :TSTP
 	case @signal_status
 	when :IN_EVAL
-	  print "^Z"
+	  STDERR.syswrite "^Z\n"
 	  reish_tstp(self)
 	when :IN_INPUT, :IN_EVAL, :IN_LOAD, :IN_IRB
 	  # ignore
@@ -513,7 +538,10 @@ module Reish
       trap(:TTOU, :IGNORE)
 
       trap(:SIGCHLD) do
-	@process_monitor.accept_sigchild
+	STDERR.syswrite "caught SIGCHLD\n" if Reish::debug_jobctl?
+#	Thread.start do
+	  @process_monitor.accept_sigchild
+#	end
       end
     end
 
