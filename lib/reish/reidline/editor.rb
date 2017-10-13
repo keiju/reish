@@ -76,6 +76,7 @@ module Reish
       attr_accessor :history
 
       def set_buffer(buffer = nil)
+	old_buffer = @buffer
 	case buffer
 	when nil
 	  @buffer = Buffer.new
@@ -127,6 +128,7 @@ module Reish
 	    end
 	  end
 	end until closed?
+	@view.clear_prompt_line
 	contents = @buffer.contents
 	if contents[-1] != "\n"
 	  contents.concat "\n"

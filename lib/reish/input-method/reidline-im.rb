@@ -377,9 +377,8 @@ module Reish
 	@in_queue.push nil
 	ret = @out_queue.pop
 	if !ret && @exc && @parser.err_token
-	  rest = ttyput lines.size - @parser.err_token.line_no
-	  for l in @parser.err_token.line_no + 1 .. lines.size do
-	    @reidline.set_prompt(l - 1, @promptor.call(l, "", nil, nil))
+	  for l in @parser.err_token.line_no + 1 .. @line_no + lines.size do
+	    @reidline.set_prompt(l - @line_no, @promptor.call(l, "", nil, nil))
 	  end
 	end
 

@@ -41,7 +41,7 @@ module Reish
 
     def input_closed
       @history.push @editor.buffer if auto_history?
-      @editor.set_buffer
+#      @editor.set_buffer
     end
 
     def init_editor

@@ -73,6 +73,11 @@ module Reish
 	redisplay(cache_update: true)
       end
 
+      def clear_prompt_line
+	ti_line_beg
+	ti_clear_eol
+      end
+
       def redisplay(from: 0, cache_update: false, height: nil)
 	if cache_update
 	  @cache = []
@@ -226,11 +231,11 @@ module Reish
 #ttyput "CURSOR_REPOSITON"
 	t_row, t_col = term_pos(@controller.c_row, @controller.c_col)
 	h = t_row - @t_row
-	w = t_col - @t_col
-	@t_row = t_row
-	@t_col = t_col
+ 	w = t_col - @t_col
+ 	@t_row = t_row
+ 	@t_col = t_col
 #ttyput h, w
-	ti_move(h, w)
+ 	ti_move(h, w)
       end
 
       def cursor_move(t_row, t_col)
