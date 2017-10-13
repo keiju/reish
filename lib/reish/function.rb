@@ -99,7 +99,7 @@ module Reish
     end
 
     def class_name(klass = @klass, fn = @name)
-      klass.name.sub("::", "_")+"_"+ fn.split("_").collect{|e|e.capitalize}.join.tr("-", "_")
+      klass.name.sub("::", "_")+"_"+ escape(fn.split("_").collect{|e|e.capitalize}.join)
     end
 
     def arg_form(args = @args)
@@ -117,8 +117,13 @@ module Reish
       "__reish_impl_#{escape(@name)}__#{name}"
     end
 
+    ESC = {
+      "-" => "_minus_",
+      "+" => "_plus_",
+    }
+
     def escape(str)
-      str.gsub("_", "__").gsub("-", "_")
+      str.gsub("_", "__").gsub(/(\-|\+)/){ESC[$1]}
     end
   end
 
