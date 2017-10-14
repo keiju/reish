@@ -17,7 +17,7 @@ module Reish
     extend Forwardable
 
     # Creates a new input method object using Readline
-    def initialize
+    def initialize(exenv)
       super
 
       @reidline = Reidline.new
@@ -57,7 +57,7 @@ module Reish
 	  @lex = Lex.new
 	  @parser = Parser.new(@lex)
 	  @queue = Queue.new
-	  im = QueueInputMethod.new(@queue)
+	  im = QueueInputMethod.new(nil, @queue)
 	  @lex.initialize_input
 	  @lex.set_input(im) do
 	    if l = im.gets
@@ -190,7 +190,7 @@ module Reish
     extend Forwardable
 
     # Creates a new input method object using Readline
-    def initialize
+    def initialize(exenv)
       super
 
       @reidline = Reidline.new
@@ -216,7 +216,7 @@ module Reish
       @parser.input_closed = true
       @in_queue = Queue.new
       @out_queue = Queue.new
-      @im = QueueInputMethod.new(@in_queue)
+      @im = QueueInputMethod.new(nil, @in_queue)
 
       @lex.set_prompt do |ltype, indent, continue, line_no|
 	if @promptor

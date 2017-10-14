@@ -49,7 +49,7 @@ module Reish
 	return candidate_commands 
       end
 
-      im = StringInputMethod.new(str)
+      im = StringInputMethod.new(nil, str)
 
       @lex.initialize_input
       @lex.set_input(im) do

@@ -5,17 +5,14 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 module Reish
-  STDIN_FILE_NAME = "(line)" # :nodoc:
   class InputMethod
 
     # Creates a new input method object
-    def initialize(file = STDIN_FILE_NAME)
-      @file_name = file
+    def initialize(exenv, *opts)
+      @exenv = exenv
       @completable = false
     end
-    # The file name of this input method, usually given during initialization.
-    attr_reader :file_name
-    
+
     def completable?; @completable; end
 
     # The irb prompt associated with this input method
@@ -49,7 +46,7 @@ module Reish
 
   class StringInputMethod < InputMethod
 
-    def initialize(string)
+    def initialize(exenv, string)
       super
       @lines = string.lines
       @lines = [""] if @lines.empty?
@@ -64,7 +61,7 @@ module Reish
   end
 
   class QueueInputMethod < InputMethod
-    def initialize(que)
+    def initialize(exenv, que)
       super
       @queue = que
     end

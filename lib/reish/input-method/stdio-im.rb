@@ -15,7 +15,7 @@ require "reish/reidline"
 module Reish
   class StdioInputMethod < InputMethod
     # Creates a new input method object
-    def initialize
+    def initialize(exenv)
       super
       @line_no = 0
       @line = []
