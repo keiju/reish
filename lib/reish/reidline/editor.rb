@@ -133,7 +133,7 @@ module Reish
 	    end
 	  end
 	end until closed?
-#	@view.clear_prompt_line
+	@view.clear_prompt_line
 	contents = @buffer.contents
 	if contents[-1] != "\n"
 	  contents.concat "\n"
