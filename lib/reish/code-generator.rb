@@ -46,17 +46,35 @@ module Reish
 
 	ags = args && args.join(", ")
 
-	fclass = Reish::define_function(UserFunctionSpace, name, args, body, self)
-	%{Reish::UserFunctionSpace.module_eval %{
-	  def #{name}(#{ags})
-	    #{fclass.name}.new(self#{ags && ", #{ags}" || ""})
-	  end
-        }}
+  	fclass = Reish::define_function(UserFunctionSpace, name, args, body, self)
+
+	ag = args && ", #{ags}" || ""
+	if command.id.kind_of?(IDToken)
+	  %{Reish::UserFunctionSpace.module_eval %{
+	    def #{name}(#{ags})
+	      #{fclass.name}.new(self#{ag})
+	    end
+	  }}
+        else
+	 ab = args && "|#{ags}|" || ""
+	  %{Reish::UserFunctionSpace.module_eval %{
+	    define_method(:'#{name}'){#{ab}
+	      #{fclass.name}.new(self#{ag})
+	    }
+	  }}
+        end
       end
     end
 
     def visit_alias_command(command)
       super do |id, pl|
+	if command.id.kind_of?(ID2Token)
+	  id = ":'#{id}'"
+	end
+	if command.pipeline.kind_of?(ID2Token)
+	  pl = ":'#{pl}'"
+	end
+
 	"alias #{id} #{pl}"
       end
     end
@@ -370,12 +388,15 @@ module Reish
       end
 
       super do |name, args, blk|
-	if !command.name.kind_of?(PathToken)
+	case command.name
+	when IDToken
 	  argc = args.empty? && "" || "(#{args.join(", ")})"
 	  script = "#{name}#{argc}#{blk || ""}"
-	else
+	when ID2Token, PathToken
 	  argc = args.empty? && "" || ", #{args.join(", ")}"
 	  script = "send('#{name}'#{argc})#{blk || ""}"
+	else
+	  raise InternalError, "想定していないものです(#{command.name.inspect})"
 	end
 
 	case command.pipeout

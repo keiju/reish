@@ -119,6 +119,17 @@ module Reish
     end
   end
 
+  class ID2Token<ValueToken
+
+    def accept(visitor)
+      visitor.visit_id2(self)
+    end
+
+    def inspect_tag
+      "ID2"
+    end
+  end
+
   class TestToken<ValueToken
     def accept(visitor)
       visitor.visit_test(self)
@@ -291,6 +302,7 @@ module Reish
     VariableToken,
     PseudoVariableToken,
     IDToken,
+    ID2Token,
     TestToken,
     SpecialToken,
     PathToken,
