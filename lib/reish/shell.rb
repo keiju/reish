@@ -66,17 +66,17 @@ module Reish
 	case @exenv.use_readline?
 	when nil
 	  if STDIN.tty?
-	    @io = Reish::comp[:INPUT_METHOD][:TTY].new
+	    @io = Reish::comp[:INPUT_METHOD][:TTY].new(@exenv)
 	  else
-	    @io = StdioInputMethod.new
+	    @io = StdioInputMethod.new(@exenv)
 	  end
 	when false
-	  @io = StdioInputMethod.new
+	  @io = StdioInputMethod.new(@exenv)
 	when true
-	  @io = @exenv.tty_input_method.new
+	  @io = @exenv.tty_input_method.new(@exenv)
 	end
       when String
-	@io = FileInputMethod.new(input_method)
+	@io = FileInputMethod.new(@exenv, input_method)
 	@exenv.ap_name = File.basename(input_method)
 	@exenv.src_path = input_method
       else

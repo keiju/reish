@@ -103,6 +103,8 @@ module Reish
     @CONF[:IGNORE_EOF] = false
     @CONF[:ECHO] = nil
 
+    @CONF[:AUTO_INDENT] = true
+
     @CONF[:COMPLETION] = false
 
     @CONF[:EVAL_HISTORY] = nil

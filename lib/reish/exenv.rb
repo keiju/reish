@@ -30,6 +30,8 @@ module Reish
 
       @back_trace_limit = Reish.conf[:BACK_TRACE_LIMIT]
 
+      @auto_indent = Reish.conf[:AUTO_INDENT]
+
       @use_readline = Reish.conf[:USE_READLINE]
       @completion = Reish.conf[:COMPLETION]
 
@@ -70,6 +72,7 @@ module Reish
     end
 
     attr_accessor :prompt
+    attr_reader :auto_indent
 
     attr_reader :use_readline
     alias use_readline? use_readline
