@@ -104,8 +104,13 @@ module Reish
 	@cmpl_proc = block
       end
 
-      def set_prompt(line_no, prompt)
-	@buffer.set_prompt(line_no, prompt)
+      def set_prompt(line_no, prompt, indent = nil)
+	@buffer.set_prompt(line_no, prompt, indent)
+	cursor_reposition
+      end
+
+      def set_indent(line_no, indent)
+	@buffer.set_indent(line_no, indent)
 	cursor_reposition
       end
 
@@ -128,7 +133,7 @@ module Reish
 	    end
 	  end
 	end until closed?
-	@view.clear_prompt_line
+#	@view.clear_prompt_line
 	contents = @buffer.contents
 	if contents[-1] != "\n"
 	  contents.concat "\n"

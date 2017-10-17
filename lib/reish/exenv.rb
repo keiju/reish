@@ -72,6 +72,7 @@ module Reish
     end
 
     attr_accessor :prompt
+    attr_reader :auto_indent
 
     attr_reader :use_readline
     alias use_readline? use_readline

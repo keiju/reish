@@ -14,6 +14,8 @@ module Reish
 
       @call_backs = {}
 
+      @auto_indent = nil
+
       @history = []
 
       @auto_history = false
@@ -27,6 +29,9 @@ module Reish
 
     attr_accessor :multi_line_mode
     alias multi_line_mode? multi_line_mode
+
+    attr_accessor :auto_indent
+    alias auto_indent? auto_indent
 
     attr_reader :history
 
@@ -77,8 +82,12 @@ module Reish
       @editor.message(str, append: append)
     end
 
-    def set_prompt(line_no, prompt)
-      @editor.set_prompt(line_no, prompt)
+    def set_prompt(line_no, prompt, indent = 0)
+      @editor.set_prompt(line_no, prompt, indent)
+    end
+
+    def set_indent(line_no, indent)
+      @editor.set_indent(line_no, indent)
     end
 
     # call_caks:

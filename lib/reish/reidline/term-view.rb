@@ -24,6 +24,7 @@ module Reish
 	@buffer = nil
 	@cache = nil
 	@cache_prompts = []
+	@cache_indents = []
 
 	@t_row = nil
 	@t_col = nil
@@ -33,22 +34,35 @@ module Reish
 	@message_h = 0
       end
 
+      def indent(row, sub_row = 0)
+	if sub_row == 0
+	  "  " * (@cache_indents[row] || 0)
+	else
+	  ""
+	end
+      end
+
+      def offset(row, sub_row = 0)
+	if sub_row == 0
+	  offset = (@cache_prompts[row]&.bytesize || 0) + indent(row).size
+	else
+	  0
+	end
+      end
+
+      def last_offset
+	offset(@cache_prompts.size - 1)
+      end
+
+
       def reset_cursor_position
 	@t_row = text_height - 1
-	@t_col = @cache.last.last.bytesize + (@cache_prompts[@cache.size-1]&.bytesize || 0)
+	@t_col = @cache.last.last.bytesize + last_offset
 	cursor_reposition
       end
 
       def text_height
 	@cache.inject(0){|r, lines| r += lines.size}
-      end
-
-      def offset(row, sub_row = 0)
-	if sub_row == 0
-	  offset = @cache_prompts[row]&.bytesize || 0
-	else
-	  0
-	end
       end
 
       def change_buffer
@@ -82,9 +96,11 @@ module Reish
 	if cache_update
 	  @cache = []
 	  @cache_prompts = []
-	  @buffer.each_with_prompt do |line, prompt|
+	  @cache_indents = []
+	  @buffer.each_with_prompt do |line, prompt, indent|
 	    @cache_prompts.push prompt
-	    @cache.push slice_width(line, offset: prompt.bytesize)
+	    @cache_indents.push indent
+	    @cache.push slice_width(line, offset: last_offset)
 	  end
 	end
 
@@ -97,9 +113,10 @@ module Reish
 	    i += 1
 	    next if from >= i
 
-	    if top.equal?(line)
+	    if top.equal?(line) && @buffer.prompts[row]
 	      prompt = @cache_prompts[row] = @buffer.prompts[row]
-	      print prompt
+	      @cache_indents[row] = @buffer.indents[row]
+	      print prompt + indent(row)
 	    end
 	    print_eol line
 	    if !line.equal?(line_last)
@@ -124,20 +141,23 @@ module Reish
 	    i += 1
 	    next if from >= i
 	    if top.equal?(line)
-	      prompt = @cache_prompts[row] = @buffer.prompts[row]
-	      if slice_width(@cache[row].first, offset: prompt.bytesize).size > 1
-		@cashe_prompts[row] = prompt
+	      prompt =  @buffer.prompts[row]
+	      indent = @buffer.indents[row]
+	      if slice_width(@cache[row].first, offset: prompt.bytesize+indent*2).size > 1
+		@cache_prompt[row] = prompt
+		@cache_indent[row] = indent
 		return redisplay(row, cache_update: true)
 	      else
-		diff = prompt.bytesize - (@cache_prompts[row]&.bytesize || 0)
+		diff = prompt.bytesize + indent*2 - offset(row)
 		@cache_prompts[row] = prompt
+		@cache_indent[row] = indent
 		if diff > 0
 		  print " "*diff
 		else
 		  diff.times{ti_del}
 		end
 		ti_line_beg
-		print prompt
+		print prompt+indent(row)
 	      end
 	    end
 	    cursor_bol
@@ -439,10 +459,15 @@ module Reish
 	end
       end
 
-      def update_prompt(row)
-	return if @buffer.prompts[row] == @cache_prompts[row]
+      def update_prompt(row, force: false)
+	if !force && 
+	    @buffer.prompts[row] == @cache_prompts[row] && 
+	    @buffer.indents[row] == @cache_indents[row]
+	  return 
+	end
 	unless @cache[row]
 	  @cache_prompts[row] = @buffer.prompts[row]
+	  @cache_indents[row] = @buffer.indents[row]
 	  return
 	end
 
@@ -451,22 +476,26 @@ module Reish
 	  cursor_move(t_row, t_col)
 
 	  prompt = @buffer.prompts[row]
-	  if slice_width(@cache[row].first, offset: prompt.bytesize).size > 1
-	    @cashe_prompts[row] = prompt
+	  indent = @buffer.indents[row]
+	  if slice_width(@cache[row].first, offset: prompt.bytesize+indent*2).size > 1
+	    @cache_prompts[row] = prompt
+	    @cache_indents[row] = indent
 	    redisplay(row, cache_update: true)
 	  else
-	    diff = prompt.bytesize - (@cache_prompts[row]&.bytesize || 0)
+	    diff = prompt.bytesize + indent*2 - offset(row)
 	    @cache_prompts[row] = prompt
+	    @cache_indents[row] = indent
 	    if diff > 0
 	      ti_ins_mode do
 		print " "*diff
 	      end
 	    else
-	      diff.times{ti_del}
+	      ti_line_beg
+	      (-diff).times{ti_del}
 	    end
 	    ti_line_beg
-	    print prompt
-	    @t_col += prompt.bytesize
+	    print prompt+indent(row)
+	    @t_col += prompt.bytesize + @cache_indents[row]*2
 	  end
 	end
       end
