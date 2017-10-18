@@ -2339,7 +2339,7 @@ module_eval(<<'.,.,', 'parser.y', 880)
 
 module_eval(<<'.,.,', 'parser.y', 885)
   def _reduce_177(val, _values, result)
-    		result = Node::Array(val[2])
+    		result = Node::Array(val[1])
 	    
     result
   end

@@ -883,7 +883,7 @@ class Reish::Parser
 
   array: array_array array_element_list indent_pop ']'
 	    {
-		result = Node::Array(val[2])
+		result = Node::Array(val[1])
 	    }
 
   array_array: LBLACK_A
