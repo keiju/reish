@@ -2059,7 +2059,7 @@ module_eval(<<'.,.,', 'parser.y', 593)
 module_eval(<<'.,.,', 'parser.y', 598)
   def _reduce_141(val, _values, result)
     		@lex.indent_push(val[0])
-		recult = val[3]
+		result = val[3]
 	    
     result
   end
@@ -2339,7 +2339,7 @@ module_eval(<<'.,.,', 'parser.y', 880)
 
 module_eval(<<'.,.,', 'parser.y', 885)
   def _reduce_177(val, _values, result)
-    		result = Node::Array(val[2])
+    		result = Node::Array(val[1])
 	    
     result
   end
