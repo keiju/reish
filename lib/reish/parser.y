@@ -597,7 +597,7 @@ class Reish::Parser
   until_command_until: UNTIL cond_push opt_nl logical_command do
 	    {
 		@lex.indent_push(val[0])
-		recult = val[3]
+		result = val[3]
 	    }
   
 

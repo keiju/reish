@@ -2059,7 +2059,7 @@ module_eval(<<'.,.,', 'parser.y', 593)
 module_eval(<<'.,.,', 'parser.y', 598)
   def _reduce_141(val, _values, result)
     		@lex.indent_push(val[0])
-		recult = val[3]
+		result = val[3]
 	    
     result
   end
