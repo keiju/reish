@@ -11,7 +11,7 @@ module Reish
   # Use a File for IO with irb, see InputMethod
   class FileInputMethod < InputMethod
     # Creates a new input method object
-    def initialize(file)
+    def initialize(exenv, file)
       super
       @io = Reish::MagicFile.open(file)
     end

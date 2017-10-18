@@ -19,21 +19,27 @@ module Reish
 	@buffer = lines.collect{|l| l.chomp}
 
 	@prompts = []
-#100.times{|i| @prompts.push "#{i}:#{2**rand(10)}> "}
+	@indents = []
       end
 
-      attr_reader :prompts
       attr_reader :buffer
+      attr_reader :prompts
+      attr_reader :indents
 
       def_delegator :@buffer, :size
       def_delegator :@buffer, :[]
       def_delegator :@buffer, :each
       def_delegator :@buffer, :last
 
+      def indent_width(row)
+	@indents[row] * 2
+      end
+
       def each_with_prompt(&block)
-	@buffer.zip(@prompts) do |l, p|
+	@buffer.zip(@prompts, @indents) do |l, p, i|
 	  p = "" unless p
-	  block.call(l, p)
+	  i = 0 unless i
+	  block.call(l, p, i)
 	end
       end
 
@@ -119,12 +125,24 @@ module Reish
 	true
       end
 
-      def set_prompt(idx, prompt)
+      def set_prompt(idx, prompt, indent = nil)
 	@prompts[idx] = prompt
+	unless indent
+	  if idx >= 1
+	    indent = @indents[idx-1]
+	  else
+	    indent = 0
+	  end
+	end
+	@indents[idx] = indent
 	changed
 	notify_observers(:prompt, idx)
+      end
+
+      def set_indent(idx, indent)
+	set_prompt(idx, @prompts[idx], indent)
       end
     end
   end
 end
-
+  

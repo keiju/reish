@@ -36,7 +36,7 @@ module Reish
     Reish.setup(ap_path)
 
     if @CONF[:OPT_C]
-      im = StringInputMethod.new(@CONF[:OPT_C])
+      im = StringInputMethod.new(nil, @CONF[:OPT_C])
       sh = MainShell.new(im)
     elsif @CONF[:OPT_TEST_CMPL]
       compl = @COMP[:COMPLETOR].new(Shell.new)

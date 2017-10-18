@@ -12,7 +12,7 @@ module Reish
     class ReadlineInputMethod < InputMethod
       include Readline
       # Creates a new input method object using Readline
-      def initialize
+      def initialize(exenv)
         super
 
         @line_no = 0
