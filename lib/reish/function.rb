@@ -141,3 +141,16 @@ module Reish
   end
 
 end
+
+class Object
+  def reish_user_function_space_eval(exp)
+    case self
+    when Reish::Main
+      Reish::UserFunctionSpace.module_eval exp
+    when Module
+      self.module_eval exp
+    else 
+      self.instance_eval exp
+    end
+  end
+end

@@ -41,6 +41,20 @@ module Reish
       end
     end
 
+    def visit_class_command(command)
+      super do |klass, sklass, body|
+	if sklass
+	  %{class #{klass}<#{sklass}
+	      #{body}
+	    end}
+	else
+	  %{class #{klass}
+	      #{body}
+	    end}
+	end
+      end
+    end
+
     def visit_def_command(command)
       super do |name, args, body|
 
@@ -50,14 +64,14 @@ module Reish
 
 	ag = args && ", #{ags}" || ""
 	if command.id.kind_of?(IDToken)
-	  %{Reish::UserFunctionSpace.module_eval %{
+	  %{reish_user_function_space_eval %{
 	    def #{name}(#{ags})
 	      #{fclass.name}.new(self#{ag})
 	    end
 	  }}
-        else
-	 ab = args && "|#{ags}|" || ""
-	  %{Reish::UserFunctionSpace.module_eval %{
+	else
+	  ab = args && "|#{ags}|" || ""
+	  %{reish_user_function_space_eval %{
 	    define_method(:'#{name}'){#{ab}
 	      #{fclass.name}.new(self#{ag})
 	    }
