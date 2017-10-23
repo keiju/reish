@@ -55,9 +55,27 @@ module Reish
       end
     end
 
-    def visit_def0_command(command)
-      super do |name, args, body|
+    DirectCallFunctions = [
+      :initialize,
+      :each
+    ]
+    DirectCallFunctionSet = {}
+    DirectCallFunctions.each do |f|
+      DirectCallFunctionSet[f] = f
+      DirectCallFunctionSet[f.id2name] = f
+    end
 
+    def visit_def_command(command)
+      super do |name, args, body|
+	if DirectCallFunctionSet[name]
+	  def_direct_command(command, name, args, body)
+	else
+	  def_command(command, name, args, body)
+	end
+      end
+    end
+
+    def def_direct_command(command, name, args, body)
 	ags = args && args.join(", ") || ""
 	code = body.accept(self)
 
@@ -68,34 +86,33 @@ module Reish
 	if Reish::debug_function?
 	  puts script
 	end
-	scipt
-      end
+      script
     end
 
-    def visit_def_command(command)
-      super do |name, args, body|
+    def def_command(command, name, args, body)
 
-	ags = args && args.join(", ")
+      ags = args && args.join(", ")
 
-  	fclass = Reish::define_function(UserFunctionSpace, name, args, body, self)
+      fclass = FunctionFactory::define_function(UserFunctionSpace, name, args, body, self)
 
-	ag = args && ", #{ags}" || ""
-	if command.id.kind_of?(IDToken)
-	  %{reish_user_function_space_eval %{
+      ag = args && ", #{ags}" || ""
+      if command.id.kind_of?(IDToken)
+	%{reish_user_function_space_eval %{
 	    def #{name}(#{ags})
 	      #{fclass.name}.new(self#{ag})
 	    end
 	  }}
-	else
-	  ab = args && "|#{ags}|" || ""
-	  %{reish_user_function_space_eval %{
+      else
+        ab = args && "|#{ags}|" || ""
+        %{reish_user_function_space_eval %{
 	    define_method(:'#{name}'){#{ab}
 	      #{fclass.name}.new(self#{ag})
 	    }
 	  }}
-        end
       end
     end
+
+
 
     def visit_alias_command(command)
       super do |id, pl|

@@ -29,11 +29,6 @@ module Reish
 
   FunctionFactories = {}
 
-  def self.define_function(klass, name, args, body, visitor)
-    fact = FunctionFactory.new(klass, name, args, body, visitor)
-    fact.function_class
-  end
-
   class FunctionFactory
 
     F2mode = {
@@ -44,6 +39,18 @@ module Reish
       reish_resultl: :RESULTL,
       reish_none:  :NONE,
     }
+
+    InternalFunctions = [
+      :initialize,
+      :each
+    ]
+    InternalFunctionSet = {}
+    InternalFunctions.each{|f| InternalFunctionSet[f] = f}
+
+    def self.define_function(klass, name, args, body, visitor)
+      fact = FunctionFactory.new(klass, name, args, body, visitor)
+      fact.function_class
+    end
 
     def initialize(klass, name, args, body, visitor)
       @klass = klass
