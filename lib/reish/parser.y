@@ -113,6 +113,7 @@ class Reish::Parser
 	| return_command
 	| yield_command
 	| assgin_command
+	| class_command
         | def_command
 	| alias_command
 
@@ -354,6 +355,10 @@ class Reish::Parser
 	    {
       	       result = Node::SimpleCommand(val[0])
 	    }
+	| CLASS
+	    {
+      	       result = Node::SimpleCommand(IDToken.dup_from(val[0], "class"))
+	    }
 
   simple_command_element_list: 
 	    {
@@ -391,7 +396,6 @@ class Reish::Parser
         | for_command
 	| group_command
 	| xstring_command
-	| class_command
 
   literal_command: literal
 	    {

@@ -12,6 +12,7 @@
 require "reish/mainobj"
 
 module Reish
+
   class Exenv
 
     VOID_VALUE = Object.new
@@ -251,6 +252,8 @@ module Reish
       Reish::conf_tempkey do |main_key|
 	Reish.conf[main_key]=@main
 	case @main
+	when Main
+	  @binding = @main.instance_eval{reish_binding}
 	when Module
 	  @binding = eval("Reish.conf[:#{main_key}].module_eval('binding', __FILE__, __LINE__)", @binding, __FILE__, __LINE__)
 	else

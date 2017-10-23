@@ -34,6 +34,8 @@
 ** 引数で $func.exe は? 今は, $func.exe()
 ** if command[cr]then ができない
    -> 他の問題が発生するのでとりあえず削除
+** command --do の shift/reduce confirict がとれない.
+   # reidlineでparseエラーにならない用にしようとするとこうなってしまう.
 
 * code generation
 ** # command | if ... をもっとちゃんと対応したい(instance_evalを使わなく
@@ -45,6 +47,9 @@
 ** コマンド引数にEnumerableが渡ったときの処理
 ** return/break/next/redo/retryの対応
   #  rubyでは, 式中に上記のものを入れることができない.
+** 関数をパイプライン接続したとき最終実行結果のみが次にわたる(Rubyの関数と互換をとるため). 標準出力結果すべてを次に渡すのも欲しいか?
+** class Foo; def intialize の問題.
+  # Foo.newでinitializeが呼ばれるが, 実装メソッドが呼ばれない
 
 * jobctl
 **  TTOUTの処理は必要ない?
@@ -61,12 +66,7 @@
 ** in(TAB)等予約後をコンプレーションできない(パーズ時にエラーになる)
 
 * Reidline
-** readline互換インターフェース
-*** 基本
-*** ヒストリー
-** ti_winsizeの問題
 ** その他編集機能
-** このままだと入力時のパーズエラーが無視されてしまう...
 
 * expr
 ** 計算式文 $exp ... end $exp{...}

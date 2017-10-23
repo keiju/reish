@@ -55,6 +55,23 @@ module Reish
       end
     end
 
+    def visit_def0_command(command)
+      super do |name, args, body|
+
+	ags = args && args.join(", ") || ""
+	code = body.accept(self)
+
+	script = %{def #{name}(#{ags})
+	  #{code}
+	 end
+        }
+	if Reish::debug_function?
+	  puts script
+	end
+	scipt
+      end
+    end
+
     def visit_def_command(command)
       super do |name, args, body|
 
