@@ -259,6 +259,22 @@ module Reish
       def_accept
     end
 
+    class ClassCommand<Command
+      def_constructor
+
+      def initialize(klass, sklass, body)
+	@klass = klass
+	@super = sklass
+	@body = body
+      end
+
+      attr_reader :klass
+      attr_reader :super
+      attr_reader :body
+
+      def_accept
+    end
+
     class DefCommand<Command
       def_constructor
 
