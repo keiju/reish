@@ -115,6 +115,8 @@ module Reish
 
     @CONF[:AT_EXIT] = []
 
+#    @CONF[:BINDING_MODE] = 3	  # Reish is this mode only.
+
     # debuging configurations
     @CONF[:DISPLAY_COMP] = false
     @CONF[:DEBUG] = 0

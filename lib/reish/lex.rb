@@ -498,7 +498,7 @@ module Reish
 	if lex_state?(EXPR_FNAME)
 	  self.lex_state = EXPR_END
 	  Token(op)
-	elsif indent_current.kind_of?(SimpleToken) && indent_current.token_id == :BACK_QUOTE
+	elsif indent_current.kind_of?(SimpleToken) && indent_current.token_id == :XSTRING_BEG
 	  self.lex_state = EXPR_END
 	  SimpleToken.new(self, :XSTRING_END)
 	else

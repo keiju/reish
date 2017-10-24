@@ -14,14 +14,20 @@ module Reish
   class ::Object
 #    include UserAliasSpace, UserFunctionSpace
     include UserFunctionSpace
+
+    def reish_user_function_space_eval(exp)
+      case self
+      when Reish::Main
+	Reish::UserFunctionSpace.module_eval exp
+      when Module
+	self.module_eval exp
+      else 
+	self.instance_eval exp
+      end
+    end
   end
 
   FunctionFactories = {}
-
-  def self.define_function(klass, name, args, body, visitor)
-    fact = FunctionFactory.new(klass, name, args, body, visitor)
-    fact.function_class
-  end
 
   class FunctionFactory
 
@@ -33,6 +39,18 @@ module Reish
       reish_resultl: :RESULTL,
       reish_none:  :NONE,
     }
+
+    InternalFunctions = [
+      :initialize,
+      :each
+    ]
+    InternalFunctionSet = {}
+    InternalFunctions.each{|f| InternalFunctionSet[f] = f}
+
+    def self.define_function(klass, name, args, body, visitor)
+      fact = FunctionFactory.new(klass, name, args, body, visitor)
+      fact.function_class
+    end
 
     def initialize(klass, name, args, body, visitor)
       @klass = klass
