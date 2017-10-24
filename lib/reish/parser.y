@@ -310,20 +310,20 @@ class Reish::Parser
 	      end
 	    }
 
-  do_block_do: DO
+  do_block_do: DO opt_nl
 	    {
 	      @lex.indent_push(val[0])
       	    }
 
-  do_block_li: LBRACE_I
+  do_block_li: LBRACE_I opt_nl
 	    {
 	      @lex.indent_push(val[0])
 	    }
-  opt_block_arg: opt_nl
+  opt_block_arg: opt_nl 
 	    {
  	      result = nil
  	    }
- 	| opt_nl '|' block_arg '|' opt_nl
+ 	| opt_nl  '|' block_arg '|' opt_nl
  	    {
  	      result = val[2]
 	    }
