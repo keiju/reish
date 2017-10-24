@@ -492,18 +492,24 @@ class Reish::Parser
 		result = Node::DefCommand(val[0][0], arg, body)
 	    }
 
-  def_command_def0: DEF id opt_terms
+  def_command_def0: DEF id lex_beg opt_terms
 	    {
 		@lex.indent_push(val[0])
 		@lex.lex_state = Lex::EXPR_BEG
 		result = val[1]
   	    }
 
-  def_command_def1: DEF id func_arg_list
+  def_command_def1: DEF id lex_beg func_arg_list opt_terms
 	    {
 		@lex.indent_push(val[0])
 		@lex.lex_state = Lex::EXPR_BEG
-		result = [val[1], val[2]]
+		result = [val[1], val[3]]
+	    } 
+	| DEF id lex_beg func_arg_list1 opt_terms
+	    {
+		@lex.indent_push(val[0])
+		@lex.lex_state = Lex::EXPR_BEG
+		result = [val[1], val[3]]
 	    } 
 
   func_arg_list: LPARLEN_ARG func_arg_list0 ')'
@@ -519,6 +525,16 @@ class Reish::Parser
 	    {
 	      result = val[0]
 	      result.push val[3]
+	    }
+
+  func_arg_list1: lex_beg ID
+    	    {
+	       result = [val[1]]
+	    }
+	| func_arg_list1 lex_beg ID
+	    {
+	      result = val[0]
+	      result.push val[2]
 	    }
 
   alias_command: ALIAS id lex_beg opt_nl id
