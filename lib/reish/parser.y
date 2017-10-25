@@ -113,6 +113,7 @@ class Reish::Parser
 	| return_command
 	| yield_command
 	| assgin_command
+	| class_command
         | def_command
 	| alias_command
 
@@ -292,7 +293,7 @@ class Reish::Parser
 	    }
         | do_block
 
-  do_block: do_block_do opt_block_arg compound_list indent_pop END
+  do_block: do_block_do opt_block_arg compound_list0 indent_pop END
             { 
 	      if val[1]
 		result = Node::DoBlock(val[2], val[1])
@@ -300,7 +301,7 @@ class Reish::Parser
 		result = Node::DoBlock(val[2])
 	      end
 	    }
-	|  do_block_li opt_block_arg compound_list indent_pop '}'
+	|  do_block_li opt_block_arg compound_list0 indent_pop '}'
             { 
 	      if val[1]
 		result = Node::DoBlock(val[2], val[1])
@@ -309,23 +310,22 @@ class Reish::Parser
 	      end
 	    }
 
-  do_block_do: DO 
+  do_block_do: DO opt_nl
+	    {
+	      @lex.indent_push(val[0])
+      	    }
+
+  do_block_li: LBRACE_I opt_nl
 	    {
 	      @lex.indent_push(val[0])
 	    }
-
-  do_block_li: LBRACE_I
+  opt_block_arg: opt_nl 
 	    {
-	      @lex.indent_push(val[0])
-	    }
-
-  opt_block_arg: 
-	    {
-	      result = nil
-	    }
-	| '|' block_arg '|'
-	    {
-	      result = val[1]
+ 	      result = nil
+ 	    }
+ 	| opt_nl  '|' block_arg '|' opt_nl
+ 	    {
+ 	      result = val[2]
 	    }
 
   block_arg: 
@@ -354,6 +354,10 @@ class Reish::Parser
 	| SPECIAL
 	    {
       	       result = Node::SimpleCommand(val[0])
+	    }
+	| CLASS
+	    {
+      	       result = Node::SimpleCommand(IDToken.dup_from(val[0], "class"))
 	    }
 
   simple_command_element_list: 
@@ -463,6 +467,19 @@ class Reish::Parser
 #        | for_command
 #	| strict_pipeline
 
+  class_command: class_command_class body_list indent_pop END
+	    {
+		body = Node::BeginCommand(*val[1])
+		result = Node::ClassCommand(val[0], nil, body)
+	    }		
+
+  class_command_class: CLASS id opt_terms
+	    {
+		@lex.indent_push(val[0])
+		@lex.lex_state = Lex::EXPR_BEG
+		result=val[1]
+	    }
+
   def_command:  def_command_def0 body_list indent_pop END
 	    {
 		body = Node::BeginCommand(*val[1])
@@ -475,18 +492,24 @@ class Reish::Parser
 		result = Node::DefCommand(val[0][0], arg, body)
 	    }
 
-  def_command_def0: DEF id opt_terms
+  def_command_def0: DEF id lex_beg opt_terms
 	    {
 		@lex.indent_push(val[0])
 		@lex.lex_state = Lex::EXPR_BEG
 		result = val[1]
   	    }
 
-  def_command_def1: DEF id func_arg_list
+  def_command_def1: DEF id lex_beg func_arg_list opt_terms
 	    {
 		@lex.indent_push(val[0])
 		@lex.lex_state = Lex::EXPR_BEG
-		result = [val[1], val[2]]
+		result = [val[1], val[3]]
+	    } 
+	| DEF id lex_beg func_arg_list1 opt_terms
+	    {
+		@lex.indent_push(val[0])
+		@lex.lex_state = Lex::EXPR_BEG
+		result = [val[1], val[3]]
 	    } 
 
   func_arg_list: LPARLEN_ARG func_arg_list0 ')'
@@ -502,6 +525,16 @@ class Reish::Parser
 	    {
 	      result = val[0]
 	      result.push val[3]
+	    }
+
+  func_arg_list1: lex_beg ID
+    	    {
+	       result = [val[1]]
+	    }
+	| func_arg_list1 lex_beg ID
+	    {
+	      result = val[0]
+	      result.push val[2]
 	    }
 
   alias_command: ALIAS id lex_beg opt_nl id
@@ -605,13 +638,19 @@ class Reish::Parser
 	    {
 		result = Node::IfCommand(val[0][0], val[0][1])
 	    }
-	| if_head ELSE lex_beg compound_list indent_pop END
+	| if_head else_else compound_list indent_pop END
 	    {
-		result = Node::IfCommand(val[0][0], val[0][1], val[3])
+		result = Node::IfCommand(val[0][0], val[0][1], val[2])
 	    }
 	| if_head elsif_clause indent_pop END
 	    {
 		result = Node::IfCommand(val[0][0], val[0][1], val[1])
+	    }
+
+  else_else: ELSE opt_terms lex_beg
+	    {
+		@lex.indent_pop
+		@lex.indent_push(val[0])
 	    }
 
   if_head: if_head_if then lex_beg  compound_list 
@@ -624,17 +663,24 @@ class Reish::Parser
 		result = val[2]
 	    } 
 
-  elsif_clause:	ELSIF opt_nl logical_command then lex_beg compound_list
+  elsif_clause:	elsif_elsif then lex_beg compound_list
 	    {
-		result = Node::IfCommand(val[2], val[5])
+		result = Node::IfCommand(val[0], val[3])
 	    }
-	|	ELSIF opt_nl logical_command then lex_beg compound_list ELSE lex_beg compound_list
+	| elsif_elsif then lex_beg compound_list else_else compound_list
 	    {
-		result = Node::IfCommand(val[2], val[5], val[8])
+		result = Node::IfCommand(val[0], val[3], val[5])
 	    }
-	|	ELSIF opt_nl logical_command then lex_beg compound_list elsif_clause
+	| elsif_elsif then lex_beg compound_list elsif_clause
 	    {
-		result = Node::IfCommand(val[2], val[5], val[6])
+		result = Node::IfCommand(val[0], val[3], val[4])
+	    }
+
+  elsif_elsif: ELSIF opt_nl logical_command
+	    {
+		@lex.indent_pop
+		@lex.indent_push(val[0])
+		result = val[2]
 	    }
 
   then: THEN
@@ -957,6 +1003,28 @@ class Reish::Parser
 	| opt_nl compound_list1 ';'  lex_beg opt_nl
 	    {
 		result = val[1]
+	    } 
+
+   compound_list0: 
+ 	    {
+ 		result = Node::Sequence()
+ 	    }
+         | compound_list1 
+ 	    {
+ 		result = val[0]
+ 	    }
+ 	| compound_list1 NL lex_beg opt_nl
+ 	    {
+ 		result = val[0]
+ 	    } 
+ 	| compound_list1 '&' lex_beg  opt_nl
+ 	    {
+ 		val[1].last_command_to_async
+ 		result = val[0]
+ 	    } 
+ 	| compound_list1 ';'  lex_beg opt_nl
+ 	    {
+ 		result = val[0]
 	    } 
 
   compound_list1: logical_command
