@@ -54,7 +54,6 @@ module Reish
 	offset(@cache_prompts.size - 1)
       end
 
-
       def reset_cursor_position
 	@t_row = text_height - 1
 	@t_col = @cache.last.last.bytesize + last_offset
@@ -375,7 +374,6 @@ module Reish
 	@cache[row][sub_row].slice!(col, 1)
 	ti_del
 	
-
 	until @cache[row][sub_row+1].nil? 
 	  if @cache[row][sub_row].bytesize + @cache[row][sub_row+1][0].bytesize <= @term_width - offset(row, sub_row)
 	    cursor_col(@cache[row][sub_row].bytesize+offset(row, sub_row))
