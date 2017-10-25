@@ -54,7 +54,6 @@ module Reish
 	offset(@cache_prompts.size - 1)
       end
 
-
       def reset_cursor_position
 	@t_row = text_height - 1
 	@t_col = @cache.last.last.bytesize + last_offset
@@ -540,15 +539,40 @@ module Reish
       end
       
       def message_more(m_buffer)
-	m_height = @term_height - text_height - 2
+	@message_h = @term_height - text_height
+	mh = @message_h - 1
+	
+	offset = 0
+	loop do
+	  mh.times do |i| 
+	    if m_buffer.size == offset+i
+	      (mh - i).times{print_eol "\n"}
+	      ti_clear_eol
+	      return
+	    end
+	    puts m_buffer[offset+i]
+	  end
+	  offset += mh
 
-	m_height.times{print @m_buffer[i]}
+	  print "At Top: Hit TAB for more, or the character to insert"
 
-#	@controller.more(m_height) do |i|
-#	  m_height.times{print @m_buffer[i]}
-#	end
-	@message_h = m_height
-	reset_cursor_position
+	  ch = nil
+	  STDIN.noecho do
+	    STDIN.raw do
+	      ch = STDIN.getc
+	    end
+	  end
+
+	  case ch
+	  when "\t"
+	    ti_up(mh)
+	    ti_line_beg
+	    next
+	  else
+	    STDIN.ungetc(ch)
+	    break
+	  end
+	end
       end
 
       def message_clear
