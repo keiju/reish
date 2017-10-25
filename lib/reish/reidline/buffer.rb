@@ -60,6 +60,39 @@ module Reish
 	@buffer.size - 1 == row && @buffer.last.size == col
       end
 
+      def index(pat, row=0, col=0)
+	idx = @buffer[row].index(pat, col)
+	return [row, idx] if idx
+	row += 1
+	while row < @buffer.size
+	  idx = @buffer[row].index(pat)
+	  return [row, idx] if idx
+	  row += 1
+	end
+	return nil
+      end
+      alias re_search_forward index
+
+      def rindex(pat, row = nil, col = nil)
+	unless row
+	  row = @buffer.size - 1
+	end
+	unless col
+	  col = @buffer[row].size - 1
+	end
+
+	idx = @buffer[row].rindex(pat, col)
+	return [row, col] if idx
+	row -= 1
+	while row < 0
+	  idx = @buffer[row].rindex(pat)
+	  return [row, idx] if idx
+	  row -= 1
+	end
+	return nil
+      end
+      alias re_search_backward rindex
+
       def insert(row, col, str)
 	@buffer[row][col,0] = str
 	changed
