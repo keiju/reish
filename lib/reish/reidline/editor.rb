@@ -35,6 +35,7 @@ module Reish
       def init_keys
 	@handler = KeyHandler.new
 	@handler.def_handlers [
+	  ["\e\u007F", method(:delete_backword_word)],
 	  ["\e[A", method(:cursor_up)],
 	  ["\e[B", method(:cursor_down)],
 	  ["\e[C", method(:cursor_right)],
@@ -42,6 +43,7 @@ module Reish
 	  ["\e<", method(:cursor_bob)],
 	  ["\e>", method(:cursor_eob)],
 	  ["\eb", method(:cursor_backword_word)],
+	  ["\ed", method(:delete_forword_word)],
 	  ["\ef", method(:cursor_forword_word)],
 	  ["\ep", method(:history_prev)],
 	  ["\en", method(:history_next)],
@@ -60,9 +62,11 @@ module Reish
 	  ["\C-p", method(:cursor_up)],
 	  ["\C-m", method(:key_cr)],
 
+#	  ["\M-\u007F", method(:delete_backword_word)],
 	  ["\M-<", method(:cursor_bob)],
 	  ["\M->", method(:cursor_eob)],
 	  ["\M-b", method(:cursor_backword_word)],
+	  ["\M-d", method(:delete_forword_word)],
 	  ["\M-f", method(:cursor_forword_word)],
 	  ["\M-p", method(:history_prev)],
 	  ["\M-n", method(:history_next)],
@@ -347,6 +351,40 @@ module Reish
 	  @buffer.join_line(@c_row + 1)
 	else
 	  @buffer.delete(@c_row, @c_col)
+	end
+      end
+
+      def delete_backword_word(*args)
+	normalize_cursor
+	f_row = @c_row
+	f_col = @c_col
+
+	cursor_backword_word
+	if  f_row == @c_row && f_col == @c_col
+	  return
+	end
+	t_row = @c_row
+	t_col = @c_col
+	@c_row = f_row
+	@c_col = f_col
+	
+	until t_row == @c_row && t_col == @c_col
+	  backspace
+	end
+      end
+
+      def delete_forword_word(*args)
+	normalize_cursor
+	f_row = @c_row
+	f_col = @c_col
+
+	cursor_forword_word
+	if  f_row == @c_row && f_col == @c_col
+	  return
+	end
+	
+	until f_row == @c_row && f_col == @c_col
+	  backspace
 	end
       end
 
