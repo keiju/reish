@@ -31,7 +31,7 @@ module Reish
 
 #	@ORG_H = nil
 	
-	@message_h = 0
+	@m_buffer = []
       end
 
       def indent(row, sub_row = 0)
@@ -510,28 +510,27 @@ module Reish
 
       def message(str, append: false)
 	unless append
-	  message_clear if @message_h > 0
+	  message_clear if @m_buffer.empty?
 	end
-	message_cursor_save(append: append) do
-	  m_buffer = []
-
+	message_cursor_save do
 	  lines = str.lstrip.split(/\n/)
 	
+	  m_buffer = @m_buffer.dup
 	  lines.each do |line|
 	    ll = slice_width(line)
 	    ll.each do |l|
 	      m_buffer.push l
 	    end
 	  end
-	  if text_height + @message_h + m_buffer.size < @term_height
-	    m_buffer.each do |l|
-	      if l == m_buffer.last
+	  if text_height + m_buffer.size < @term_height
+	    @m_buffer = m_buffer
+	    @m_buffer.each do |l|
+	      if l == @m_buffer.last
 		print l
 	      else
 		puts l
 	      end
 	    end
-	    @message_h += m_buffer.size
 	  else
 	    message_more(m_buffer)
 	  end
@@ -539,15 +538,20 @@ module Reish
       end
       
       def message_more(m_buffer)
-	@message_h = @term_height - text_height
-	mh = @message_h - 1
+	message_h = @term_height - text_height
+	mh = message_h - 1
 	
 	offset = 0
 	loop do
 	  mh.times do |i| 
 	    if m_buffer.size == offset+i
-	      (mh - i).times{print_eol "\n"}
+	      @m_buffer = m_buffer[offset..-1]
+	      (mh - i).times do
+		print_eol "\n"
+		@m_buffer.push ""
+	      end
 	      ti_clear_eol
+	      @m_buffer.push ""
 	      return
 	    end
 	    puts m_buffer[offset+i]
@@ -568,7 +572,16 @@ module Reish
 	    ti_up(mh)
 	    ti_line_beg
 	    next
+	  when "\u007F"
+	    offset -= mh*2
+	    offset = 0 if offset < 0
+
+	    ti_up(mh)
+	    ti_line_beg
+	    next
 	  else
+	    @m_buffer = m_buffer[offset-mh, mh]
+	    @m_buffer.push ""
 	    STDIN.ungetc(ch)
 	    break
 	  end
@@ -576,29 +589,29 @@ module Reish
       end
 
       def message_clear
-	return if @message_h == 0
+	return if @m_buffer.empty?
 
 	message_cursor_save do
-	  @message_h.times{ti_delete_line}
-	  @message_h = 1
+	  @m_buffer.each{ti_delete_line}
+	  @m_buffer = [""]
 	end
-	@message_h = 0
+	@m_buffer.clear
       end
 
-      def message_cursor_save(append: false, &block)
+      def message_cursor_save(&block)
 	b_row = @t_row
 	b_col = @t_col
 
 	t_row, t_col = term_pos(text_height - 1, @cache[text_height - 1].size - 1)
 	cursor_move(t_row, t_col)
-	if append
-	  ti_down(@message_h)
-	end
+#	if append
+#	  ti_down(@m_buffer.size)
+#	end
 	print "\n"
 	
 	block.call
 	
-	ti_up(text_height + @message_h - b_row - 1)
+	ti_up(text_height + @m_buffer.size - b_row - 1)
 	ti_hpos(b_col)
 	@t_row = b_row
 	@t_col = b_col
