@@ -217,6 +217,8 @@ module Reish
     attr_reader :space_seen
     attr_reader :readed
 
+    attr_reader :indent_stack
+
 #    attr_accessor :lex_state
     def lex_state=(v)
       if Reish::debug_lex_state?
