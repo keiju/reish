@@ -19,7 +19,7 @@ module Reish
       def initialize(editor)
 	@controller = editor
 
-	@term_height, @term_width = ti_winsize
+	@TERM_H, @TERM_W = ti_winsize
 
 	@buffer = nil
 	@cache = nil
@@ -30,6 +30,9 @@ module Reish
 	@t_col = nil
 
 #	@ORG_H = nil
+
+	@OFF_H = 0
+	@WIN_H = nil
 	
 	@m_buffer = []
       end
@@ -62,6 +65,10 @@ module Reish
 
       def text_height
 	@cache.inject(0){|r, lines| r += lines.size}
+      end
+
+      def win_height
+	@WIN_H || [text_height - @OFF_H, @TERM_H].min
       end
 
       def change_buffer
@@ -165,7 +172,7 @@ module Reish
 	end
       end
 
-      def slice_width(str, width = @term_width, offset: 0)
+      def slice_width(str, width = @TERM_W, offset: 0)
 	str = str.dup
 	split = []
 	until str.size == 0
@@ -329,7 +336,7 @@ module Reish
 	  else
 	    print str
 	  end
-	  until @cache[row][sub_row].bytesize <= @term_width - offset(row, sub_row)
+	  until @cache[row][sub_row].bytesize <= @TERM_W - offset(row, sub_row)
 	    split = slice_width(@cache[row][sub_row], offset: offset(row, sub_row))
 	    @cache[row][sub_row] = split.shift
 	    until split.size <= 2
@@ -349,7 +356,7 @@ module Reish
 	    @cache[row][sub_row] = "" if @cache[row][sub_row].nil?
 	    @cache[row][sub_row].insert(0, sub)
 	  end
-	  if @cache[row][sub_row].bytesize == @term_width - offset(row, sub_row)
+	  if @cache[row][sub_row].bytesize == @TERM_W - offset(row, sub_row)
 	    @cache[row].push ""
 	    unless insert_line_row
 #	      insert_line
@@ -376,7 +383,7 @@ module Reish
 	
 
 	until @cache[row][sub_row+1].nil? 
-	  if @cache[row][sub_row].bytesize + @cache[row][sub_row+1][0].bytesize <= @term_width - offset(row, sub_row)
+	  if @cache[row][sub_row].bytesize + @cache[row][sub_row+1][0].bytesize <= @TERM_W - offset(row, sub_row)
 	    cursor_col(@cache[row][sub_row].bytesize+offset(row, sub_row))
 	    cursor_save_positon do
 	      ti_ins_mode do
@@ -481,7 +488,7 @@ module Reish
 	  if slice_width(@cache[row].first, offset: prompt.bytesize+indent*2).size > 1
 	    @cache_prompts[row] = prompt
 	    @cache_indents[row] = indent
-	    redisplay(row, cache_update: true)
+	    redisplay(from: row, cache_update: true)
 	  else
 	    diff = prompt.bytesize + indent*2 - offset(row)
 	    @cache_prompts[row] = prompt
@@ -524,7 +531,7 @@ module Reish
 	      m_buffer.push l
 	    end
 	  end
-	  if text_height + m_buffer.size < @term_height
+	  if text_height + m_buffer.size < @TERM_H
 	    @m_buffer = m_buffer
 	    @m_buffer.each do |l|
 	      if l == @m_buffer.last
@@ -540,7 +547,7 @@ module Reish
       end
       
       def message_more(m_buffer)
-	message_h = @term_height - text_height
+	message_h = @TERM_H - text_height
 	mh = message_h - 1
 	
 	offset = 0
