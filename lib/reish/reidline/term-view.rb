@@ -138,18 +138,18 @@ module Reish
 	  top = lines.first
 	  lines.each do |line|
 	    i += 1
-	    next if from >= i
+	    next if from > i
 	    if top.equal?(line)
 	      prompt =  @buffer.prompts[row]
 	      indent = @buffer.indents[row]
 	      if slice_width(@cache[row].first, offset: prompt.bytesize+indent*2).size > 1
-		@cache_prompt[row] = prompt
-		@cache_indent[row] = indent
+		@cache_prompts[row] = prompt
+		@cache_indents[row] = indent
 		return redisplay(row, cache_update: true)
 	      else
 		diff = prompt.bytesize + indent*2 - offset(row)
 		@cache_prompts[row] = prompt
-		@cache_indent[row] = indent
+		@cache_indents[row] = indent
 		if diff > 0
 		  print " "*diff
 		else
@@ -413,6 +413,8 @@ module Reish
 	  cursor_move(t_row, t_col)
 	  n = @cache[t_row].size
 	  @cache.slice!(t_row)
+	  @cache_prompts.slice!(t_row)
+	  @cache_indents.slice!(t_row)
 	  n.times{ti_delete_line}
 	  reprompt(t_row)
 	end

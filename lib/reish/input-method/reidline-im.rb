@@ -165,7 +165,7 @@ module Reish
 	    @out_queue.push true
 
 	  rescue ParserClosingSupp, ParserClosingEOFSupp
-	    @exc = $!
+	    @exc = nil
 	    @out_queue.push false
 
 	  rescue Racc::ParseError

@@ -325,6 +325,11 @@ module Reish
 
     def initialize_input
       @ruby_scanner.initialize_input
+      @ruby_scanner.instance_eval do
+	@rests = []
+	@readed = []
+      end
+
       @ltype = nil
       @quoted = nil
       @indent = 0

@@ -309,6 +309,7 @@ module Reish
       end
 
       def clear(*args)
+	closed?
 	@view.clear_display
       end
 
