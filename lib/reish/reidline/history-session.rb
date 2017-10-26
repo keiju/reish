@@ -48,6 +48,7 @@ module Reish
 	@editor.cursor_beginning_of_buffer
 	@editor.set_buffer(lines)
 	@editor.closed?
+	@editor.cursor_beginning_of_buffer
       end
     end
   end
