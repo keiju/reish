@@ -378,10 +378,10 @@ ttyput "CURSOR_REPOSITON:3"
       def cursor_down(c=1)
 	@t_row += c
 	if @WIN_H && @OFF_H + @WIN_H >= @t_row
-	  ti_down(c)
-	else
 	  @OFF_H += 1
 	  redisplay(from: @OFF_H, cache_update:false)
+	else
+	  ti_down(c)
 	end
       end
 
@@ -517,7 +517,11 @@ ttyput "UIL: OUT"
 	  @cache_prompts.slice!(t_row)
 	  @cache_indents.slice!(t_row)
 	  n.times{ti_delete_line}
-	  reprompt(t_row)
+	  if @WIN_H
+	    redisplay(from: t_row)
+	  else
+	    reprompt(t_row+1)
+	  end
 	end
       end
 
