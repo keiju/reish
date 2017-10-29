@@ -57,11 +57,15 @@ module Reish
 	offset(@cache_prompts.size - 1)
       end
 
-      def reset_cursor_position
-	@t_row = text_height - 1
-	@t_col = @cache.last.last.bytesize + last_offset
-	cursor_reposition
-      end
+#       def reset_cursor_position
+# 	if @WIN_H
+# 	  @t_row = @WIN_H + @OFF_H - 1
+# 	else
+# 	  @t_row = text_height - 1
+# 	end
+# 	@t_col = @cache.last.last.bytesize + last_offset
+# 	cursor_reposition
+#       end
 
       def text_height
 	@cache.inject(0){|r, lines| r += lines.size}
@@ -98,7 +102,8 @@ module Reish
 	ti_clear_eol
       end
 
-      def redisplay(from: 0, cache_update: false, height: nil)
+      def redisplay(from: 0, cache_update: false, height: nil, t_row: @t_row)
+ttyput "RD:0"
 	if cache_update
 	  @cache = []
 	  @cache_prompts = []
@@ -109,25 +114,64 @@ module Reish
 	    @cache.push slice_width(line, offset: last_offset)
 	  end
 	end
+ttyput "RD:1"
+	th = text_height
+	if th <= @TERM_H
+ttyput "RD:2"
+	  @OFF_H  = 0
+	  @WIN_H = nil
+	else
+ttyput "RD:3"
+ttyput @OFF_H, @t_row, @TERM_H, th, @WIN_H
+	  if th - @OFF_H <= @TERM_H
+ttyput "RD:4"
+	    @WIN_H = nil
+	  else
+ttyput "RD:5"
+#	    @OFF_H = th - @TERM_H + 1
+	    @WIN_H = @TERM_H 
+ttyput @OFF_H, @t_row, @TERM_H, th, @WIN_H
+	  end
+	  # カーソルがウィンドウに入るように調整
+	  if @OFF_H > t_row
+ttyput "RD:6"
+	    @OFF_H = t_row
+	  elsif @WIN_H && @WIN_H + @OFF_H  <= t_row
+ttyput "RD:7"
+	    @OFF_H = t_row - @TERM_H + 1
+	  end
 
+	end
+
+ttyput "RD:8"
+ttyput @OFF_H, @WIN_H, @TERM_H, th
 	i = 0
+	ti_line_beg
 	line_last = @cache.last.last
+	last_line = nil
+	last_prompt = nil
 	@cache.each_with_index do |lines, row|
 #	@cache.zip(@cache_prompts) do |lines, prompt|
 	  top = lines.first
 	  lines.each do |line|
 	    i += 1
 	    next if from >= i
+	    if @WIN_H && @OFF_H+@WIN_H < i
+	      break
+	    end
+ttyput [i, @WIN_H && @OFF_H+@WIN_H]
 
 	    if top.equal?(line) && @buffer.prompts[row]
 	      prompt = @cache_prompts[row] = @buffer.prompts[row]
 	      @cache_indents[row] = @buffer.indents[row]
-	      print prompt + indent(row)
+	      last_prompt = prompt + indent(row)
+	      print last_prompt
 	    end
 	    print_eol line
-	    if !line.equal?(line_last)
-	      print "\n"
+	    if !line.equal?(line_last) && (!@WIN_H || @OFF_H+@WIN_H > i)
+	     print "\n"
 	    end
+	    last_line = line
 	  end
 	end
 	if height && i < height
@@ -135,7 +179,19 @@ module Reish
 	  (height-i).times{ti_delete_line}
 	  ti_up
 	end
-	reset_cursor_position
+
+	if @WIN_H
+	  @t_row = @WIN_H + @OFF_H - 1
+	  @t_col = last_line.bytesize + last_prompt.bytesize
+ttyput last_line, last_prompt
+	else
+	  @t_row = text_height - 1
+	  @t_col = @cache.last.last.bytesize + last_offset
+	end
+ttyput "RD:E"
+ttyput  [@t_row, @t_col]
+	cursor_reposition
+ttyput  [@t_row, @t_col]
       end
 
       def reprompt(from)
@@ -217,9 +273,10 @@ module Reish
 #	  col = @buffer[row].size
 #	end
 	
-#ttyput "TERM_POS"
-#ttyput row, col
-#ttyput @cache
+ttyput "TERM_POS"
+ttyput row, col
+ttyput @cache[row]
+ttyput @cache_prompts[row], @cache_indents[row]
 
 	len = @cache[row].inject(0){|s, e| s + e.size}
 #ttyput len
@@ -244,7 +301,7 @@ module Reish
 	  w = of+@cache[row][sub_row][0..sub_col-1].bytesize
 	end
 
-#ttyput h+sub_row, w
+ttyput h+sub_row, w
 	return h+sub_row, w
       end
 
@@ -254,14 +311,31 @@ module Reish
 #      end
 
       def cursor_reposition
-#ttyput "CURSOR_REPOSITON"
+ttyput "CURSOR_REPOSITON"
 	t_row, t_col = term_pos(@controller.c_row, @controller.c_col)
-	h = t_row - @t_row
- 	w = t_col - @t_col
+ttyput t_row, t_col
+	dh = t_row - @t_row
+ 	dw = t_col - @t_col
  	@t_row = t_row
  	@t_col = t_col
-#ttyput h, w
- 	ti_move(h, w)
+ttyput dh, dw
+ttyput @OFF_H, @WIN_H
+	if @t_row < @OFF_H
+ttyput "CURSOR_REPOSITON:1"
+	  @OFF_H = @t_row
+	  redisplay(from: @t_row, cache_update: false)
+	elsif  @WIN_H && @WIN_H + @OFF_H <= @t_row || @TERM_H + @OFF_H <= @t_row
+ttyput "CURSOR_REPOSITON:2"
+	  @WIN_H = @TERM_H unless @WIN_H
+	  oo = @OFF_H
+	  @OFF_H = @t_row - @WIN_H + 1
+ttyput @WIN_H - (@t_row - dh + 1)
+#	  ti_vmove(@WIN_H - (@t_row - dh))
+	  redisplay(from: @t_row - 1, cache_update: false)
+	else
+ttyput "CURSOR_REPOSITON:3"
+	  ti_move(dh, dw)
+	end
       end
 
       def cursor_move(t_row, t_col)
@@ -270,7 +344,14 @@ module Reish
 	dw = t_col - @t_col
 	@t_row = t_row
 	@t_col = t_col
-	ti_move(dh, dw)
+	if @t_row < @OFF_H
+	  d = @OFF_H - @t_row
+	  @OFF_H = @t_row
+	  redisplay(from: @t_row, cache_update: false)
+	  ti_move(0, dw)
+	else
+	  ti_move(dh, dw)
+	end
       end
 
       def cursor_save_position(&block)
@@ -286,12 +367,22 @@ module Reish
 
       def cursor_up(c=1)
 	@t_row -= c
-	ti_up(c)
+	if @t_row >= @OFF_H
+	  ti_up(c)
+	else
+	  @OFF_H -= 1
+	  redisplay(from: @OFF_H, cache_update:false)
+	end
       end
 
       def cursor_down(c=1)
 	@t_row += c
-	ti_down(c)
+	if @WIN_H && @OFF_H + @WIN_H >= @t_row
+	  ti_down(c)
+	else
+	  @OFF_H += 1
+	  redisplay(from: @OFF_H, cache_update:false)
+	end
       end
 
       def cursor_right(c=1)
@@ -405,12 +496,16 @@ module Reish
       end
 
       def update_insert_line(row)
-	t_row, t_col = term_pos(row, @buffer[row].size)
+	t_row, t_col = term_pos(row, @buffer[row].size-1)
 	cursor_move(t_row, t_col)
 	@cache.insert(row+1, [""])
 	print "\n"
 	ti_clear_eol
-	redisplay(from: row+1)
+#	@t_row += 1
+#	@t_col = 0
+ttyput "UIL: IN"
+	redisplay(from: row+1, t_row: @t_row + 1)
+ttyput "UIL: OUT"
       end
 
       def update_delete_line(row)
@@ -480,6 +575,7 @@ module Reish
 
 	cursor_save_position do
 	  t_row, t_col = term_pos(row, 0)
+	  return if @OFF_H > t_row || @WIN_H && @WIN_H < t_row
 	  cursor_move(t_row, t_col)
 
 	  prompt = @buffer.prompts[row]
