@@ -50,17 +50,7 @@ module Reish
       @lex.set_prompt do |ltype, indent, continue, line_no|
 	idx = line_no - @line_no
 	@nesting[idx] = indent.dup
-	if idx > 1
-	  i = 0
-	  @nesting[idx].zip(@nesting[idx-1]) do |n1, n2|
-	    break unless n1 == n2
-	    i += 1
-	  end
-	  if @nesting[idx-1].size > i
-	    @reidline.set_indent(idx - 1, i)
-	  end
-	end
-
+	set_indent(idx)
 	if @promptor
 	  @reidline.set_prompt(idx, @promptor.call(line_no, indent, ltype, continue), indent.size)
 	end
@@ -175,7 +165,7 @@ module Reish
 	    @out_queue.push true
 
 	  rescue ParserClosingSupp, ParserClosingEOFSupp
-	    @exc = $!
+	    @exc = nil
 	    @out_queue.push false
 
 	  rescue Racc::ParseError
@@ -223,7 +213,12 @@ module Reish
 	ret = @out_queue.pop
  	if !ret && @exc && @parser.err_token
  	  for l in @parser.err_token.line_no + 1 .. @line_no + lines.size do
- 	    @reidline.set_prompt(l - @line_no, @promptor.call(l, "", nil, nil))
+	    idx = l - @line_no
+	    @nesting[idx] = @lex.indent_stack.dup
+	    set_indent(idx)
+ 	    @reidline.set_prompt(idx, 
+				 @promptor.call(l, @nesting[idx], "*", nil), 
+				 @nesting[idx].size)
  	  end
  	end
 
@@ -234,5 +229,17 @@ module Reish
       ret
     end
 
+    def set_indent(idx)
+      if idx > 1
+	i = 0
+	@nesting[idx].zip(@nesting[idx-1]) do |n1, n2|
+	  break unless n1 == n2
+	  i += 1
+	end
+	if @nesting[idx-1].size > i
+	  @reidline.set_indent(idx - 1, i)
+	end
+      end
+    end
   end
 end

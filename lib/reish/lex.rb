@@ -217,6 +217,8 @@ module Reish
     attr_reader :space_seen
     attr_reader :readed
 
+    attr_reader :indent_stack
+
 #    attr_accessor :lex_state
     def lex_state=(v)
       if Reish::debug_lex_state?
@@ -323,6 +325,11 @@ module Reish
 
     def initialize_input
       @ruby_scanner.initialize_input
+      @ruby_scanner.instance_eval do
+	@rests = []
+	@readed = []
+      end
+
       @ltype = nil
       @quoted = nil
       @indent = 0
