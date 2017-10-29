@@ -51,7 +51,7 @@ module Reish
 
     def init_editor
       @editor = Editor.new
-      @editor.history = @history
+      @editor.set_history(@history)
       @multi_line_mode = false
       @editor.set_closed_proc(&@closed_proc)
       @editor.set_cmpl_proc(&@cmpl_proc)

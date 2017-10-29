@@ -7,6 +7,7 @@
 require "reish/reidline/buffer"
 require "reish/reidline/term-view"
 require "reish/reidline/key-handler"
+require "reish/reidline/history-session"
 
 module Reish
 
@@ -16,8 +17,7 @@ module Reish
       def initialize(buffer = nil)
 	@view = TermView.new(self)
 
-	@history = nil
-	@current_history = 0
+	@history_session = nil
 
 	@in_move_cursor = nil
 
@@ -81,8 +81,6 @@ module Reish
       attr_reader :c_row
       attr_reader :c_col
 
-      attr_accessor :history
-
       def set_buffer(buffer = nil)
 	old_buffer = @buffer
 	case buffer
@@ -129,6 +127,7 @@ module Reish
 #      end
 
       def get_lines(prompt = nil)
+	reset_history_session
 	set_prompt(0, prompt) if prompt
 	contents = nil
 	begin
@@ -424,6 +423,7 @@ module Reish
       end
 
       def clear(*args)
+	closed?
 	@view.clear_display
       end
 
@@ -459,26 +459,20 @@ module Reish
 	end
       end
 
+      def set_history(history)
+	@history_session = HistorySession.new(self, history)
+      end
+
+      def reset_history_session
+	@history_session.reset
+      end
+
       def history_prev(*args)
-	@current_history -= 1
-	if @history.size + @current_history < 0
-	  @current_history += 1
-	end
-	lines = @history[@current_history]
-	cursor_beginning_of_buffer
-	set_buffer(lines)
-	closed?
+	@history_session.prev
       end
 
       def history_next(*args)
-	@current_history += 1
-	if @current_history > 0
-	  @current_history -= 1
-	end
-	lines = @history[@current_history]
-	cursor_beginning_of_buffer
-	set_buffer(lines)
-	closed?
+	@history_session.next
       end
 
 #       def init_more_keys
