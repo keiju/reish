@@ -26,8 +26,8 @@ module Reish
 	@cache_prompts = []
 	@cache_indents = []
 
-	@t_row = nil
-	@t_col = nil
+	@t_row = 0
+	@t_col = 0
 
 #	@ORG_H = nil
 
@@ -102,7 +102,8 @@ module Reish
 	ti_clear_eol
       end
 
-      def redisplay(from: 0, cache_update: false, height: nil, t_row: @t_row)
+      def redisplay(from: 0, cache_update: false, height: nil, t_row: @t_row,
+		    adjust: true)
 ttyput "RD:0"
 	if cache_update
 	  @cache = []
@@ -116,31 +117,33 @@ ttyput "RD:0"
 	end
 ttyput "RD:1"
 	th = text_height
-	if th <= @TERM_H
+	if adjust
+	  if th <= @TERM_H
 ttyput "RD:2"
-	  @OFF_H  = 0
-	  @WIN_H = nil
-	else
-ttyput "RD:3"
-ttyput @OFF_H, @t_row, @TERM_H, th, @WIN_H
-	  if th - @OFF_H <= @TERM_H
-ttyput "RD:4"
+	    @OFF_H  = 0
 	    @WIN_H = nil
 	  else
+ttyput "RD:3"
+ttyput @OFF_H, @t_row, @TERM_H, th, @WIN_H
+	    if th - @OFF_H <= @TERM_H
+ttyput "RD:4"
+	      @WIN_H = nil
+	    else
 ttyput "RD:5"
 #	    @OFF_H = th - @TERM_H + 1
-	    @WIN_H = @TERM_H 
+	      @WIN_H = @TERM_H 
 ttyput @OFF_H, @t_row, @TERM_H, th, @WIN_H
+	    end
 	  end
-	  # カーソルがウィンドウに入るように調整
-	  if @OFF_H > t_row
-ttyput "RD:6"
-	    @OFF_H = t_row
-	  elsif @WIN_H && @WIN_H + @OFF_H  <= t_row
-ttyput "RD:7"
-	    @OFF_H = t_row - @TERM_H + 1
-	  end
+	end
 
+	# カーソルがウィンドウに入るように調整
+	if (@OFF_H || 0) > t_row
+ttyput "RD:6"
+	  @OFF_H = t_row
+	elsif @WIN_H && @WIN_H + (@OFF_H || 0) <= t_row
+ttyput "RD:7"
+	  @OFF_H = t_row - @TERM_H + 1
 	end
 
 ttyput "RD:8"
@@ -323,7 +326,7 @@ ttyput @OFF_H, @WIN_H
 	if @t_row < @OFF_H
 ttyput "CURSOR_REPOSITON:1"
 	  @OFF_H = @t_row
-	  redisplay(from: @t_row, cache_update: false)
+	  redisplay(from: @t_row, cache_update: false, adjust: false)
 	elsif  @WIN_H && @WIN_H + @OFF_H <= @t_row || @TERM_H + @OFF_H <= @t_row
 ttyput "CURSOR_REPOSITON:2"
 	  @WIN_H = @TERM_H unless @WIN_H
@@ -331,7 +334,7 @@ ttyput "CURSOR_REPOSITON:2"
 	  @OFF_H = @t_row - @WIN_H + 1
 ttyput @WIN_H - (@t_row - dh + 1)
 #	  ti_vmove(@WIN_H - (@t_row - dh))
-	  redisplay(from: @t_row - 1, cache_update: false)
+	  redisplay(from: @t_row - 1, cache_update: false, adjust: false)
 	else
 ttyput "CURSOR_REPOSITON:3"
 	  ti_move(dh, dw)
@@ -399,10 +402,26 @@ ttyput "CURSOR_REPOSITON:3"
 	@t_col = 0
 	ti_line_beg
       end
+
+#      def cursor_eol
+#	
+#	ti_line_beg
+#      end
       
       def cursor_col(col)
 	@t_col = col
 	ti_hpos(col)
+      end
+
+      def cursor_bob
+	cursor_bol
+	cursor_up(@t_row)
+      end
+
+      def cursor_eob
+	cursor_bol
+	cursor_down(text_height - @t_row - 1)
+	cursor_eol
       end
 
       def update_insert(row, col, len)
@@ -620,78 +639,125 @@ ttyput "UIL: OUT"
 	unless append
 	  message_clear if @m_buffer.empty?
 	end
-	message_cursor_save do
-	  lines = str.lstrip.split(/\n/)
-	
-	  m_buffer = @m_buffer.dup
-	  lines.each do |line|
-	    ll = slice_width(line)
-	    ll.each do |l|
-	      m_buffer.push l
+
+	lines = str.lstrip.split(/\n/)
+	m_buffer = @m_buffer.dup
+	lines.each do |line|
+	  ll = slice_width(line)
+	  ll.each do |l|
+	    m_buffer.push l
+	  end
+	end
+
+ttyput "MES:1"
+	th = text_height
+	message_h = @TERM_H - th
+	mh = message_h - 1
+ttyput @TERM_H, @WIN_H, th, mh
+	if text_height > @TERM_H
+ttyput "MES:2"
+	  if @WIN_H && @TERM_H - @WIN_H >= m_buffer.size
+ttyput "MES:3"
+	    message_cat(m_buffer)
+	  else
+ttyput "MES:4"
+	    if @TERM_H.div(2) > m_buffer.size
+ttyput "MES:5"
+	      @WIN_H = @TERM_H - m_buffer.size
+	      @OFF_H = (th - @WIN_H).div(2)
+	      ti_clear
+	      redisplay(from: @OFF_H, adjust: false)
+		
+	      message_cat(m_buffer)
+	    else
+ttyput "MES:6"
+	      @WIN_H = (@TERM_H / 2.0).ceil
+	      @OFF_H = @t_row - @WIN_H.div(2)
+ttyput @WIN_H, @OFF_H
+#	      ti_clear
+	      redisplay(from: @OFF_H, adjust: false)
+	      message_more(m_buffer)
 	    end
 	  end
-	  if text_height + m_buffer.size < @TERM_H
-	    @m_buffer = m_buffer
-	    @m_buffer.each do |l|
-	      if l == @m_buffer.last
-		print l
-	      else
-		puts l
-	      end
+	elsif text_height + m_buffer.size < @TERM_H
+ttyput "MES:7"
+	  message_cat(m_buffer)
+	else
+ttyput "MES:8"
+	  message_more(m_buffer)
+	end
+ttyput "MES:E"
+      end
+
+      def message_cat(m_buffer)
+	message_cursor_save do
+	  @m_buffer = m_buffer
+	  @m_buffer.each do |l|
+	    if l == @m_buffer.last
+	      print l
+	    else
+	      puts l
 	    end
-	  else
-	    message_more(m_buffer)
 	  end
 	end
       end
       
       def message_more(m_buffer)
-	message_h = @TERM_H - text_height
+ttyput "MM:0"
+	if @WIN_H
+	  message_h = @TERM_H - @WIN_H
+	else
+	  message_h = @TERM_H - text_height
+	end
 	mh = message_h - 1
+
+ttyput @WIN_H, @TERM_H, mh
 	
-	offset = 0
-	loop do
-	  mh.times do |i| 
-	    if m_buffer.size == offset+i
-	      @m_buffer = m_buffer[offset..-1]
-	      (mh - i).times do
-		print_eol "\n"
+	message_cursor_save do
+	  offset = 0
+	  loop do
+	    mh.times do |i| 
+	      if m_buffer.size == offset+i
+		@m_buffer = m_buffer[offset..-1]
+		(mh - i).times do
+		  print_eol "\n"
+		  @m_buffer.push ""
+		end
+		ti_clear_eol
 		@m_buffer.push ""
+		return
 	      end
-	      ti_clear_eol
+	      puts m_buffer[offset+i]
+	    end
+	    offset += mh
+
+	    print "At Top: Hit TAB for more, or the character to insert"
+
+	    ch = nil
+	    STDIN.noecho do
+	      STDIN.raw do
+		ch = STDIN.getc
+	      end
+	    end
+
+	    case ch
+	    when "\t"
+	      ti_up(mh)
+	      ti_line_beg
+	      next
+	    when "\u007F"
+	      offset -= mh*2
+	      offset = 0 if offset < 0
+
+	      ti_up(mh)
+	      ti_line_beg
+	      next
+	    else
+	      @m_buffer = m_buffer[offset-mh, mh]
 	      @m_buffer.push ""
-	      return
+	      STDIN.ungetc(ch)
+	      break
 	    end
-	    puts m_buffer[offset+i]
-	  end
-	  offset += mh
-
-	  print "At Top: Hit TAB for more, or the character to insert"
-
-	  ch = nil
-	  STDIN.noecho do
-	    STDIN.raw do
-	      ch = STDIN.getc
-	    end
-	  end
-
-	  case ch
-	  when "\t"
-	    ti_up(mh)
-	    ti_line_beg
-	    next
-	  when "\u007F"
-	    offset -= mh*2
-	    offset = 0 if offset < 0
-
-	    ti_up(mh)
-	    ti_line_beg
-	    next
-	  else
-	    @m_buffer = m_buffer[offset-mh, mh]
-	    @m_buffer.push ""
-	    STDIN.ungetc(ch)
-	    break
 	  end
 	end
       end
@@ -707,23 +773,34 @@ ttyput "UIL: OUT"
       end
 
       def message_cursor_save(&block)
-	b_row = @t_row
-	b_col = @t_col
+	begin
+	  b_row = @t_row
+	  b_col = @t_col
 
-	t_row, t_col = term_pos(text_height - 1, @cache[text_height - 1].size - 1)
-	cursor_move(t_row, t_col)
+	  if @WIN_H
+	    t_row, t_col = term_pos(@WIN_H + @OFF_H - 1, 0)
+	  else
+	    t_row, t_col = term_pos(text_height - 1, @cache[text_height - 1].size - 1)
+	  end
+	  cursor_move(t_row, t_col)
 #	if append
 #	  ti_down(@m_buffer.size)
 #	end
-	print "\n"
+	  print "\n"
 	
-	block.call
+	  block.call
 	
-	ti_up(text_height + @m_buffer.size - b_row - 1)
-	ti_hpos(b_col)
-	@t_row = b_row
-	@t_col = b_col
+	ensure
+	  if @WIN_H
+	    ti_up(@TERM_H + @OFF_H - b_row - 1)
+	  else
+	    ti_up(text_height + @m_buffer.size - b_row - 1)
+	  end
+	  ti_hpos(b_col)
+	  @t_row = b_row
+	  @t_col = b_col
 #	reset_cursor_position
+	end
       end
 
       def print_eol(str)
