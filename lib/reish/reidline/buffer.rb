@@ -47,6 +47,15 @@ module Reish
 	@buffer.join("\n")
       end
 
+      def contents_to(row, col)
+	contents = @buffer[0..row-1].join("\n")
+	contents.concat "\n"
+	contents.concat @buffer[row][0..col]
+ttyput "contents_to"
+ttyput contents
+	contents
+      end
+
       def empty?
 #ttyput @row, @buffer[@row]
 	@buffer.size == 1 && @buffer.first.empty?

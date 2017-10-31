@@ -741,7 +741,7 @@ ttyput @WIN_H, @TERM_H, mh
 	    end
 	    offset += mh
 
-	    print "At Top: Hit TAB for more, or the character to insert"
+	    print "TAB for more, BS for back-more, or the character to insert"
 
 	    ch = nil
 	    STDIN.noecho do
