@@ -673,16 +673,17 @@ ttyput "MES:5"
 ttyput "MES:6"
 	      @WIN_H = (@TERM_H / 2.0).ceil
 	      @OFF_H = @t_row - (@WIN_H/2.0).ceil
-	      if @OFF_H > @t_row
+	      if @OFF_H < 0
+		@OFF_H = 0
+	      elsif @OFF_H > @t_row 
 ttyput "MES:6.2"
 		@OFF_H = @t_row
 	      elsif @OFF_H > th - @t_row
 ttyput "MES:6.5"
 		@OFF_H = @t_row - @WIN_H + 1
-ttyput @OFF_H, @WIN_H, @t_row
 	      end
 
-ttyput @WIN_H, @OFF_H
+ttyput @OFF_H, @WIN_H, @t_row
 	      ti_clear
 	      redisplay(from: 0, adjust: false)
 	      message_more(m_buffer)
@@ -736,7 +737,7 @@ ttyput @WIN_H, @TERM_H, mh
 		@m_buffer.push ""
 		return
 	      end
-	      puts m_buffer[offset+i]
+	      puts_eol m_buffer[offset+i]
 	    end
 	    offset += mh
 
@@ -816,7 +817,12 @@ ttyput @WIN_H, @TERM_H, mh
 	print str
 	ti_clear_eol
       end
-      
+
+      def puts_eol(str)
+	print str
+	ti_clear_eol
+	print "\n"
+      end
     end
   end
 end
