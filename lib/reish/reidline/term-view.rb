@@ -784,6 +784,7 @@ ttyput @WIN_H, @TERM_H, mh
 
       def message_cursor_save(&block)
 	begin
+ttyput "MCS:0"
 	  b_row = @t_row
 	  b_col = @t_col
 
@@ -797,13 +798,17 @@ ttyput @WIN_H, @TERM_H, mh
 #	  ti_down(@m_buffer.size)
 #	end
 	  print "\n"
-	
-	  block.call
+#	  ti_save_position do
+	    block.call
+#	  end
 	
 	ensure
+ttyput "MCS:E0"
 	  if @WIN_H
-	    ti_up(@TERM_H + @OFF_H - b_row - 1)
+ttyput "MCS:E1"
+	    ti_up(@WIN_H + @OFF_H + @m_buffer.size - b_row - 1)
 	  else
+ttyput "MCS:E2"
 	    ti_up(text_height + @m_buffer.size - b_row - 1)
 	  end
 	  ti_hpos(b_col)
