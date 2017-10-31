@@ -672,10 +672,19 @@ ttyput "MES:5"
 	    else
 ttyput "MES:6"
 	      @WIN_H = (@TERM_H / 2.0).ceil
-	      @OFF_H = @t_row - @WIN_H.div(2)
+	      @OFF_H = @t_row - (@WIN_H/2.0).ceil
+	      if @OFF_H > @t_row
+ttyput "MES:6.2"
+		@OFF_H = @t_row
+	      elsif @OFF_H > th - @t_row
+ttyput "MES:6.5"
+		@OFF_H = @t_row - @WIN_H + 1
+ttyput @OFF_H, @WIN_H, @t_row
+	      end
+
 ttyput @WIN_H, @OFF_H
-#	      ti_clear
-	      redisplay(from: @OFF_H, adjust: false)
+	      ti_clear
+	      redisplay(from: 0, adjust: false)
 	      message_more(m_buffer)
 	    end
 	  end
