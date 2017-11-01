@@ -435,7 +435,7 @@ module Reish
 	  return
 	end
 
-	candidates = @cmpl_proc.call(@buffer.contents) 
+	candidates = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col)) 
 	return if candidates.nil? || candidates.empty?
 
 	if candidates.size > 1
