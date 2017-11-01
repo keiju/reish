@@ -48,8 +48,12 @@ module Reish
       end
 
       def contents_to(row, col)
-	contents = @buffer[0..row-1].join("\n")
-	contents.concat "\n"
+	if row > 0
+	  contents = @buffer[0..row-1].join("\n")
+	  contents.concat "\n"
+	else
+	  contents = ""
+	end
 	contents.concat @buffer[row][0..col]
 ttyput "contents_to"
 ttyput contents
