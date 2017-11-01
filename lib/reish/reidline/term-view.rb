@@ -654,7 +654,8 @@ ttyput "MES:1"
 	message_h = @TERM_H - th
 	mh = message_h - 1
 ttyput @TERM_H, @WIN_H, th, mh
-	if text_height > @TERM_H
+	if text_height > @TERM_H + @OFF_H &&
+	    text_height < @TERM_H.div(2) + @OFF_H
 ttyput "MES:2"
 	  if @WIN_H && @TERM_H - @WIN_H >= m_buffer.size
 ttyput "MES:3"
@@ -741,7 +742,7 @@ ttyput @WIN_H, @TERM_H, mh
 	    end
 	    offset += mh
 
-	    print "TAB for more, BS for back-more, or the character to insert"
+	    print_width_winsz "TAB for next-page, BS for back-page, or return for other character: "
 
 	    ch = nil
 	    STDIN.noecho do
@@ -766,6 +767,7 @@ ttyput @WIN_H, @TERM_H, mh
 	      @m_buffer = m_buffer[offset-mh, mh]
 	      @m_buffer.push ""
 	      STDIN.ungetc(ch)
+	      ti_delete_line
 	      break
 	    end
 	  end
@@ -827,6 +829,10 @@ ttyput "MCS:E2"
 	print str
 	ti_clear_eol
 	print "\n"
+      end
+
+      def print_width_winsz(str)
+	print str[0, @TERM_W]
       end
     end
   end
