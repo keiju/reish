@@ -55,13 +55,10 @@ module Reish
 	  contents = ""
 	end
 	contents.concat @buffer[row][0..col]
-ttyput "contents_to"
-ttyput contents
 	contents
       end
 
       def empty?
-#ttyput @row, @buffer[@row]
 	@buffer.size == 1 && @buffer.first.empty?
       end
 
@@ -122,16 +119,13 @@ ttyput contents
       end
 
       def insert_cr(row, col)
-#ttyput "IC:0"
 	if eol?(row, col)
-#ttyput "IC:1"
 	  @buffer.insert(row + 1, "")
 	  changed
 	  notify_observers(:insert_line, row)
 	  changed
 	  notify_observers(:prompt, row+1)
 	else
-#ttyput "IC:2"
 	  sub = @buffer[row].slice!(col..-1)
 	  @buffer.insert(row + 1, sub)
 	  changed
@@ -150,7 +144,6 @@ ttyput contents
 	notify_observers(:join_line, row-1, col, len)
 #	notify_observers(:delete_line, row)
 #	changed
-#ttyput "INSERT", row-1, col
 #	notify_observers(:insert, row-1, col, len)
       end
 

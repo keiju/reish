@@ -66,8 +66,6 @@
 ** in(TAB)等予約後をコンプレーションできない(パーズ時にエラーになる)
 
 * Reidline
-** バッファ高をはみ出したときの処理
-   + メッセージ対応
 ** status line
 ** input-buffer in message area
 ** その他編集機能

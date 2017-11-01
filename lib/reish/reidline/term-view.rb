@@ -104,7 +104,6 @@ module Reish
 
       def redisplay(from: 0, cache_update: false, height: nil, t_row: @t_row,
 		    adjust: true)
-ttyput "RD:0"
 	if cache_update
 	  @cache = []
 	  @cache_prompts = []
@@ -115,39 +114,28 @@ ttyput "RD:0"
 	    @cache.push slice_width(line, offset: last_offset)
 	  end
 	end
-ttyput "RD:1"
 	th = text_height
 	if adjust
 	  if th <= @TERM_H
-ttyput "RD:2"
 	    @OFF_H  = 0
 	    @WIN_H = nil
 	  else
-ttyput "RD:3"
-ttyput @OFF_H, @t_row, @TERM_H, th, @WIN_H
 	    if th - @OFF_H <= @TERM_H
-ttyput "RD:4"
 	      @WIN_H = nil
 	    else
-ttyput "RD:5"
 #	    @OFF_H = th - @TERM_H + 1
 	      @WIN_H = @TERM_H 
-ttyput @OFF_H, @t_row, @TERM_H, th, @WIN_H
 	    end
 	  end
 	end
 
 	# カーソルがウィンドウに入るように調整
 	if (@OFF_H || 0) > t_row
-ttyput "RD:6"
 	  @OFF_H = t_row
 	elsif @WIN_H && @WIN_H + (@OFF_H || 0) <= t_row
-ttyput "RD:7"
 	  @OFF_H = t_row - @TERM_H + 1
 	end
 
-ttyput "RD:8"
-ttyput @OFF_H, @WIN_H, @TERM_H, th
 	i = 0
 	ti_line_beg
 	line_last = @cache.last.last
@@ -162,7 +150,6 @@ ttyput @OFF_H, @WIN_H, @TERM_H, th
 	    if @WIN_H && @OFF_H+@WIN_H < i
 	      break
 	    end
-ttyput [i, @WIN_H && @OFF_H+@WIN_H]
 
 	    if top.equal?(line) && @buffer.prompts[row]
 	      prompt = @cache_prompts[row] = @buffer.prompts[row]
@@ -186,15 +173,11 @@ ttyput [i, @WIN_H && @OFF_H+@WIN_H]
 	if @WIN_H
 	  @t_row = @WIN_H + @OFF_H - 1
 	  @t_col = last_line.bytesize + last_prompt.bytesize
-ttyput last_line, last_prompt
 	else
 	  @t_row = text_height - 1
 	  @t_col = @cache.last.last.bytesize + last_offset
 	end
-ttyput "RD:E"
-ttyput  [@t_row, @t_col]
 	cursor_reposition
-ttyput  [@t_row, @t_col]
       end
 
       def reprompt(from)
@@ -272,17 +255,7 @@ ttyput  [@t_row, @t_col]
       end
 
       def term_pos(row, col, offset: true)
-#	if @buffer[row].size < col
-#	  col = @buffer[row].size
-#	end
-	
-ttyput "TERM_POS"
-ttyput row, col
-ttyput @cache[row]
-ttyput @cache_prompts[row], @cache_indents[row]
-
 	len = @cache[row].inject(0){|s, e| s + e.size}
-#ttyput len
 	if len < col
 	  col = len
 	end
@@ -304,7 +277,6 @@ ttyput @cache_prompts[row], @cache_indents[row]
 	  w = of+@cache[row][sub_row][0..sub_col-1].bytesize
 	end
 
-ttyput h+sub_row, w
 	return h+sub_row, w
       end
 
@@ -314,29 +286,20 @@ ttyput h+sub_row, w
 #      end
 
       def cursor_reposition
-ttyput "CURSOR_REPOSITON"
 	t_row, t_col = term_pos(@controller.c_row, @controller.c_col)
-ttyput t_row, t_col
 	dh = t_row - @t_row
  	dw = t_col - @t_col
  	@t_row = t_row
  	@t_col = t_col
-ttyput dh, dw
-ttyput @OFF_H, @WIN_H
 	if @t_row < @OFF_H
-ttyput "CURSOR_REPOSITON:1"
 	  @OFF_H = @t_row
 	  redisplay(from: @t_row, cache_update: false, adjust: false)
 	elsif  @WIN_H && @WIN_H + @OFF_H <= @t_row || @TERM_H + @OFF_H <= @t_row
-ttyput "CURSOR_REPOSITON:2"
 	  @WIN_H = @TERM_H unless @WIN_H
 	  oo = @OFF_H
 	  @OFF_H = @t_row - @WIN_H + 1
-ttyput @WIN_H - (@t_row - dh + 1)
-#	  ti_vmove(@WIN_H - (@t_row - dh))
 	  redisplay(from: @t_row - 1, cache_update: false, adjust: false)
 	else
-ttyput "CURSOR_REPOSITON:3"
 	  ti_move(dh, dw)
 	end
       end
@@ -520,11 +483,7 @@ ttyput "CURSOR_REPOSITON:3"
 	@cache.insert(row+1, [""])
 	print "\n"
 	ti_clear_eol
-#	@t_row += 1
-#	@t_col = 0
-ttyput "UIL: IN"
 	redisplay(from: row+1, t_row: @t_row + 1)
-ttyput "UIL: OUT"
       end
 
       def update_delete_line(row)
@@ -649,21 +608,15 @@ ttyput "UIL: OUT"
 	  end
 	end
 
-ttyput "MES:1"
 	th = text_height
 	message_h = @TERM_H - th
 	mh = message_h - 1
-ttyput @TERM_H, @WIN_H, th, mh
 	if text_height > @TERM_H + @OFF_H ||
 	    text_height > @TERM_H.div(2) + @OFF_H
-ttyput "MES:2"
 	  if @WIN_H && @TERM_H - @WIN_H >= m_buffer.size
-ttyput "MES:3"
 	    message_cat(m_buffer)
 	  else
-ttyput "MES:4"
 	    if @TERM_H.div(2) > m_buffer.size
-ttyput "MES:5"
 	      @WIN_H = @TERM_H - m_buffer.size
 	      @OFF_H = (th - @WIN_H).div(2)
 	      ti_clear
@@ -671,33 +624,26 @@ ttyput "MES:5"
 		
 	      message_cat(m_buffer)
 	    else
-ttyput "MES:6"
 	      @WIN_H = (@TERM_H / 2.0).ceil
 	      @OFF_H = @t_row - (@WIN_H/2.0).ceil
 	      if @OFF_H < 0
 		@OFF_H = 0
 	      elsif @OFF_H > @t_row 
-ttyput "MES:6.2"
 		@OFF_H = @t_row
 	      elsif @OFF_H > th - @t_row
-ttyput "MES:6.5"
 		@OFF_H = @t_row - @WIN_H + 1
 	      end
 
-ttyput @OFF_H, @WIN_H, @t_row
 	      ti_clear
 	      redisplay(from: 0, adjust: false)
 	      message_more(m_buffer)
 	    end
 	  end
 	elsif text_height + m_buffer.size < @TERM_H
-ttyput "MES:7"
 	  message_cat(m_buffer)
 	else
-ttyput "MES:8"
 	  message_more(m_buffer)
 	end
-ttyput "MES:E"
       end
 
       def message_cat(m_buffer)
@@ -714,7 +660,6 @@ ttyput "MES:E"
       end
       
       def message_more(m_buffer)
-ttyput "MM:0"
 	if @WIN_H
 	  message_h = @TERM_H - @WIN_H
 	else
@@ -722,8 +667,6 @@ ttyput "MM:0"
 	end
 	mh = message_h - 1
 
-ttyput @WIN_H, @TERM_H, mh
-	
 	message_cursor_save do
 	  offset = 0
 	  loop do
@@ -786,7 +729,6 @@ ttyput @WIN_H, @TERM_H, mh
 
       def message_cursor_save(&block)
 	begin
-ttyput "MCS:0"
 	  b_row = @t_row
 	  b_col = @t_col
 
@@ -805,12 +747,9 @@ ttyput "MCS:0"
 #	  end
 	
 	ensure
-ttyput "MCS:E0"
 	  if @WIN_H
-ttyput "MCS:E1"
 	    ti_up(@WIN_H + @OFF_H + @m_buffer.size - b_row - 1)
 	  else
-ttyput "MCS:E2"
 	    ti_up(text_height + @m_buffer.size - b_row - 1)
 	  end
 	  ti_hpos(b_col)
