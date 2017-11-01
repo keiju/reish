@@ -654,8 +654,8 @@ ttyput "MES:1"
 	message_h = @TERM_H - th
 	mh = message_h - 1
 ttyput @TERM_H, @WIN_H, th, mh
-	if text_height > @TERM_H + @OFF_H &&
-	    text_height < @TERM_H.div(2) + @OFF_H
+	if text_height > @TERM_H + @OFF_H ||
+	    text_height > @TERM_H.div(2) + @OFF_H
 ttyput "MES:2"
 	  if @WIN_H && @TERM_H - @WIN_H >= m_buffer.size
 ttyput "MES:3"
