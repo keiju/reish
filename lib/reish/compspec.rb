@@ -25,25 +25,17 @@ module Reish
     end
 
     def CompSpec.spec(receiver, name)
-puts "CS#0"
-p receiver
-p name
       unless  /^\// =~ name
 	case receiver
 	when ModuleSpec, DescendantSpec
-puts "CS#1"
-
 	  mod = receiver.module
-p mod
 	  spec = nil
 	  mod.ancestors.find{|m| spec = M2Spec[[m, name]]}
-p spec
 	  if !spec && receiver.respond_to?(name)
 	    spec = DefaultRubyMethodCS
 	  end
 	  return spec if spec
 	when CompositeSpec
-puts "CS#2"
 	  specs = Set.new
 	  receiver.modules.each do |mod|
 	    spec = nil
@@ -55,11 +47,16 @@ puts "CS#2"
 	  end
 	  return specs
 	else
-puts "CS#3"
-	  for mod in receiver.class.ancestors
+	  case receiver
+	  when Module
+	    desc = receiver.singleton_class
+	  else
+	    desc = receiver.class
+	  end
+	  for mod in desc.ancestors
 	    spec = M2Spec[[mod, name]]
 	    if spec
-	      puts "Match CompSpec for #{mod}##{name} spec: #{spec.inspect}"
+	      puts "Match CompSpec for #{mod}##{name} spec: #{spec.inspect}" if Reish.debug_cmpl?
 	      return spec
 	    end
 	  end
@@ -67,9 +64,7 @@ puts "CS#3"
 	end
       end
       spec = N2Spec[name]
-puts "CS#4"
       return spec if spec
-puts "CS#5"
       DefaultSystemCommandCS
     end
 
@@ -119,6 +114,10 @@ puts "CS#5"
       end
 
       if arg
+	if /^\// === arg
+	  pwd = ""
+	end
+
 	l = pwd.size
 	Dir.glob("#{pwd}/#{arg}*", File::FNM_DOTMATCH).collect{|e| e[0..l]= ""; e}
       else
@@ -216,10 +215,27 @@ puts "CS#5"
     end
   }
   CompSpec.def_method(Class, "new", DefaultNewCS)
+  
+  FileNewCS = DefaultNewCS.clone
+  FileNewCS.arg_proc = proc{|call| 
+    if call.args.size == 0
+      FileNewCS.files(call)
+    end
+  }
+  FileNewCS.ret_proc{ModuleSpec(File)}
+  CompSpec.def_method(File.singleton_class, "new", FileNewCS)
+  CompSpec.def_method(File.singleton_class, "open", FileNewCS)
 
   DefaultSystemCommandCS = CompSpec.new
   DefaultSystemCommandCS.arg_proc = DefaultSystemCommandCS.files_arg_proc
   DefaultSystemCommandCS.ret_proc = proc{|call| ModuleSpec(SystemCommand)}
+
+  all_cs = CompSpec.new
+  all_cs.arg_proc = all_cs.objects_arg_proc
+  all_cs.ret_proc = proc{|call| ModuleSpec(TrueClass) | ModuleSpec(FalseClass)}
+  CompSpec.def_method(Enumerable, "all?", all_cs)
+  CompSpec.def_method(Enumerable, "any?", all_cs)
+  
 
   CompSpec.def_method Object, "Special#|", DefaultRubyMethodCS
   CompSpec.def_method Object, "Special#&", DefaultRubyMethodCS

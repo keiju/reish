@@ -39,6 +39,14 @@ module Reish
       block_given? ? yield(var, idx) : [var, idx]
     end
 
+    def visit_class_command(command)
+      klass = command.klass.accept(self)
+      sklass = command.super
+      body = command.body.accept(self)
+      
+      block_given? ? yield(klass, sklass, body) : [klass, sklass, body]
+    end
+
     def visit_def_command(command)
       name = command.id.accept(self)
       args = command.args && command.args.collect{|e| e.accept(self)}
@@ -304,6 +312,7 @@ module Reish
       val.value
     end
     alias visit_id visit_value
+    alias visit_id2 visit_value
     alias visit_test visit_value
     alias visit_path visit_value
     alias visit_number visit_value

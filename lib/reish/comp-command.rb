@@ -22,12 +22,12 @@ module Reish
       receiver = @receiver
       first_comm = @pipeline.commands.first
       last_comm = @pipeline.commands.last
-      
+
       @pipeline.commands.each do |com|
 	case com
 	when first_comm
 	  case com.name
-	  when IDToken, TestToken
+	  when IDToken, ID2Token, TestToken
 	    name = com.name.value
 	    var = eval("local_variables | self.class.constants(true) | Object.constants", @bind).find{|v| v.to_s == name}
 	    if var
@@ -53,7 +53,7 @@ module Reish
 	    candidates = receiver.methods
 	  end
 	  case com.name
-	  when IDToken
+	  when IDToken, ID2Token
 	    return candidates.grep(/^#{com.name.value}/)
 	  when nil
 	    return candidates
@@ -90,23 +90,19 @@ module Reish
       last_comm = @pipeline.commands.last
       
       @pipeline.commands.each do |com|
-puts "PIPE"
-p com
 	case com
 	when first_comm
 	  case com.name
-	  when IDToken, TestToken
+	  when IDToken, ID2Token, TestToken
 	    name = com.name.value
 	    var = eval("local_variables | self.class.constants(true) | Object.constants", @bind).find{|v| v.to_s == name}
 	    if var
 	      receiver = eval(var.to_s, @bind)
 	    else
-puts "CALL"
 	      call = CompCommandCall.new(receiver,
 					 com.name,
 					 com.args,
 					 bind)
-p call
 	      receiver = call.return_value
 	    end
 	  when SpecialToken, ReservedWordToken, PathToken
@@ -136,7 +132,7 @@ p call
   class CompCommandBase
     def spec_name
       case @name
-      when IDToken
+      when IDToken, ID2Token
 	@name.value
       when SpecialToken
 	"Special#"+@name.value

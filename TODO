@@ -32,6 +32,10 @@
 ** ワイルドカード 文字列"..."の中でワイルドカードが使えない.
 ** 空文(;;)が不可
 ** 引数で $func.exe は? 今は, $func.exe()
+** if command[cr]then ができない
+   -> 他の問題が発生するのでとりあえず削除
+** command --do の shift/reduce confirict がとれない.
+   # reidlineでparseエラーにならない用にしようとするとこうなってしまう.
 
 * code generation
 ** # command | if ... をもっとちゃんと対応したい(instance_evalを使わなく
@@ -43,10 +47,14 @@
 ** コマンド引数にEnumerableが渡ったときの処理
 ** return/break/next/redo/retryの対応
   #  rubyでは, 式中に上記のものを入れることができない.
+** 関数をパイプライン接続したとき最終実行結果のみが次にわたる(Rubyの関数と互換をとるため). 標準出力結果すべてを次に渡すのも欲しいか?
+** def --[direct|term...] func
+  # これは, めんどくさそう... define_function [opt] func... か?
 
 * jobctl
 **  TTOUTの処理は必要ない?
 ** fg/bgでのjobの選択アルゴリズム
+** Process.spawn, IO.popenからの独立
 
 * コンプレーション機能
 ** 完全なCompSystemCommand - パイプライン, リダイレクションの処理
@@ -56,6 +64,12 @@
 ** CompSpec#optparse optparseのような指定でオプションスペック指定でき
    るようにする
 ** in(TAB)等予約後をコンプレーションできない(パーズ時にエラーになる)
+
+* Reidline
+** status line
+** input-buffer in message area
+** その他編集機能
+
 
 * expr
 ** 計算式文 $exp ... end $exp{...}

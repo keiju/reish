@@ -67,6 +67,18 @@ module Reish
   end
 
   class ValueToken<Token
+    def self.dup_from(src, id)
+      new_token = new(src.lex, id)
+      new_token.instance_eval do
+	@io = src.io
+	@seek = src.seek
+	@line_no = src.line_no
+	@char_no = src.char_no
+	@space_seen = src.space_seen
+      end
+      new_token
+    end
+
     def initialize(lex, val)
       super
       @value = val
@@ -110,12 +122,24 @@ module Reish
 
   class IDToken<ValueToken
 
+
     def accept(visitor)
       visitor.visit_id(self)
     end
 
     def inspect_tag
       "ID"
+    end
+  end
+
+  class ID2Token<ValueToken
+
+    def accept(visitor)
+      visitor.visit_id2(self)
+    end
+
+    def inspect_tag
+      "ID2"
     end
   end
 
@@ -291,6 +315,7 @@ module Reish
     VariableToken,
     PseudoVariableToken,
     IDToken,
+    ID2Token,
     TestToken,
     SpecialToken,
     PathToken,

@@ -103,6 +103,8 @@ module Reish
     @CONF[:IGNORE_EOF] = false
     @CONF[:ECHO] = nil
 
+    @CONF[:AUTO_INDENT] = true
+
     @CONF[:COMPLETION] = false
 
     @CONF[:EVAL_HISTORY] = nil
@@ -112,6 +114,8 @@ module Reish
     @CONF[:VERBOSE] = nil
 
     @CONF[:AT_EXIT] = []
+
+#    @CONF[:BINDING_MODE] = 3	  # Reish is this mode only.
 
     # debuging configurations
     @CONF[:DISPLAY_COMP] = false

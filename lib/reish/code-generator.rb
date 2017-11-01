@@ -41,22 +41,88 @@ module Reish
       end
     end
 
-    def visit_def_command(command)
-      super do |name, args, body|
-
-	ags = args && args.join(", ")
-
-	fclass = Reish::define_function(UserFunctionSpace, name, args, body, self)
-	%{Reish::UserFunctionSpace.module_eval %{
-	  def #{name}(#{ags})
-	    #{fclass.name}.new(self#{ags && ", #{ags}" || ""})
-	  end
-        }}
+    def visit_class_command(command)
+      super do |klass, sklass, body|
+	if sklass
+	  %{class #{klass}<#{sklass}
+	      #{body}
+	    end}
+	else
+	  %{class #{klass}
+	      #{body}
+	    end}
+	end
       end
     end
 
+    DirectCallFunctions = [
+      :initialize,
+      :each
+    ]
+    DirectCallFunctionSet = {}
+    DirectCallFunctions.each do |f|
+      DirectCallFunctionSet[f] = f
+      DirectCallFunctionSet[f.id2name] = f
+    end
+
+    def visit_def_command(command)
+      super do |name, args, body|
+	if DirectCallFunctionSet[name]
+	  def_direct_command(command, name, args, body)
+	else
+	  def_command(command, name, args, body)
+	end
+      end
+    end
+
+    def def_direct_command(command, name, args, body)
+	ags = args && args.join(", ") || ""
+	code = body.accept(self)
+
+	script = %{def #{name}(#{ags})
+	  #{code}
+	 end
+        }
+	if Reish::debug_function?
+	  puts script
+	end
+      script
+    end
+
+    def def_command(command, name, args, body)
+
+      ags = args && args.join(", ")
+
+      fclass = FunctionFactory::define_function(UserFunctionSpace, name, args, body, self)
+
+      ag = args && ", #{ags}" || ""
+      if command.id.kind_of?(IDToken)
+	%{reish_user_function_space_eval %{
+	    def #{name}(#{ags})
+	      #{fclass.name}.new(self#{ag})
+	    end
+	  }}
+      else
+        ab = args && "|#{ags}|" || ""
+        %{reish_user_function_space_eval %{
+	    define_method(:'#{name}'){#{ab}
+	      #{fclass.name}.new(self#{ag})
+	    }
+	  }}
+      end
+    end
+
+
+
     def visit_alias_command(command)
       super do |id, pl|
+	if command.id.kind_of?(ID2Token)
+	  id = ":'#{id}'"
+	end
+	if command.pipeline.kind_of?(ID2Token)
+	  pl = ":'#{pl}'"
+	end
+
 	"alias #{id} #{pl}"
       end
     end
@@ -370,12 +436,15 @@ module Reish
       end
 
       super do |name, args, blk|
-	if !command.name.kind_of?(PathToken)
+	case command.name
+	when IDToken
 	  argc = args.empty? && "" || "(#{args.join(", ")})"
 	  script = "#{name}#{argc}#{blk || ""}"
-	else
+	when ID2Token, PathToken
 	  argc = args.empty? && "" || ", #{args.join(", ")}"
 	  script = "send('#{name}'#{argc})#{blk || ""}"
+	else
+	  raise InternalError, "想定していないものです(#{command.name.inspect})"
 	end
 
 	case command.pipeout
