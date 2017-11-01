@@ -435,27 +435,32 @@ module Reish
 	  return
 	end
 
-	candidates = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col)) 
+	candidates, token = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col)) 
 	return if candidates.nil? || candidates.empty?
 
 	if candidates.size > 1
 	  message candidates.join("\n")
 	else
 	  word = candidates.first+" "
-	  idx = -1
-	  while idx = @buffer[@c_row].rindex(word[0], idx)
-	    sublen = @buffer[@c_row].size - idx
-	    if @buffer[@c_row][idx..-1] == word[0, sublen]
-		#	      sublen.times{@buffer.delete(@c_row, idx)}
-	      sublen.times{backspace}
-	      @buffer.insert(@c_row, idx, word)
-	      @c_col += word.size
-	      cursor_reposition
-	      break
-	    else
-	      idx -= 1
-	    end
-	  end
+	  token.size.times{backspace}
+	  @buffer.insert(@c_row, @c_col, word)
+	  @c_col += word.size
+	  cursor_reposition
+
+# 	  idx = -1
+# 	  while idx = @buffer[@c_row].rindex(word[0], idx)
+# 	    sublen = @buffer[@c_row].size - idx
+# 	    if @buffer[@c_row][idx..-1] == word[0, sublen]
+# 		#	      sublen.times{@buffer.delete(@c_row, idx)}
+# 	      sublen.times{backspace}
+# 	      @buffer.insert(@c_row, idx, word)
+# 	      @c_col += word.size
+# 	      cursor_reposition
+# 	      break
+# 	    else
+# 	      idx -= 1
+# 	    end
+# 	  end
 	end
       end
 
