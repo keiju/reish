@@ -439,7 +439,7 @@ module Reish
 	return if candidates.nil? || candidates.empty?
 
 	if candidates.size > 1
-	  message candidates.join("\n")
+	  message candidates.sort.join("\n")
 	else
 	  word = candidates.first+" "
 	  token.size.times{backspace}
