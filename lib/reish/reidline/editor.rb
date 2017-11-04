@@ -8,6 +8,7 @@ require "reish/reidline/buffer"
 require "reish/reidline/term-view"
 require "reish/reidline/key-handler"
 require "reish/reidline/history-session"
+require "reish/reidline/lam-buffer"
 
 module Reish
 
@@ -148,8 +149,8 @@ module Reish
 	contents
       end
 
-      def message(str, append: false)
-	@view.message(str, append: append)
+      def message(str, append: false, buffer_class: nil)
+	@view.message(str, append: append, buffer_class: buffer_class)
       end
 
       def message_clear
@@ -439,7 +440,8 @@ module Reish
 	return if candidates.nil? || candidates.empty?
 
 	if candidates.size > 1
-	  message candidates.sort.join("\n")
+	  i = -1
+	  message candidates.sort, buffer_class: LamBuffer
 	else
 	  word = candidates.first+" "
 	  token.size.times{backspace}
