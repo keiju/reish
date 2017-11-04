@@ -10,6 +10,7 @@ require "observer"
 require "terminfo"
 
 require "reish/reidline/ti"
+require "reish/reidline/lam-buffer"
 
 module Reish
   class Reidline
@@ -34,8 +35,11 @@ module Reish
 	@OFF_H = 0
 	@WIN_H = nil
 	
-	@m_buffer = []
+	@m_buffer = nil
       end
+
+      attr_reader :TERM_H, :TERM_W
+      attr_reader :WIN_H, :OFF_H
 
       def indent(row, sub_row = 0)
 	if sub_row == 0
@@ -594,13 +598,26 @@ module Reish
 	end
       end
 
-      def message(str, append: false)
-	unless append
-	  message_clear if @m_buffer.empty?
+      def message(str, append: false, buffer_class: nil)
+	if !append && @m_buffer
+	  message_clear
 	end
 
-	lines = str.lstrip.split(/\n/)
-	m_buffer = @m_buffer.dup
+	if append
+	  m_buffer = @m_buffer.dup
+	elsif buffer_class
+	  m_buffer = buffer_class.new(self)
+	else
+	  m_buffer = []
+	end
+
+	case str
+	when String
+	  lines = str.lstrip.split(/\n/)
+	when Array
+	  lines = str
+	end
+
 	lines.each do |line|
 	  ll = slice_width(line)
 	  ll.each do |l|
@@ -674,6 +691,7 @@ module Reish
 	      if m_buffer.size == offset+i
 		@m_buffer = m_buffer[offset..-1]
 		(mh - i).times do
+		  ti_clear_eol
 		  print_eol "\n"
 		  @m_buffer.push ""
 		end
@@ -685,7 +703,7 @@ module Reish
 	    end
 	    offset += mh
 
-	    print_width_winsz "TAB for next-page, BS for back-page, or return for other character: "
+	    print_width_winsz "CR: return, TAB: next-page, BS: back-page, or other character to pass itsself: "
 
 	    ch = nil
 	    STDIN.noecho do
@@ -695,6 +713,11 @@ module Reish
 	    end
 
 	    case ch
+	    when "\C-m"
+	      @m_buffer = m_buffer[offset-mh, mh]
+	      @m_buffer.push ""
+	      ti_delete_line
+	      break
 	    when "\t"
 	      ti_up(mh)
 	      ti_line_beg
@@ -718,13 +741,13 @@ module Reish
       end
 
       def message_clear
-	return if @m_buffer.empty?
+	return unless @m_buffer
 
 	message_cursor_save do
 	  @m_buffer.each{ti_delete_line}
 	  @m_buffer = [""]
 	end
-	@m_buffer.clear
+	@m_buffer = nil
       end
 
       def message_cursor_save(&block)
