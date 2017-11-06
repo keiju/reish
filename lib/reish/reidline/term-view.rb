@@ -652,13 +652,17 @@ module Reish
 
 	      ti_clear
 	      redisplay(from: 0, adjust: false)
-	      message_more(m_buffer)
+	      @m_buffer = m_buffer
+	      @m_buffer.more
+#	      message_more(m_buffer)
 	    end
 	  end
 	elsif text_height + m_buffer.size < @TERM_H
 	  message_cat(m_buffer)
 	else
-	  message_more(m_buffer)
+	  @m_buffer = m_buffer
+	  @m_buffer.more
+#	  message_more(m_buffer)
 	end
       end
 

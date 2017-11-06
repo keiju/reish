@@ -4,15 +4,15 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
+require "reish/reidline/message-pager"
+
 module Reish
   class Reidline
-    class LamPager
-      include Enumerable
+    class LamPager<MessagePager
 
       def initialize(view, ary = [])
-	@view = view
+	super
 
-	@buffer = ary
 	@cols = nil
 	@col_width = nil
       end
@@ -31,10 +31,6 @@ module Reish
 	end
       end
 
-      def empty?
-	@buffer.empty?
-      end
-
       def cols
 	return @cols if @cols
 	@col_width = @buffer.collect{|c| c.size}.max + 1
@@ -45,10 +41,6 @@ module Reish
 
       def size
 	@buffer.size.fdiv(cols).ceil
-      end
-
-      def push(str)
-	@buffer.push str
       end
 
       def [](idx, len = nil)
