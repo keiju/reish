@@ -8,7 +8,9 @@ require "reish/reidline/buffer"
 require "reish/reidline/term-view"
 require "reish/reidline/key-handler"
 require "reish/reidline/history-session"
-require "reish/reidline/lam-buffer"
+
+require "reish/reidline/pager"
+require "reish/reidline/lam-pager"
 
 module Reish
 
@@ -441,7 +443,7 @@ module Reish
 
 	if candidates.size > 1
 	  i = -1
-	  message candidates.sort, buffer_class: LamBuffer
+	  message candidates.sort, buffer_class: Pager
 	else
 	  word = candidates.first+" "
 	  token.size.times{backspace}

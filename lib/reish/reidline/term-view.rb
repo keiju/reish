@@ -10,7 +10,6 @@ require "observer"
 require "terminfo"
 
 require "reish/reidline/ti"
-require "reish/reidline/lam-buffer"
 
 module Reish
   class Reidline

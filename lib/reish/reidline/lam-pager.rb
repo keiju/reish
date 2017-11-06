@@ -6,7 +6,7 @@
 
 module Reish
   class Reidline
-    class LamBuffer
+    class LamPager
       include Enumerable
 
       def initialize(view, ary = [])
@@ -57,7 +57,7 @@ module Reish
 	  len.times do |i|
 	    ary.push self[idx+i]
 	  end
-	  return LamBuffer.new(@view, ary)
+	  return LamPager.new(@view, ary)
 	end
 
 	case idx
@@ -105,7 +105,7 @@ module Reish
       end
 
       def inspect
-	"#<LamBuffer: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
+	"#<LamPager: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
       end
 
     end
