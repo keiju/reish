@@ -97,6 +97,24 @@ module Reish
       def clear_display
 	ti_clear
 #	@ORG_H = 0
+	@WIN_H = nil
+
+	th = text_height
+	if @TERM_H >= th
+	  @WIN_H = nil
+	  @OFF_H = 0
+	else
+	  @WIN_H = @TERM_H
+	  @OFF_H = @t_row - (@WIN_H/2.0).ceil
+	  if @OFF_H < 0
+	    @OFF_H = 0
+	  elsif @OFF_H > @t_row 
+	    @OFF_H = 0
+	  elsif @OFF_H > th - @t_row
+	    @OFF_H = th - @WIN_H
+	  end
+	end
+
 	redisplay(cache_update: true)
       end
 
@@ -107,6 +125,7 @@ module Reish
 
       def redisplay(from: 0, cache_update: false, height: nil, t_row: @t_row,
 		    adjust: true)
+ttyput "RD:0"
 	if cache_update
 	  @cache = []
 	  @cache_prompts = []
@@ -119,14 +138,20 @@ module Reish
 	end
 	th = text_height
 	if adjust
+ttyput "RD:1"
 	  if th <= @TERM_H
+ttyput "RD:2"
 	    @OFF_H  = 0
 	    @WIN_H = nil
 	  else
+ttyput "RD:3"
 	    if th - @OFF_H <= @TERM_H
+ttyput "RD:4"
 	      @WIN_H = nil
+#	      @OFF_H = th - @TERM_H
 	    else
 #	    @OFF_H = th - @TERM_H + 1
+ttyput "RD:5"
 	      @WIN_H = @TERM_H 
 	    end
 	  end
@@ -134,10 +159,13 @@ module Reish
 
 	# カーソルがウィンドウに入るように調整
 	if (@OFF_H || 0) > t_row
+ttyput "RD:6"
 	  @OFF_H = t_row
 	elsif @WIN_H && @WIN_H + (@OFF_H || 0) <= t_row
+ttyput "RD:7"
 	  @OFF_H = t_row - @TERM_H + 1
 	end
+ttyput @OFF_H, @WIN_H, th
 
 	i = 0
 	ti_line_beg
@@ -168,15 +196,18 @@ module Reish
 	  end
 	end
 	if height && i < height
+ttyput "RD:8"
 	  ti_down
 	  (height-i).times{ti_delete_line}
 	  ti_up
 	end
 
 	if @WIN_H
+ttyput "RD:9"
 	  @t_row = @WIN_H + @OFF_H - 1
 	  @t_col = last_line.bytesize + last_prompt.bytesize
 	else
+ttyput "RD:A"
 	  @t_row = text_height - 1
 	  @t_col = @cache.last.last.bytesize + last_offset
 	end
@@ -289,20 +320,30 @@ module Reish
 #      end
 
       def cursor_reposition
+ttyput "CR:0"
+	b_row = @t_row
+	c_col = @t_col
 	t_row, t_col = term_pos(@controller.c_row, @controller.c_col)
 	dh = t_row - @t_row
  	dw = t_col - @t_col
  	@t_row = t_row
  	@t_col = t_col
 	if @t_row < @OFF_H
+ttyput "CR:1"
 	  @OFF_H = @t_row
-	  redisplay(from: @t_row, cache_update: false, adjust: false)
+	  ti_up(b_row)
+ttyput @OFF_H, t_row
+	  redisplay(from: @OFF_H, cache_update: false, adjust: false)
 	elsif  @WIN_H && @WIN_H + @OFF_H <= @t_row || @TERM_H + @OFF_H <= @t_row
+ttyput "CR:2"
 	  @WIN_H = @TERM_H unless @WIN_H
 	  oo = @OFF_H
 	  @OFF_H = @t_row - @WIN_H + 1
-	  redisplay(from: @t_row - 1, cache_update: false, adjust: false)
+ttyput @WIN_H, @OFF_H, @t_row
+	  ti_up(b_row)
+	  redisplay(from: @OFF_H, cache_update: false, adjust: false)
 	else
+ttyput "CR:3"
 	  ti_move(dh, dw)
 	end
       end
