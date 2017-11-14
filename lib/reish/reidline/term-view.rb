@@ -125,7 +125,6 @@ module Reish
 
       def redisplay(from: 0, cache_update: false, height: nil, t_row: @t_row,
 		    adjust: true)
-ttyput "RD:0"
 	if cache_update
 	  @cache = []
 	  @cache_prompts = []
@@ -138,20 +137,15 @@ ttyput "RD:0"
 	end
 	th = text_height
 	if adjust
-ttyput "RD:1"
 	  if th <= @TERM_H
-ttyput "RD:2"
 	    @OFF_H  = 0
 	    @WIN_H = nil
 	  else
-ttyput "RD:3"
 	    if th - @OFF_H <= @TERM_H
-ttyput "RD:4"
 	      @WIN_H = nil
 #	      @OFF_H = th - @TERM_H
 	    else
 #	    @OFF_H = th - @TERM_H + 1
-ttyput "RD:5"
 	      @WIN_H = @TERM_H 
 	    end
 	  end
@@ -159,13 +153,10 @@ ttyput "RD:5"
 
 	# カーソルがウィンドウに入るように調整
 	if (@OFF_H || 0) > t_row
-ttyput "RD:6"
 	  @OFF_H = t_row
 	elsif @WIN_H && @WIN_H + (@OFF_H || 0) <= t_row
-ttyput "RD:7"
 	  @OFF_H = t_row - @TERM_H + 1
 	end
-ttyput @OFF_H, @WIN_H, th
 
 	i = 0
 	ti_line_beg
@@ -196,18 +187,15 @@ ttyput @OFF_H, @WIN_H, th
 	  end
 	end
 	if height && i < height
-ttyput "RD:8"
 	  ti_down
 	  (height-i).times{ti_delete_line}
 	  ti_up
 	end
 
 	if @WIN_H
-ttyput "RD:9"
 	  @t_row = @WIN_H + @OFF_H - 1
 	  @t_col = last_line.bytesize + last_prompt.bytesize
 	else
-ttyput "RD:A"
 	  @t_row = text_height - 1
 	  @t_col = @cache.last.last.bytesize + last_offset
 	end
@@ -320,7 +308,6 @@ ttyput "RD:A"
 #      end
 
       def cursor_reposition
-ttyput "CR:0"
 	b_row = @t_row
 	c_col = @t_col
 	t_row, t_col = term_pos(@controller.c_row, @controller.c_col)
@@ -329,21 +316,16 @@ ttyput "CR:0"
  	@t_row = t_row
  	@t_col = t_col
 	if @t_row < @OFF_H
-ttyput "CR:1"
 	  @OFF_H = @t_row
 	  ti_up(b_row)
-ttyput @OFF_H, t_row
 	  redisplay(from: @OFF_H, cache_update: false, adjust: false)
 	elsif  @WIN_H && @WIN_H + @OFF_H <= @t_row || @TERM_H + @OFF_H <= @t_row
-ttyput "CR:2"
 	  @WIN_H = @TERM_H unless @WIN_H
 	  oo = @OFF_H
 	  @OFF_H = @t_row - @WIN_H + 1
-ttyput @WIN_H, @OFF_H, @t_row
 	  ti_up(b_row)
 	  redisplay(from: @OFF_H, cache_update: false, adjust: false)
 	else
-ttyput "CR:3"
 	  ti_move(dh, dw)
 	end
       end
@@ -665,20 +647,15 @@ ttyput "CR:3"
 	  end
 	end
 
-ttyput "M:0"
 	th = text_height
 	message_h = @TERM_H - th
 	mh = message_h - 1
 	if text_height > @TERM_H + @OFF_H ||
 	    text_height > @TERM_H.div(2) + @OFF_H
-ttyput "M:1"
 	  if @WIN_H && @TERM_H - @WIN_H >= m_buffer.size
-ttyput "M:2"
 	    message_cat(m_buffer)
 	  else
-ttyput "M:3"
 	    if @TERM_H.div(2) > m_buffer.size
-ttyput "M:4"
 	      if th > @TERM_H - m_buffer.size
 		@WIN_H = @TERM_H - m_buffer.size
 		@OFF_H = (th - @WIN_H).div(2)
@@ -691,17 +668,13 @@ ttyput "M:4"
 		
 	      message_cat(m_buffer)
 	    else
-ttyput "M:5"
 	      @WIN_H = (@TERM_H / 2.0).ceil
 	      @OFF_H = @t_row - (@WIN_H/2.0).ceil
 	      if @OFF_H < 0
-ttyput "M:5A"
 		@OFF_H = 0
 	      elsif @OFF_H > @t_row 
-ttyput "M:5B"
 		@OFF_H = 0
 	      elsif @OFF_H > th - @t_row
-ttyput "M:5C"
 		@OFF_H = th - @WIN_H
 	      end
 
@@ -711,10 +684,8 @@ ttyput "M:5C"
 	    end
 	  end
 	elsif text_height + m_buffer.size < @TERM_H
-ttyput "M:6"
 	  message_cat(m_buffer)
 	else
-ttyput "M:7"
 	  message_more(m_buffer)
 	end
       end
@@ -722,7 +693,7 @@ ttyput "M:7"
       def message_cat(m_buffer)
 	unless m_buffer.kind_of?(Array)
 	  @m_buffer = m_buffer
-	  return @m_buffer.more
+	  return @m_buffer.cat
 	end
 
 	message_cursor_save do

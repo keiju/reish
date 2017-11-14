@@ -58,7 +58,6 @@ module Reish
       end
 
       def cat
-ttyput "CAT:0"
 	message_cursor_save do
 	  each do |l|
 	    if l == last
@@ -71,29 +70,19 @@ ttyput "CAT:0"
       end
 
       def more
-ttyput "MORE:0"
 	if @view.WIN_H
-ttyput "MORE:0W"
 	  message_h = [size + 1, @view.TERM_H - @view.WIN_H].min
-ttyput message_h, size, @view.TERM_H, @view.WIN_H, @view.OFF_H
 	else
-ttyput "MORE:0X"
 	  message_h = [size + 1, @view.TERM_H - @view.text_height + @view.OFF_H].min
-ttyput message_h, size, @view.TERM_H, @view.text_height, @view.OFF_H
 	end
 	mh = message_h - 1
 
 	message_cursor_save do
 	  offset = 0
 	  loop do
-ttyput "MORE:1"
 	    mh.times do |i| 
-ttyput "MORE:2"
-ttyput size, offset, i
 	      if size  == offset+i
-ttyput "MORE:3"
 		(mh - i).times do
-ttyput "MORE:4"
 		  @view.puts_eol
 		end
 		ti_clear_eol
@@ -103,16 +92,12 @@ ttyput "MORE:4"
 	    end
 	    offset += mh
 
-ttyput "MORE:5"
 	    if line(offset)
-ttyput "MORE:5A"
 	      unless line(offset+1)
-ttyput "MORE:5B"
 		@view.print_eol line(offset)
 		return
 	      end
 	    else
-ttyput "MORE:6"
 	      ti_clear_eol
 	      ti_up if offset == mh
 	      return
@@ -170,31 +155,18 @@ ttyput "MORE:6"
 	  print "\n"
 	  block.call
 	ensure
-ttyput "MCS:0"
 	  if @view.WIN_H
-ttyput "MCS:1"
 	    h = [size, @view.TERM_H - @view.WIN_H].min
-ttyput size, h
 	  else
-ttyput "MCS:2"
 	    h = [size, @view.TERM_H - @view.text_height + @view.OFF_H ].min
-ttyput size, h, @view.TERM_H, @view.text_height, @view.OFF_H
 	  end
 
-ttyput "MCS:3"
 	  if @view.WIN_H
-ttyput "MCS:4"
 	    ti_up(@view.WIN_H + @view.OFF_H + h - b_row - 1)
-ttyput @view.WIN_H + @view.OFF_H + h - b_row - 1
-ttyput @view.WIN_H,  @view.OFF_H, h, b_row
 	  else
-ttyput "MCS:5"
 	    ti_up(@view.text_height + h - b_row - 1)
-ttyput @view.text_height + h - b_row - 1
-ttyput @view.text_height, b_row
 	  end
 	  ti_hpos(b_col)
-ttyput "MCS:6"
 	  @view.instance_eval do
 	    @t_row = b_row
 	    @t_col = b_col
