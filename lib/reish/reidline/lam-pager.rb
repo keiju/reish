@@ -4,36 +4,20 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
+require "reish/reidline/message-pager"
+
 module Reish
   class Reidline
-    class LamBuffer
-      include Enumerable
+    class LamPager<MessagePager
 
       def initialize(view, ary = [])
-	@view = view
+	super
 
-	@buffer = ary
 	@cols = nil
 	@col_width = nil
       end
 
       attr_reader :col_width
-
-      def win_width
-	@view.TERM_W
-      end
-
-      def win_height
-	if @view.WIN_H
-	  @view.TERM_H - @view.WIN_H - 1
-	else
-	  @view.TERM_H - @view.text_height - 1
-	end
-      end
-
-      def empty?
-	@buffer.empty?
-      end
 
       def cols
 	return @cols if @cols
@@ -44,11 +28,11 @@ module Reish
       end
 
       def size
-	@buffer.size.fdiv(cols).ceil
-      end
-
-      def push(str)
-	@buffer.push str
+	d, m = @buffer.size.divmod(cols)
+#ttyput "SIZE"
+#ttyput d, m, cols, @buffer.size
+	d += 1 if m > 0
+	d
       end
 
       def [](idx, len = nil)
@@ -57,7 +41,7 @@ module Reish
 	  len.times do |i|
 	    ary.push self[idx+i]
 	  end
-	  return LamBuffer.new(@view, ary)
+	  return LamPager.new(@view, ary)
 	end
 
 	case idx
@@ -72,7 +56,7 @@ module Reish
 	  if (o+1)*height > size 
 	    height = size - o*win_height
 	  end
-
+	  
 	  @cols.times do |i|
 	    s = @buffer[off + i*height]
 	    break unless s
@@ -92,6 +76,8 @@ module Reish
 	end
       end
 
+      alias line []
+
       def each(&block)
 	(0..(size-1)).each do |i|
 	  e = self[i]
@@ -105,7 +91,7 @@ module Reish
       end
 
       def inspect
-	"#<LamBuffer: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
+	"#<LamPager: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
       end
 
     end

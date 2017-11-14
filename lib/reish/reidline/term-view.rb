@@ -10,7 +10,6 @@ require "observer"
 require "terminfo"
 
 require "reish/reidline/ti"
-require "reish/reidline/lam-buffer"
 
 module Reish
   class Reidline
@@ -98,6 +97,24 @@ module Reish
       def clear_display
 	ti_clear
 #	@ORG_H = 0
+	@WIN_H = nil
+
+	th = text_height
+	if @TERM_H >= th
+	  @WIN_H = nil
+	  @OFF_H = 0
+	else
+	  @WIN_H = @TERM_H
+	  @OFF_H = @t_row - (@WIN_H/2.0).ceil
+	  if @OFF_H < 0
+	    @OFF_H = 0
+	  elsif @OFF_H > @t_row 
+	    @OFF_H = 0
+	  elsif @OFF_H > th - @t_row
+	    @OFF_H = th - @WIN_H
+	  end
+	end
+
 	redisplay(cache_update: true)
       end
 
@@ -126,6 +143,7 @@ module Reish
 	  else
 	    if th - @OFF_H <= @TERM_H
 	      @WIN_H = nil
+#	      @OFF_H = th - @TERM_H
 	    else
 #	    @OFF_H = th - @TERM_H + 1
 	      @WIN_H = @TERM_H 
@@ -290,6 +308,8 @@ module Reish
 #      end
 
       def cursor_reposition
+	b_row = @t_row
+	c_col = @t_col
 	t_row, t_col = term_pos(@controller.c_row, @controller.c_col)
 	dh = t_row - @t_row
  	dw = t_col - @t_col
@@ -297,12 +317,14 @@ module Reish
  	@t_col = t_col
 	if @t_row < @OFF_H
 	  @OFF_H = @t_row
-	  redisplay(from: @t_row, cache_update: false, adjust: false)
+	  ti_up(b_row)
+	  redisplay(from: @OFF_H, cache_update: false, adjust: false)
 	elsif  @WIN_H && @WIN_H + @OFF_H <= @t_row || @TERM_H + @OFF_H <= @t_row
 	  @WIN_H = @TERM_H unless @WIN_H
 	  oo = @OFF_H
 	  @OFF_H = @t_row - @WIN_H + 1
-	  redisplay(from: @t_row - 1, cache_update: false, adjust: false)
+	  ti_up(b_row)
+	  redisplay(from: @OFF_H, cache_update: false, adjust: false)
 	else
 	  ti_move(dh, dw)
 	end
@@ -634,8 +656,13 @@ module Reish
 	    message_cat(m_buffer)
 	  else
 	    if @TERM_H.div(2) > m_buffer.size
-	      @WIN_H = @TERM_H - m_buffer.size
-	      @OFF_H = (th - @WIN_H).div(2)
+	      if th > @TERM_H - m_buffer.size
+		@WIN_H = @TERM_H - m_buffer.size
+		@OFF_H = (th - @WIN_H).div(2)
+	      else
+		@OFF_H = 0
+		@WIN_H = th
+	      end
 	      ti_clear
 	      redisplay(from: @OFF_H, adjust: false)
 		
@@ -646,9 +673,9 @@ module Reish
 	      if @OFF_H < 0
 		@OFF_H = 0
 	      elsif @OFF_H > @t_row 
-		@OFF_H = @t_row
+		@OFF_H = 0
 	      elsif @OFF_H > th - @t_row
-		@OFF_H = @t_row - @WIN_H + 1
+		@OFF_H = th - @WIN_H
 	      end
 
 	      ti_clear
@@ -664,6 +691,11 @@ module Reish
       end
 
       def message_cat(m_buffer)
+	unless m_buffer.kind_of?(Array)
+	  @m_buffer = m_buffer
+	  return @m_buffer.cat
+	end
+
 	message_cursor_save do
 	  @m_buffer = m_buffer
 	  @m_buffer.each do |l|
@@ -677,6 +709,11 @@ module Reish
       end
       
       def message_more(m_buffer)
+	unless m_buffer.kind_of?(Array)
+	  @m_buffer = m_buffer
+	  return @m_buffer.more
+	end
+
 	if @WIN_H
 	  message_h = @TERM_H - @WIN_H
 	else
@@ -787,8 +824,8 @@ module Reish
 	ti_clear_eol
       end
 
-      def puts_eol(str)
-	print str
+      def puts_eol(str = nil)
+	print str if str
 	ti_clear_eol
 	print "\n"
       end
