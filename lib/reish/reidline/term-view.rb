@@ -624,49 +624,66 @@ module Reish
 	  end
 	end
 
+ttyput "M:0"
 	th = text_height
 	message_h = @TERM_H - th
 	mh = message_h - 1
 	if text_height > @TERM_H + @OFF_H ||
 	    text_height > @TERM_H.div(2) + @OFF_H
+ttyput "M:1"
 	  if @WIN_H && @TERM_H - @WIN_H >= m_buffer.size
+ttyput "M:2"
 	    message_cat(m_buffer)
 	  else
+ttyput "M:3"
 	    if @TERM_H.div(2) > m_buffer.size
-	      @WIN_H = @TERM_H - m_buffer.size
-	      @OFF_H = (th - @WIN_H).div(2)
+ttyput "M:4"
+	      if th > @TERM_H - m_buffer.size
+		@WIN_H = @TERM_H - m_buffer.size
+		@OFF_H = (th - @WIN_H).div(2)
+	      else
+		@OFF_H = 0
+		@WIN_H = th
+	      end
 	      ti_clear
 	      redisplay(from: @OFF_H, adjust: false)
 		
 	      message_cat(m_buffer)
 	    else
+ttyput "M:5"
 	      @WIN_H = (@TERM_H / 2.0).ceil
 	      @OFF_H = @t_row - (@WIN_H/2.0).ceil
 	      if @OFF_H < 0
+ttyput "M:5A"
 		@OFF_H = 0
 	      elsif @OFF_H > @t_row 
-		@OFF_H = @t_row
+ttyput "M:5B"
+		@OFF_H = 0
 	      elsif @OFF_H > th - @t_row
-		@OFF_H = @t_row - @WIN_H + 1
+ttyput "M:5C"
+		@OFF_H = th - @WIN_H
 	      end
 
 	      ti_clear
 	      redisplay(from: 0, adjust: false)
-	      @m_buffer = m_buffer
-	      @m_buffer.more
-#	      message_more(m_buffer)
+	      message_more(m_buffer)
 	    end
 	  end
 	elsif text_height + m_buffer.size < @TERM_H
+ttyput "M:6"
 	  message_cat(m_buffer)
 	else
-	  @m_buffer = m_buffer
-	  @m_buffer.more
-#	  message_more(m_buffer)
+ttyput "M:7"
+	  message_more(m_buffer)
 	end
       end
 
       def message_cat(m_buffer)
+	unless m_buffer.kind_of?(Array)
+	  @m_buffer = m_buffer
+	  return @m_buffer.more
+	end
+
 	message_cursor_save do
 	  @m_buffer = m_buffer
 	  @m_buffer.each do |l|
@@ -680,6 +697,11 @@ module Reish
       end
       
       def message_more(m_buffer)
+	unless m_buffer.kind_of?(Array)
+	  @m_buffer = m_buffer
+	  return @m_buffer.more
+	end
+
 	if @WIN_H
 	  message_h = @TERM_H - @WIN_H
 	else
@@ -790,8 +812,8 @@ module Reish
 	ti_clear_eol
       end
 
-      def puts_eol(str)
-	print str
+      def puts_eol(str = nil)
+	print str if str
 	ti_clear_eol
 	print "\n"
       end

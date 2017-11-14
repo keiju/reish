@@ -19,18 +19,6 @@ module Reish
 
       attr_reader :col_width
 
-      def win_width
-	@view.TERM_W
-      end
-
-      def win_height
-	if @view.WIN_H
-	  @view.TERM_H - @view.WIN_H - 1
-	else
-	  @view.TERM_H - @view.text_height - 1
-	end
-      end
-
       def cols
 	return @cols if @cols
 	@col_width = @buffer.collect{|c| c.size}.max + 1
@@ -40,7 +28,11 @@ module Reish
       end
 
       def size
-	@buffer.size.fdiv(cols).ceil
+	d, m = @buffer.size.divmod(cols)
+#ttyput "SIZE"
+#ttyput d, m, cols, @buffer.size
+	d += 1 if m > 0
+	d
       end
 
       def [](idx, len = nil)
@@ -64,7 +56,7 @@ module Reish
 	  if (o+1)*height > size 
 	    height = size - o*win_height
 	  end
-
+	  
 	  @cols.times do |i|
 	    s = @buffer[off + i*height]
 	    break unless s
@@ -83,6 +75,8 @@ module Reish
 	  ary
 	end
       end
+
+      alias line []
 
       def each(&block)
 	(0..(size-1)).each do |i|

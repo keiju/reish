@@ -11,6 +11,7 @@ require "reish/reidline/history-session"
 
 require "reish/reidline/message-pager"
 require "reish/reidline/lam-pager"
+require "reish/reidline/mcol-pager"
 
 module Reish
 
