@@ -36,16 +36,20 @@ module Reish
       when ReidlineInputMethod, ReidlineInputMethod2
 	@completion_proc = proc{|expr|
 	  cand = candidate(expr)
-	  token = @lex.pretoken
-	  case token
-	  when ValueToken
-	    s = token.value
-	  when ReservedWordToken, SimpleToken
-	    s = token.token_id
+	  if @lex.space_seen
+	    [cand, ""]
 	  else
-	    s = ""
+	    token = @lex.pretoken
+	    case token
+	    when ValueToken
+	      s = token.value
+	    when ReservedWordToken, SimpleToken
+	      s = token.token_id
+	    else
+	      s = ""
+	    end
+	    [cand, s]
 	  end
-	  [cand, s]
 	}
 	shell.io.set_cmpl_proc &@completion_proc
       end
