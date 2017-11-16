@@ -22,15 +22,37 @@ module Reish
       @parser.cmpl_mode = true
       @parser.yydebug = Reish::debug_cmpl_yy?
 
-      @completion_proc = proc{|input|
-	puts "input: #{input}" if @debug
-	expr = @shell.lex.readed + Readline.line_buffer
-	puts "input all: #{expr}" if @debug
+      case shell.io
+      when ReadlineInputMethod
+	@completion_proc = proc{|input|
+	  puts "input: #{input}" if @debug
+	  expr = @shell.lex.readed + Readline.line_buffer
+	  puts "input all: #{expr}" if @debug
 
-	candidate(expr)
-      }
+	  candidate(expr)
+	}
 
-      Readline.completion_proc = @completion_proc
+	Readline.completion_proc = @completion_proc
+      when ReidlineInputMethod, ReidlineInputMethod2
+	@completion_proc = proc{|expr|
+	  cand = candidate(expr)
+	  if @lex.space_seen
+	    [cand, ""]
+	  else
+	    token = @lex.pretoken
+	    case token
+	    when ValueToken
+	      s = token.value
+	    when ReservedWordToken, SimpleToken
+	      s = token.token_id
+	    else
+	      s = ""
+	    end
+	    [cand, s]
+	  end
+	}
+	shell.io.set_cmpl_proc &@completion_proc
+      end
     end
 
     attr_reader :completion_proc
@@ -41,7 +63,7 @@ module Reish
 	return candidate_commands 
       end
 
-      im = StringInputMethod.new(str)
+      im = StringInputMethod.new(nil, str)
 
       @lex.initialize_input
       @lex.set_input(im) do
@@ -181,7 +203,7 @@ module Reish
 	  sub = @lex.pretoken.value
 	  (class<<Test; TestMap.keys; end).grep(/^#{sub}/).collect{|sub| "-"+sub}
 
-	when IDToken
+	when IDToken, ID2Token
 	  puts "CANDIDATE: ID(#{@lex.pretoken.value})" if Reish::debug_cmpl?
 	  command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
 

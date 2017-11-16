@@ -27,7 +27,7 @@ module Reish
 	case com
 	when first_comm
 	  case com.name
-	  when IDToken, TestToken
+	  when IDToken, ID2Token, TestToken
 	    name = com.name.value
 	    var = eval("local_variables | self.class.constants(true) | Object.constants", @bind).find{|v| v.to_s == name}
 	    if var
@@ -53,7 +53,7 @@ module Reish
 	    candidates = receiver.methods
 	  end
 	  case com.name
-	  when IDToken
+	  when IDToken, ID2Token
 	    return candidates.grep(/^#{com.name.value}/)
 	  when nil
 	    return candidates
@@ -93,7 +93,7 @@ module Reish
 	case com
 	when first_comm
 	  case com.name
-	  when IDToken, TestToken
+	  when IDToken, ID2Token, TestToken
 	    name = com.name.value
 	    var = eval("local_variables | self.class.constants(true) | Object.constants", @bind).find{|v| v.to_s == name}
 	    if var
@@ -132,7 +132,7 @@ module Reish
   class CompCommandBase
     def spec_name
       case @name
-      when IDToken
+      when IDToken, ID2Token
 	@name.value
       when SpecialToken
 	"Special#"+@name.value

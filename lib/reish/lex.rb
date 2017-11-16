@@ -217,6 +217,8 @@ module Reish
     attr_reader :space_seen
     attr_reader :readed
 
+    attr_reader :indent_stack
+
 #    attr_accessor :lex_state
     def lex_state=(v)
       if Reish::debug_lex_state?
@@ -323,6 +325,11 @@ module Reish
 
     def initialize_input
       @ruby_scanner.initialize_input
+      @ruby_scanner.instance_eval do
+	@rests = []
+	@readed = []
+      end
+
       @ltype = nil
       @quoted = nil
       @indent = 0
@@ -336,6 +343,11 @@ module Reish
 
       @line = ""
       @exp_line_no = @line_no
+    end
+
+    def set_line_no(line_no)
+      @exp_line_no = @line_no = line_no
+      @ruby_scanner.instance_eval{@line_no = line_no}
     end
 
     attr_accessor :continue
@@ -493,7 +505,7 @@ module Reish
 	if lex_state?(EXPR_FNAME)
 	  self.lex_state = EXPR_END
 	  Token(op)
-	elsif @indent_stack.last == :BACK_QUOTE
+	elsif indent_current.kind_of?(SimpleToken) && indent_current.token_id == :XSTRING_BEG
 	  self.lex_state = EXPR_END
 	  SimpleToken.new(self, :XSTRING_END)
 	else
@@ -744,10 +756,6 @@ module Reish
 
       @OP.def_rule("-", proc{|op, io| lex_state?(EXPR_BEG_ANY)}) do
 	|op, io|
-
-p "X"
-print_lex_state
-
 	if /\s/ =~ io.peek(0)
 	  self.lex_state = EXPR_ARG
 	  SpecialToken.new(self, op)
@@ -800,14 +808,18 @@ print_lex_state
     end
 
     def identify_id(io)
+      id_class = IDToken
       token = ""
 
       while /[[:graph:]]/ =~ (ch = io.getc) && /[.:=\|&;,\(\)<>\[\{\}\]\`\$\"\'\*]/ !~ ch
 	print ":", ch, ":" if Debug
 
-	if /[\/\-\+]/ =~ ch
+	if /[\/]/ =~ ch
 	  io.ungetc
 	  return identify_path(io, token)
+	end
+	if /[\+\-]/ =~ ch
+	  id_class = ID2Token
 	end
 	token.concat ch
       end
@@ -817,7 +829,7 @@ print_lex_state
 	identify_reserved_word(io, token, tid)
       else
 	self.lex_state = EXPR_ARG
-	IDToken.new(self, token)
+	id_class.new(self, token)
       end
     end
 
@@ -1240,6 +1252,5 @@ class RubyLex
 #print ":#{c}:"
     c
   end
-
 
 end

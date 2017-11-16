@@ -12,6 +12,7 @@
 require "reish/mainobj"
 
 module Reish
+
   class Exenv
 
     VOID_VALUE = Object.new
@@ -29,6 +30,8 @@ module Reish
       @ignore_eof = Reish.conf[:IGNORE_EOF]
 
       @back_trace_limit = Reish.conf[:BACK_TRACE_LIMIT]
+
+      @auto_indent = Reish.conf[:AUTO_INDENT]
 
       @use_readline = Reish.conf[:USE_READLINE]
       @completion = Reish.conf[:COMPLETION]
@@ -70,6 +73,7 @@ module Reish
     end
 
     attr_accessor :prompt
+    attr_reader :auto_indent
 
     attr_reader :use_readline
     alias use_readline? use_readline
@@ -248,6 +252,8 @@ module Reish
       Reish::conf_tempkey do |main_key|
 	Reish.conf[main_key]=@main
 	case @main
+	when Main
+	  @binding = @main.instance_eval{reish_binding}
 	when Module
 	  @binding = eval("Reish.conf[:#{main_key}].module_eval('binding', __FILE__, __LINE__)", @binding, __FILE__, __LINE__)
 	else

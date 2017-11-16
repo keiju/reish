@@ -14,14 +14,20 @@ module Reish
   class ::Object
 #    include UserAliasSpace, UserFunctionSpace
     include UserFunctionSpace
+
+    def reish_user_function_space_eval(exp)
+      case self
+      when Reish::Main
+	Reish::UserFunctionSpace.module_eval exp
+      when Module
+	self.module_eval exp
+      else 
+	self.instance_eval exp
+      end
+    end
   end
 
   FunctionFactories = {}
-
-  def self.define_function(klass, name, args, body, visitor)
-    fact = FunctionFactory.new(klass, name, args, body, visitor)
-    fact.function_class
-  end
 
   class FunctionFactory
 
@@ -34,16 +40,27 @@ module Reish
       reish_none:  :NONE,
     }
 
+    InternalFunctions = [
+      :initialize,
+      :each
+    ]
+    InternalFunctionSet = {}
+    InternalFunctions.each{|f| InternalFunctionSet[f] = f}
+
+    def self.define_function(klass, name, args, body, visitor)
+      fact = FunctionFactory.new(klass, name, args, body, visitor)
+      fact.function_class
+    end
+
     def initialize(klass, name, args, body, visitor)
       @klass = klass
       @name = name
       @args = args
       @body = body
-      
+
       @visitor = visitor
 
       @function_class = make_function_class
-
     end
 
     attr_reader :function_class
@@ -100,7 +117,7 @@ module Reish
     end
 
     def class_name(klass = @klass, fn = @name)
-      klass.name.sub("::", "_")+"_"+ fn.split("_").collect{|e|e.capitalize}.join
+      klass.name.sub("::", "_")+"_"+ escape(fn.split("_").collect{|e|e.capitalize}.join)
     end
 
     def arg_form(args = @args)
@@ -115,7 +132,16 @@ module Reish
     end
 
     def real_fn(name)
-      "__reish_impl_#{@name}__#{name}"
+      "__reish_impl_#{escape(@name)}__#{name}"
+    end
+
+    ESC = {
+      "-" => "_minus_",
+      "+" => "_plus_",
+    }
+
+    def escape(str)
+      str.gsub("_", "__").gsub(/(\-|\+)/){ESC[$1]}
     end
   end
 

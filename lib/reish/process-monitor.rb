@@ -23,7 +23,6 @@ module Reish
 
       @monitor = nil
       @monitor_queue = Queue.new
-      @monitor_queue_rt = Queue.new
     end
 
     def entry_exe(pid, exe)
@@ -97,7 +96,7 @@ module Reish
 	  sleep 100
 	end
       end
-
+      
 #       Thread.start do
 # 	sleep 10
 #       end
@@ -168,7 +167,6 @@ module Reish
 	# ignore
 	puts "ProcessMonitor: #{$!}" if Reish::debug_jobctl?
       end
-      #	  @monitor_queue_rt.push self
     end
 
     def accept_sigchild
