@@ -66,6 +66,8 @@ module Reish
 	  ["\C-p", method(:cursor_up)],
 	  ["\C-m", method(:key_cr)],
 
+	  ["\C-h\C-m", method(:man)],
+
 #	  ["\M-\u007F", method(:delete_backword_word)],
 	  ["\M-<", method(:cursor_bob)],
 	  ["\M->", method(:cursor_eob)],
@@ -485,6 +487,22 @@ module Reish
 
       def history_next(*args)
 	@history_session.next
+      end
+
+      def man(*args)
+ttyput "MAN:0"
+	word = @buffer.last_word(@c_row, @c_col)
+ttyput word
+	if word
+ttyput "MAN:1"
+	  IO::popen("env COLUMNS=#{@view.TERM_W} man #{word} |& cat -s") do |io|
+ttyput "MAN:2"
+	    message(io.readlines.collect{|l| l.chomp})
+	  end
+	else
+	  message("man not found: #{word}")
+	end
+ttyput "MAN:E"
       end
 
 #       def init_more_keys

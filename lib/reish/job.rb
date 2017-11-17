@@ -247,11 +247,11 @@ module Reish
 	  end
 	end
       ensure
-	#Reish.tcsetpgrp(STDOUT, Process.pid) if @foreground
+	# ここ(ctltermの再設定前)で, ^Cが発生すると無視される?
 	reset_ctlterm if @foreground
 	exe_b = @current_exe
 	@current_exe = nil
-	if exe_b.exit_status.signaled?
+	if exe_b.exit_status && exe_b.exit_status.signaled?
 	  @thread.raise Abort, "job abort signaled."
 	end
       end

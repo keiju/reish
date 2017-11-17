@@ -238,7 +238,6 @@ module Reish
 	  STDERR.syswrite "\nabort!!\n" if verbose?
 	  exit
 	end
-
 	case @signal_status
 	when :IN_INPUT
 	  STDERR.syswrite "^C\n"

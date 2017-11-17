@@ -20,7 +20,6 @@ module Reish
 
     attr_accessor :pid
     attr_reader :pstat
-    attr_reader :exit_status
 
     def pstat=(stat)
       @wait_mx.synchronize do
@@ -28,6 +27,16 @@ module Reish
 	@wait_cv.broadcast
       end
     end
+
+#     def exit_status
+#       @wait_mx.synchronize do
+# 	until @exit_status
+# 	  @wait_cv.wait @wait_mx
+# 	end
+# 	@exit_status
+#       end
+#     end
+    attr_reader :exit_status
 
     def set_exit_stat(stat, status)
       @wait_mx.synchronize do
