@@ -497,8 +497,7 @@ ttyput word
 ttyput "MAN:1"
 	  IO::popen("env COLUMNS=#{@view.TERM_W} man #{word} |& cat -s") do |io|
 ttyput "MAN:2"
-#	    message(io.readlines.collect{|l| l.chomp})
-	    io.readlines.collect{|l| l.chomp}
+	    message(io.readlines.collect{|l| l.chomp})
 	  end
 	else
 	  message("man not found: #{word}")
