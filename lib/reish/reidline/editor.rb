@@ -490,19 +490,14 @@ module Reish
       end
 
       def man(*args)
-ttyput "MAN:0"
-	word = @buffer.last_word(@c_row, @c_col)
-ttyput word
+	word = @buffer.lookup_word(@c_row, @c_col)
 	if word
-ttyput "MAN:1"
-	  IO::popen("env COLUMNS=#{@view.TERM_W} man #{word} |& cat -s") do |io|
-ttyput "MAN:2"
+	  IO::popen("man #{word}") do |io|
 	    message(io.readlines.collect{|l| l.chomp})
 	  end
 	else
 	  message("man not found: #{word}")
 	end
-ttyput "MAN:E"
       end
 
 #       def init_more_keys

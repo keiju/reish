@@ -6,8 +6,8 @@
 require "pp"
 
 require "reish/path-finder"
-require "reish/compspec"
-require "reish/comp-command"
+require "reish/cmpl/compspec"
+require "reish/cmpl/comp-command"
 
 module Reish
 
