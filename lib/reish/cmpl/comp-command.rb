@@ -3,7 +3,7 @@
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
 
-require "reish/comp-module-spec"
+require "reish/cmpl/comp-module-spec"
 
 module Reish
 

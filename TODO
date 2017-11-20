@@ -70,6 +70,7 @@
 ** input-buffer in message area
 ** 実行結果をメッセージとして表示
 ** さらに, それを実行結果ヒストリとして保存
+** ^h^m でri(コマンドコールをパーズする必要あり)
 ** ^hv describe-variable
 ** ^h^e eval-last-exp
 ** ^hf(?) describe-function
