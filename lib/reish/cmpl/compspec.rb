@@ -3,7 +3,7 @@
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
 
-require "reish/comp-module-spec"
+require "reish/cmpl/comp-module-spec"
 
 module Reish
 
@@ -313,6 +313,30 @@ module Reish
   }
   cs_ls.ret_proc = cs_ls.command_ret_proc
   CompSpec.def_command "ls", cs_ls
+
+  cs_df = CompSpec.new
+  cs_df.arg_proc do |call|
+    clist = ComplList.new(call)
+    clist.opt "--all", "-a", exp: "include dummy file systems"
+    clist.opt "--block-size", "-B", exp: "specify block size"
+    clist.opt "--exclude-type", "-x", exp: "exclude file systems of specified type"
+    clist.opt "--help", exp: "display help and exit"
+    clist.opt "--human-readable", "-h", exp: "print sizes in human readable format"
+    clist.opt "--inodes", "-i", exp: "list inode information instead of block usage"
+    clist.opt "--local", "-l", exp: "limit listing to local file systems"
+    clist.opt "--no-sync", exp: "do not invoke sync before getting usage info (default"
+    clist.opt "--portability", "-P", exp: "use the POSIX output format"
+    clist.opt "--print-type", "-T", exp: "print file system type"
+    clist.opt "--si", "-H", exp: "human readable fomat, but use powers of 1000 not 1024"
+    clist.opt "--sync", exp: "invoke sync before getting usage info"
+    clist.opt "--total", exp: "produce a grand total"
+    clist.opt "--type", "-t", exp: "limit listing to file systems of specified type"
+    clist.opt "--version", exp: "output version information and exit"
+    clist.opt "-k", exp: "like --block-size=1K"
+    clist.opt "-v", exp: "(ignored)"
+    clist.files
+  end
+  
 
   cs_grep = CompSpec.new
   cs_grep.arg_proc = proc{|call|
