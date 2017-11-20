@@ -58,25 +58,15 @@ module Reish
 	contents
       end
 
-      def last_word(row, col)
-ttyput "LW:0"
-ttyput row, col
-ttyput @buffer
-	case @buffer[row][col]
-	when nil
-ttyput "LW:1"
-	  s = @buffer[row].rindex(/[^[:word:]]/, col) || -1
-	  @buffer[row][s+1..-1]
-	when /[[:word:]]/
-ttyput "LW:2"
+      def lookup_word(row, col)
+	if /[[:word:]]/ =~@buffer[row][col]
 	  s = @buffer[row].rindex(/[^[:word:]]/, col) || -1
 	  e = @buffer[row].index(/[^[:word:]]/, col) || @buffer[row].size
-ttyput s, e
 	  @buffer[row][s+1..e-1]
+	elsif col == 0
+	  nil
 	else
-ttyput "LW:3"
-	  e = @buffer[row].rindex(/[^[:word:]]/, col) || @buffer[row].size
-	  s = @buffer[row].rindex(/[^[:word:]]/, col) || -1
+	  lookup_word(row, col-1)
 	end
       end
 
