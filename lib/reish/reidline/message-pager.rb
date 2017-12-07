@@ -57,10 +57,20 @@ module Reish
 	@buffer[idx]
       end
 
+      def last_line
+	line(size - 1)
+      end
+
+      def each_line(&block)
+	size.times do |i|
+	  block.call line(i)
+	end
+      end
+
       def cat
 	message_cursor_save do
-	  each do |l|
-	    if l == last
+	  each_line do |l|
+	    if l == last_line
 	      print l
 	    else
 	      puts l

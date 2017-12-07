@@ -4,6 +4,8 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 
 require "reish/cmpl/comp-module-spec"
+require "reish/cmpl/comp-action"
+require "reish/cmpl/comp-arg-proc"
 
 module Reish
 
@@ -12,6 +14,7 @@ module Reish
   end
 
   class CompSpec
+    include CompAction
 
     N2Spec = {}
     M2Spec = {}
@@ -76,6 +79,10 @@ module Reish
     
     attr_accessor :arg_proc
     attr_accessor :ret_proc
+
+    def arg_proc(&block)
+      @arg_proc = block
+    end
     
     def arg_candidates(call)
       return @arg_proc.call call if @arg_proc
@@ -96,35 +103,6 @@ module Reish
     end
 
     
-    # filter: nil 指定なし, true 
-    def files(call, filter=nil)
-      exenv = eval("@exenv", call.bind)
-      if exenv
-	pwd = exenv.pwd
-      else
-	pwd = Dir.pwd
-      end
-
-      if filter
-	arg = filter
-      elsif call.last_arg
-	arg = call.last_arg.value
-      else
-	arg = nil
-      end
-
-      if arg
-	if /^\// === arg
-	  pwd = ""
-	end
-
-	l = pwd.size
-	Dir.glob("#{pwd}/#{arg}*", File::FNM_DOTMATCH).collect{|e| e[0..l]= ""; e}
-      else
-	Dir.entries(pwd).select{|e| /^\./ !~ e}
-      end
-    end
-    
     def files_arg_proc
       proc{|call| files(call)}
     end
@@ -143,12 +121,6 @@ module Reish
       filter(lopts, call, filter)
     end
 
-    def commands(call, filter=nil)
-      exenv = eval("@exenv", call.bind)
-      shell = exenv.shell
-      filter shell.all_commands, call, filter
-    end
-
     def command_arg_proc
       proc{|call| commands(call)}
     end
@@ -165,22 +137,6 @@ module Reish
       proc{|call| symbols(call)}
     end
 
-    def filter(candidates, call, filter=nil)
-
-      if filter
-	arg = filter
-      elsif call.last_arg
-	arg = call.last_arg.value
-      else 
-	arg = nil
-      end
-
-      if arg
-	candidates.select{|c| c[0..arg.size-1] == arg}
-      else
-	candidates
-      end
-    end
   end
 
   class CompositeCompSpec
@@ -316,27 +272,46 @@ module Reish
 
   cs_df = CompSpec.new
   cs_df.arg_proc do |call|
-    clist = ComplList.new(call)
-    clist.opt "--all", "-a", exp: "include dummy file systems"
-    clist.opt "--block-size", "-B", exp: "specify block size"
-    clist.opt "--exclude-type", "-x", exp: "exclude file systems of specified type"
-    clist.opt "--help", exp: "display help and exit"
-    clist.opt "--human-readable", "-h", exp: "print sizes in human readable format"
-    clist.opt "--inodes", "-i", exp: "list inode information instead of block usage"
-    clist.opt "--local", "-l", exp: "limit listing to local file systems"
-    clist.opt "--no-sync", exp: "do not invoke sync before getting usage info (default"
-    clist.opt "--portability", "-P", exp: "use the POSIX output format"
-    clist.opt "--print-type", "-T", exp: "print file system type"
-    clist.opt "--si", "-H", exp: "human readable fomat, but use powers of 1000 not 1024"
-    clist.opt "--sync", exp: "invoke sync before getting usage info"
-    clist.opt "--total", exp: "produce a grand total"
-    clist.opt "--type", "-t", exp: "limit listing to file systems of specified type"
-    clist.opt "--version", exp: "output version information and exit"
-    clist.opt "-k", exp: "like --block-size=1K"
-    clist.opt "-v", exp: "(ignored)"
-    clist.files
+    CompArgProc(call) do |ap|
+      ap.def_opt "--all", "-a", 
+	desc: "include dummy file systems" 
+      ap.def_opt "--block-size=", "-B+", 
+	desc: "specify block size", message: "Block size"
+      ap.def_opt "--exclude-type", "-x", 
+	desc: "exclude file systems of specified type"
+      ap.def_opt "--help", 
+	desc: "display help and exit"
+      ap.def_opt "--human-readable", "-h", 
+	desc: "print sizes in human readable format"
+      ap.def_opt "--inodes", "-i", 
+	desc: "list inode information instead of block usage"
+      ap.def_opt "--local", "-l", 
+	desc: "limit listing to local file systems"
+      ap.def_opt "--no-sync", 
+	desc: "do not invoke sync before getting usage info (default)"
+      ap.def_opt "--portability", "-P", 
+	desc: "use the POSIX output format"
+      ap.def_opt "--print-type", "-T", 
+	desc: "print file system type"
+      ap.def_opt "--si", "-H", 
+	desc: "human readable fomat, but use powers of 1000 not 1024"
+      ap.def_opt "--sync", 
+	desc: "invoke sync before getting usage info"
+      ap.def_opt "--total", 
+	desc: "produce a grand total"
+      ap.def_opt "--type=", "-t+", 
+	desc: "limit listing to file systems of specified type", 
+	act: :file_systems
+      ap.def_opt "--version", 
+	desc: "output version information and exit"
+      ap.def_opt "-k", 
+	desc: "like --block-size=1K"
+      ap.def_opt "-v", 
+	desc: "(ignored)"
+      ap.def_arg :files
+    end
   end
-  
+  CompSpec.def_command "df", cs_df
 
   cs_grep = CompSpec.new
   cs_grep.arg_proc = proc{|call|

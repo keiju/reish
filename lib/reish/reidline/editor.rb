@@ -83,6 +83,7 @@ module Reish
 	@handler.def_default method(:insert)
       end
 
+      attr_reader :view
       attr_reader :buffer
       attr_reader :c_row
       attr_reader :c_col
@@ -154,8 +155,8 @@ module Reish
 	contents
       end
 
-      def message(str, append: false, buffer_class: nil)
-	@view.message(str, append: append, buffer_class: buffer_class)
+      def message(str=nil, append: false, buffer_class: nil, pager: nil)
+	@view.message(str, append: append, buffer_class: buffer_class, pager: pager)
       end
 
       def message_clear
@@ -442,6 +443,10 @@ module Reish
 	end
 
 	candidates, token = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col)) 
+	if !candidates.kind_of?(Array)
+	  return candidates.display(self)
+	end
+	  
 	return if candidates.nil? || candidates.empty?
 	t_size = token.size
 
