@@ -28,8 +28,8 @@ module Reish
 	
 	@buffer.each do |l|
 	  l.each_with_index do |e, i|
-	    @col_widths[i] = @col_widths[i] && e &&
-	      e < @col_widths[i]  ? e : @col_widths[i]
+	    s = (e&.bytesize || 0) + 1
+	    @col_widths[i] = s > (@col_widths[i] || 0) ? s : @col_widths[i]
 	  end
 	end
 	@col_widths[idx]
@@ -40,12 +40,11 @@ module Reish
 	
 	str = ""
 	@buffer[idx].each_with_index do |e, i|
-	  str.concat format("%-*s", @col_widths[i], e)
+	  str.concat format("%-*s", col_width(i), e)
 	end
 
 	str[0, win_width]
       end
-
 
       def inspect
 	"#<MColPager: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
@@ -54,10 +53,3 @@ module Reish
     end
   end
 end
-
-
-
-	
-	
-
-      

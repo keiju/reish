@@ -620,7 +620,7 @@ module Reish
 	end
       end
 
-      def message(str, append: false, buffer_class: nil)
+      def message(str = nil, append: false, buffer_class: nil, pager: nil)
 	if !append && @m_buffer
 	  message_clear
 	end
@@ -629,6 +629,8 @@ module Reish
 	  m_buffer = @m_buffer.dup
 	elsif buffer_class
 	  m_buffer = buffer_class.new(self)
+	elsif pager
+	  m_buffer = pager
 	else
 	  m_buffer = []
 	end
@@ -638,12 +640,16 @@ module Reish
 	  lines = str.lstrip.split(/\n/)
 	when Array
 	  lines = str
+	when nil
+	  lines = nil
 	end
 
-	lines.each do |line|
-	  ll = slice_width(line)
-	  ll.each do |l|
-	    m_buffer.push l
+	if lines
+	  lines.each do |line|
+	    ll = slice_width(line)
+	    ll.each do |l|
+	      m_buffer.push l
+	    end
 	  end
 	end
 
