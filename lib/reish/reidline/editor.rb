@@ -453,23 +453,9 @@ ttyput candidates, token
 	t_size = token.size
 
 	if candidates.size > 1
-	  c_set = candidates.sort
-	  match = c_set.last.chars
-	  c_set.each do |elm|
-	    n_match = []
-	    match.each_with_index do |m, i|
-	      break unless m == elm[i]
-	      n_match.push m
-	    end
-	    match = n_match
-	    if match.size == t_size
-	      break
-	    end
+	  unless word = max_match_candidate(candidates, t_size)
+	    return message candidates.sort, buffer_class: LamPager
 	  end
-	  if match.size == t_size
-	    return message c_set, buffer_class: LamPager
-	  end
-	  word = match.join
 	else
 	  word = candidates.first+" "
 	end
@@ -478,6 +464,26 @@ ttyput candidates, token
 	@buffer.insert(@c_row, @c_col, word)
 	@c_col += word.size
 	cursor_reposition
+      end
+
+      def max_match_candidate(candidates, t_size)
+	c_set = candidates.sort
+	match = c_set.last.chars
+	c_set.each do |elm|
+	  n_match = []
+	  match.each_with_index do |m, i|
+	    break unless m == elm[i]
+	    n_match.push m
+	  end
+	  match = n_match
+	  if match.size == t_size
+	    break
+	  end
+	end
+	if match.size == t_size
+	  return nil
+	end
+	match.join
       end
 
       def set_history(history)
