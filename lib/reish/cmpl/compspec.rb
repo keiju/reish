@@ -278,7 +278,8 @@ module Reish
 	ex: %w[-a --all]
       ap.def_opt "--block-size=", "-B+", 
 	desc: "specify block size", message: "Block size",
-	ex: %w[-B --block-size -k]
+	ex: %w[-B --block-size -k],
+	act: %w[K M G T P E Z Y KB MB GB TB PB EB ZB YB]
       ap.def_opt "--exclude-type", "-x", 
 	desc: "exclude file systems of specified type"
       ap.def_opt "--help", 

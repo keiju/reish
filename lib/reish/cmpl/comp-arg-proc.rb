@@ -126,11 +126,40 @@ module Reish
 
     end
 
+    class OptSet
+      def initialize
+	@set = Set.new
+	@patterns = []
+      end
+
+      def << other
+	case other
+	when Enumerable
+	  other.each do |e|
+	    self << e
+	  end
+	when Symbol
+	  @set << other.id2name
+	when String
+	  @set << other
+	when Regexp
+	  @patterns.push other
+	else
+	  raise "想定していないものです(#{other.inspect})"
+	end
+      end
+
+      def include?(other)
+	@set.include?(other) || 
+	  @patterns.find{|p| p === other}
+      end
+    end
+
     def initialize(call)
       @call = call
       @opts = []
       @candidates = []
-      @excludes_opt = Set.new
+      @excludes_opt = OptSet.new
     end
 
     def empty?
@@ -215,7 +244,7 @@ ttyput "C"
 	  when /^(-.*)=(.*)$/
 ttyput "C:1"
 	    if ex = opt_spec(arg.value)&.exclude
-	      @excludes_opt |= ex
+	      @excludes_opt << ex
 	    end
 
 	  when /^--/
@@ -223,7 +252,7 @@ ttyput "C:2"
 	    if spec = opt_spec(arg.value)
 	      arg_opt_p = arg if spec.with_arg?
 	      if ex = spec.exclude
-		@excludes_opt |= ex
+		@excludes_opt << ex
 	      end
 	    end
 
@@ -232,7 +261,7 @@ ttyput "C:3"
 	    if spec = opt_spec(arg.value)
 	      arg_opt_p = arg if spec.with_arg?
 	      if ex = spec.exclude
-		@excludes_opt |= ex
+		@excludes_opt << ex
 	      end
 	    else
 ttyput "C:3B"
@@ -241,7 +270,7 @@ ttyput "C:3B"
 		if spec2 = opt_spec("-"+k)
 ttyput spec2
 		  if ex = spec2.exclude
-		    @excludes_opt |= ex
+		    @excludes_opt << ex
 		  end
 		  if spec2.with_arg?
 		    if sopts.empty?
@@ -310,7 +339,7 @@ ttyput "X"
 	  if spec
 	    # オプション確定
 	    if ex = spec.exclude
-	      @excludes_opt |= ex
+	      @excludes_opt << ex
 	    end
 	    if spec.with_arg?
 	      # オプション引数確定
@@ -344,7 +373,7 @@ ttyput "X:4B"
 		else
 ttyput "X:4C"
 		  if ex = spec2.exclude
-		    @excludes_opt |= ex
+		    @excludes_opt << ex
 		  end
 		end
 	      else
@@ -486,16 +515,21 @@ ttyput @excludes_opt
     def act_option_arg(spec, opt, sep = spec.arg_separator, option_arg: nil, option_arg_closed: false)
       # ここで, message出力
 ttyput "AOA"
-ttyput spec, opt, option_arg
+ttyput spec, opt, option_arg, spec.action
       case spec.action
       when nil
+ttyput "AOA:1"
 	[]
       when Array
+ttyput "AOA:2"
 	@candidates = spec.action
+	@candidates = ca_filter(@candidates, nil, option_arg)
       when Symbol
+ttyput "AOA:3"
 	@candidates = self.send spec.action
 	@candidates = ca_filter(@candidates, nil, option_arg)
       when Proc
+ttyput "AOA:4"
 	spec.action.call(self, opt, option_arg)
       end
 
