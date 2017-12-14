@@ -42,17 +42,25 @@ module Reish
     end
     alias files ca_files
 
-    def ca_filter(candidates, call, filter=nil)
+    def ca_file_systems
+      %w(adfs autofs bdev bfs binfmt_misc cgroup cpuset cramfs debugfs devpts 
+         devtmpfs ext2 ext3 ext4 fuse fuseblk fusectl hfs  hpfs hugetlbfs 
+         iso9660 minix mqueue mtd_inodefs nfs nfs4 nfsd ntfs pipefs proc 
+         pstore qnx4  ramfs reiserfs romfs rootfs rpc_pipefs securityfs 
+         sockfs swap sysfs tmpfs udf ufs vxfs xfs xiafs)
+    end
+    alias file_systems ca_file_systems
 
+    def ca_filter(candidates, call=nil, filter=nil)
       if filter
 	arg = filter
-      elsif call.last_arg
+      elsif call&.last_arg
 	arg = call.last_arg.value
-      else 
+      else
 	arg = nil
       end
 
-      if arg
+      if arg && arg != ""
 	candidates.select{|c| c[0..arg.size-1] == arg}
       else
 	candidates

@@ -308,6 +308,10 @@ module Reish
 	desc: "like --block-size=1K"
       ap.def_opt "-v", 
 	desc: "(ignored)"
+      ap.def_opt "-reishtest",
+	desc: "test for reish"
+      ap.def_opt "-r",
+	desc: "test for reish"
       ap.def_arg :files
     end
   end

@@ -435,6 +435,7 @@ module Reish
       end
 
       def dynamic_complete(*args)
+ttyput "dynamic_complete"
 	message_clear
 
 	unless @cmpl_proc
@@ -443,8 +444,9 @@ module Reish
 	end
 
 	candidates, token = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col)) 
+ttyput candidates, token
 	if !candidates.kind_of?(Array)
-	  return candidates.display(self)
+	  return candidates.message_to(self)
 	end
 	  
 	return if candidates.nil? || candidates.empty?
