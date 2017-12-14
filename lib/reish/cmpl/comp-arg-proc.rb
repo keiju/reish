@@ -4,6 +4,8 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
+require "set"
+
 require "reish/cmpl/comp-action"
 require "reish/reidline/mcol-pager"
 
@@ -128,6 +130,7 @@ module Reish
       @call = call
       @opts = []
       @candidates = []
+      @excludes_opt = Set.new
     end
 
     def empty?
@@ -149,7 +152,7 @@ module Reish
     #       -opt-, -opt+, --opt=, --opt==
     #       -opt-?, -opt+?, --opt=?, --opt==?
     # --opt
-    def def_opt(opt1, opt2=nil, desc: nil, exclude: nil, message: nil, act: nil)
+    def def_opt(opt1, opt2=nil, desc: nil, ex: nil, exclude: ex, message: nil, act: nil)
       family = OptFamily.new(opt1, opt2, desc: desc, exclude: exclude, message: message, act: act)
 
       @opts.push family
@@ -211,22 +214,41 @@ ttyput "C"
 	  case arg.value
 	  when /^(-.*)=(.*)$/
 ttyput "C:1"
-	    # do nothing
+	    if ex = opt_spec(arg.value)&.exclude
+	      @excludes_opt |= ex
+	    end
+
 	  when /^--/
 ttyput "C:2"
-	    arg_opt_p = arg if opt_spec(arg.value)&.with_arg?
+	    if spec = opt_spec(arg.value)
+	      arg_opt_p = arg if spec.with_arg?
+	      if ex = spec.exclude
+		@excludes_opt |= ex
+	      end
+	    end
+
 	  when /^-(.*)$/
 ttyput "C:3"
-	    if opt_spec(arg.value)&.with_arg?
-	      arg_opt_p = arg
+	    if spec = opt_spec(arg.value)
+	      arg_opt_p = arg if spec.with_arg?
+	      if ex = spec.exclude
+		@excludes_opt |= ex
+	      end
 	    else
+ttyput "C:3B"
 	      sopts = $1.chars
 	      while k = sopts.shift
-		if opt_spec("-"+k)&.with_arg?
-		  if sopts.empty?
-		    arg_opt_p = arg
+		if spec2 = opt_spec("-"+k)
+ttyput spec2
+		  if ex = spec2.exclude
+		    @excludes_opt |= ex
 		  end
-		  break
+		  if spec2.with_arg?
+		    if sopts.empty?
+		      arg_opt_p = arg
+		    end
+		    break
+		  end
 		end
 	      end
 	    end
@@ -235,10 +257,10 @@ ttyput "C:4"
 	    # 引数の最後ではないのに通常引数が来た場合
 	    return @arg_action.call
 	  end
-	when StringToken, CompositeWord
+	when StringToken #, CompositeWord
 	  raise "not implemented"
 	else
-	  raise "not implemented"
+	  raise "not implemented token=(#{arg.inspect})"
 	end
 	next
       end
@@ -286,13 +308,15 @@ ttyput "C:7"
 ttyput "X"
 	  spec = opt_spec(arg.value)
 	  if spec
+	    # オプション確定
+	    if ex = spec.exclude
+	      @excludes_opt |= ex
+	    end
 	    if spec.with_arg?
 	      # オプション引数確定
-	      
 	      return act_option_arg(spec, arg.value, option_arg: last_arg&.value)
 	    else
 ttyput "X:3"
-	      
 	      return candidates_short_opt(arg.value)
 	    end
 	  else
@@ -319,6 +343,9 @@ ttyput "X:4B"
 		  end
 		else
 ttyput "X:4C"
+		  if ex = spec2.exclude
+		    @excludes_opt |= ex
+		  end
 		end
 	      else
 ttyput "X:4D"
@@ -397,6 +424,8 @@ ttyput "Z:4G"
     def candidates_long_opt(arg)
       @candidates = []
       each_opt do |opt_spec|
+	next if @excludes_opt.include?(opt_spec.opt)
+
 	opt = opt_spec.opt
 	if opt[0..arg.size-1] == arg || opt == arg[0..opt.size]
 	  @candidates.push opt_spec 
@@ -436,7 +465,11 @@ ttyput "Z:4G"
 
     def candidates_short_opt(arg)
       @candidates = []
+ttyput "CSO"
+ttyput @excludes_opt
       each_short_opt do |opt_spec|
+	next if @excludes_opt.include?(opt_spec.opt)
+
 	@candidates.push opt_spec
       end
 

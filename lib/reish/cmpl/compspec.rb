@@ -274,38 +274,51 @@ module Reish
   cs_df.arg_proc do |call|
     CompArgProc(call) do |ap|
       ap.def_opt "--all", "-a", 
-	desc: "include dummy file systems" 
+	desc: "include dummy file systems" ,
+	ex: %w[-a --all]
       ap.def_opt "--block-size=", "-B+", 
-	desc: "specify block size", message: "Block size"
+	desc: "specify block size", message: "Block size",
+	ex: %w[-B --block-size -k]
       ap.def_opt "--exclude-type", "-x", 
 	desc: "exclude file systems of specified type"
       ap.def_opt "--help", 
-	desc: "display help and exit"
+	desc: "display help and exit",
+	ex: /.*/
       ap.def_opt "--human-readable", "-h", 
-	desc: "print sizes in human readable format"
+	desc: "print sizes in human readable format",
+	ex: %w[-h --human-readable -H --si]
       ap.def_opt "--inodes", "-i", 
-	desc: "list inode information instead of block usage"
+	desc: "list inode information instead of block usage",
+	ex: %w[-i --inodes]
       ap.def_opt "--local", "-l", 
-	desc: "limit listing to local file systems"
+	desc: "limit listing to local file systems",
+	ex: %w[-l --local]
       ap.def_opt "--no-sync", 
-	desc: "do not invoke sync before getting usage info (default)"
+	desc: "do not invoke sync before getting usage info (default)",
+	ex: %w[--sync]
       ap.def_opt "--portability", "-P", 
-	desc: "use the POSIX output format"
+	desc: "use the POSIX output format",
+	ex: %w[-P --portability]
       ap.def_opt "--print-type", "-T", 
-	desc: "print file system type"
+	desc: "print file system type",
+	ex: %w[-T --print-typee]
       ap.def_opt "--si", "-H", 
-	desc: "human readable fomat, but use powers of 1000 not 1024"
+	desc: "human readable fomat, but use powers of 1000 not 1024",
+	ex:  %w[-h --human-readable -H --si]
       ap.def_opt "--sync", 
-	desc: "invoke sync before getting usage info"
+	desc: "invoke sync before getting usage info",
+	ex: %w[--no-sync]
       ap.def_opt "--total", 
 	desc: "produce a grand total"
       ap.def_opt "--type=", "-t+", 
 	desc: "limit listing to file systems of specified type", 
 	act: :file_systems
       ap.def_opt "--version", 
-	desc: "output version information and exit"
+	desc: "output version information and exit",
+	ex: /.*/
       ap.def_opt "-k", 
-	desc: "like --block-size=1K"
+	desc: "like --block-size=1K",
+	ex: %w[-B --block-size -k]
       ap.def_opt "-v", 
 	desc: "(ignored)"
       ap.def_opt "-reishtest",

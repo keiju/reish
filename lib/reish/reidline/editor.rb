@@ -444,7 +444,7 @@ ttyput "dynamic_complete"
 	end
 
 	candidates, token = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col)) 
-ttyput candidates, token
+#ttyput candidates, token
 	if !candidates.kind_of?(Array)
 	  return candidates.message_to(self)
 	end
