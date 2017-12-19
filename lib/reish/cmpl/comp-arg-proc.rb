@@ -7,7 +7,7 @@
 require "set"
 
 require "reish/cmpl/comp-action"
-require "reish/reidline/mcol-pager"
+require "reish/reidline/mcol-messenger"
 
 module Reish
   class CompArgProc
@@ -556,7 +556,7 @@ ttyput "AOA:4"
     def message_to(editor)
       case @candidates.first
       when OptSpec
-	pager = Reidline::MColPager.new
+	pager = Reidline::MColMessenger.new
 	pager.set_title @title if @title
 	@candidates.collect{|opt_spec| opt_spec.family}.uniq.each do |family|
 	  opts = family.opts.collect{|spec| spec.opt}

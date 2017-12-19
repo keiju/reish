@@ -4,11 +4,11 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
-require "reish/reidline/message-pager"
+require "reish/reidline/messenger"
 
 module Reish
   class Reidline
-    class LamPager<MessagePager
+    class LamMessenger<Messenger
 
       def initialize(ary = [], view: view)
 	super
@@ -39,7 +39,7 @@ module Reish
 	  len.times do |i|
 	    ary.push self[idx+i]
 	  end
-	  return LamPager.new(ary, view: @view)
+	  return LamMessenger.new(ary, view: @view)
 	end
 
 	case idx
@@ -89,7 +89,7 @@ module Reish
       end
 
       def inspect
-	"#<LamPager: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
+	"#<LamMessaner: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
       end
 
     end

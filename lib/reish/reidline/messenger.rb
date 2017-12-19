@@ -1,5 +1,5 @@
 #
-#   message-pager.rb - 
+#   messenger.rb - 
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
@@ -8,7 +8,7 @@ require "reish/reidline/ti"
 
 module Reish
   class Reidline
-    class MessagePager
+    class Messenger
       include Enumerable
       include TI
 

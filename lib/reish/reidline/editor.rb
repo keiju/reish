@@ -9,9 +9,8 @@ require "reish/reidline/term-view"
 require "reish/reidline/key-handler"
 require "reish/reidline/history-session"
 
-require "reish/reidline/message-pager"
-require "reish/reidline/lam-pager"
-require "reish/reidline/mcol-pager"
+require "reish/reidline/messenger"
+require "reish/reidline/lam-messenger"
 
 module Reish
 
@@ -155,7 +154,7 @@ module Reish
 	contents
       end
 
-      def message(str=nil, append: false, buffer_class: MessagePager, pager: nil)
+      def message(str=nil, append: false, buffer_class: Messenger, pager: nil)
 	@view.message(str, append: append, buffer_class: buffer_class, pager: pager)
       end
 
@@ -445,16 +444,20 @@ ttyput "dynamic_complete"
 
 	candidates, token = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col)) 
 #ttyput candidates, token
-	if !candidates.kind_of?(Array)
+	case candidates
+	when nil
+	  return
+	when Array
+	  return if candidates.empty?
+	else
 	  return candidates.message_to(self)
 	end
 	  
-	return if candidates.nil? || candidates.empty?
 	t_size = token.size
 
 	if candidates.size > 1
 	  unless word = max_match_candidate(candidates, t_size)
-	    return message candidates.sort, buffer_class: LamPager
+	    return message candidates.sort, buffer_class: LamMessenger
 	  end
 	else
 	  word = candidates.first+" "

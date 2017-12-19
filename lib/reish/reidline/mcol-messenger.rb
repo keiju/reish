@@ -4,11 +4,11 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
-require "reish/reidline/message-pager"
+require "reish/reidline/messenger"
 
 module Reish
   class Reidline
-    class MColPager<MessagePager
+    class MColMessenger<Messenger
 
       def initialize(ary = [], view: view)
 	super
@@ -50,7 +50,7 @@ module Reish
       end
 
       def inspect
-	"#<MColPager: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
+	"#<MColMessenger: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
       end
 
     end
