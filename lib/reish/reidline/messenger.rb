@@ -168,6 +168,7 @@ module Reish
 ttyput "CLR"
 	message_cursor_save do
 	  each{ti_delete_line}
+	  @buffer = [""]
 	end
 	@buffer = []
       end
