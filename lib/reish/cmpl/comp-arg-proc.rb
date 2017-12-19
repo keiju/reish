@@ -156,6 +156,8 @@ module Reish
     end
 
     def initialize(call)
+      @title = nil
+
       @call = call
       @opts = []
       @candidates = []
@@ -554,14 +556,15 @@ ttyput "AOA:4"
     def message_to(editor)
       case @candidates.first
       when OptSpec
-	pager = Reidline::MColPager.new(editor.view)
+	pager = Reidline::MColPager.new
+	pager.set_title @title if @title
 	@candidates.collect{|opt_spec| opt_spec.family}.uniq.each do |family|
 	  opts = family.opts.collect{|spec| spec.opt}
 	  pager.push [opts[0], opts[1], family.description]
 	end
 	editor.message pager: pager
       when String
-	pager = Reidline::LamPager.new(editor.view, @candidates)
+	pager = Reidline::LamPager.new(@candidates)
 	editor.message pager: pager
       end
     end

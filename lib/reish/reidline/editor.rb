@@ -155,7 +155,7 @@ module Reish
 	contents
       end
 
-      def message(str=nil, append: false, buffer_class: nil, pager: nil)
+      def message(str=nil, append: false, buffer_class: MessagePager, pager: nil)
 	@view.message(str, append: append, buffer_class: buffer_class, pager: pager)
       end
 

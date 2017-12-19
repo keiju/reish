@@ -10,7 +10,7 @@ module Reish
   class Reidline
     class LamPager<MessagePager
 
-      def initialize(view, ary = [])
+      def initialize(ary = [], view: view)
 	super
 
 	@cols = nil
@@ -29,8 +29,6 @@ module Reish
 
       def size
 	d, m = @buffer.size.divmod(cols)
-#ttyput "SIZE"
-#ttyput d, m, cols, @buffer.size
 	d += 1 if m > 0
 	d
       end
@@ -41,7 +39,7 @@ module Reish
 	  len.times do |i|
 	    ary.push self[idx+i]
 	  end
-	  return LamPager.new(@view, ary)
+	  return LamPager.new(ary, view: @view)
 	end
 
 	case idx

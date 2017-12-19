@@ -12,9 +12,16 @@ module Reish
       include Enumerable
       include TI
 
-      def initialize(view, ary = [])
+      def initialize(ary = [], view: nil)
 	@view = view
+	@title = nil
 	@buffer = ary
+      end
+
+      attr_accessor :title
+
+      def attach_view(view)
+	@view = view
       end
 
       def win_width
@@ -35,6 +42,14 @@ module Reish
 
       def size
 	@buffer.size
+      end
+
+      def height
+	size + (@title ? 1 : 0)
+      end
+
+      def set_title(title)
+	@title = title
       end
 
       def push(str)
@@ -69,6 +84,7 @@ module Reish
 
       def cat
 	message_cursor_save do
+	  puts @title if @title
 	  each_line do |l|
 	    if l == last_line
 	      print l
@@ -81,13 +97,15 @@ module Reish
 
       def more
 	if @view.WIN_H
-	  message_h = [size + 1, @view.TERM_H - @view.WIN_H].min
+	  message_h = [height + 1, @view.TERM_H - @view.WIN_H].min
 	else
-	  message_h = [size + 1, @view.TERM_H - @view.text_height + @view.OFF_H].min
+	  message_h = [height + 1, @view.TERM_H - @view.text_height + @view.OFF_H].min
 	end
 	mh = message_h - 1
 
 	message_cursor_save do
+	  puts @title if @title
+
 	  offset = 0
 	  loop do
 	    mh.times do |i| 
@@ -146,6 +164,15 @@ module Reish
 	end
       end
 
+      def clear
+ttyput "CLR"
+	message_cursor_save do
+	  each{ti_delete_line}
+	end
+	@buffer = []
+      end
+
+
       def message_cursor_save(&block)
 	begin
 	  b_row = nil
@@ -166,9 +193,9 @@ module Reish
 	  block.call
 	ensure
 	  if @view.WIN_H
-	    h = [size, @view.TERM_H - @view.WIN_H].min
+	    h = [height, @view.TERM_H - @view.WIN_H].min
 	  else
-	    h = [size, @view.TERM_H - @view.text_height + @view.OFF_H ].min
+	    h = [height, @view.TERM_H - @view.text_height + @view.OFF_H ].min
 	  end
 
 	  if @view.WIN_H

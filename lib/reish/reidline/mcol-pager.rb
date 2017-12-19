@@ -10,7 +10,7 @@ module Reish
   class Reidline
     class MColPager<MessagePager
 
-      def initialize(view, ary = [])
+      def initialize(ary = [], view: view)
 	super
 
 	@cols = nil
@@ -27,6 +27,8 @@ module Reish
 	return @col_widths[idx] unless @col_widths.empty?
 	
 	@buffer.each do |l|
+	  next unless l.kind_of?(Array)
+
 	  l.each_with_index do |e, i|
 	    s = (e&.bytesize || 0) + 1
 	    @col_widths[i] = s > (@col_widths[i] || 0) ? s : @col_widths[i]
@@ -37,6 +39,7 @@ module Reish
 
       def line(idx)
 	return nil if idx >= size
+	return @buffer[idx] unless @buffer[idx].kind_of?(Array)
 	
 	str = ""
 	@buffer[idx].each_with_index do |e, i|
