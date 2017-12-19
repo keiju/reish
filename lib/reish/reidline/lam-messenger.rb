@@ -50,13 +50,13 @@ module Reish
 	  o, m = idx.divmod(win_height)
 	  off = o*(win_height*cols)+m
 
-	  height = win_height
-	  if (o+1)*height > size 
-	    height = size - o*win_height
+	  wh = win_height
+	  if (o+1)*wh > height
+	    wh = height - o*win_height
 	  end
 	  
 	  @cols.times do |i|
-	    s = @buffer[off + i*height]
+	    s = @buffer[off + i*wh]
 	    break unless s
 	    col.concat s
 	    col.concat " "*(@col_width-s.size)

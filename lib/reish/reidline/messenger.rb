@@ -83,8 +83,10 @@ module Reish
       end
 
       def cat
+ttyput "CAT"
 	message_cursor_save do
 	  puts @title if @title
+
 	  each_line do |l|
 	    if l == last_line
 	      print l
@@ -96,6 +98,7 @@ module Reish
       end
 
       def more
+ttyput "MORE"
 	if @view.WIN_H
 	  message_h = [height + 1, @view.TERM_H - @view.WIN_H].min
 	else
@@ -104,7 +107,10 @@ module Reish
 	mh = message_h - 1
 
 	message_cursor_save do
-	  puts @title if @title
+	  if @title
+	    puts @title 
+	    mh -= 1
+	  end
 
 	  offset = 0
 	  loop do
@@ -167,6 +173,8 @@ module Reish
       def clear
 ttyput "CLR"
 	message_cursor_save do
+	  ti_delete_line if @title
+	  @title = nil
 	  each{ti_delete_line}
 	  @buffer = [""]
 	end

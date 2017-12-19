@@ -724,7 +724,7 @@ ttyput "MESSAGE:CLR"
 	  end
 	  cursor_move(t_row, t_col)
 #	if append
-#	  ti_down(@m_buffer.size)
+#	  ti_down(@m_buffer.height)
 #	end
 	  print "\n"
 #	  ti_save_position do
@@ -733,9 +733,9 @@ ttyput "MESSAGE:CLR"
 	
 	ensure
 	  if @WIN_H
-	    ti_up(@WIN_H + @OFF_H + @m_buffer.size - b_row - 1)
+	    ti_up(@WIN_H + @OFF_H + @m_buffer.height - b_row - 1)
 	  else
-	    ti_up(text_height + @m_buffer.size - b_row - 1)
+	    ti_up(text_height + @m_buffer.height - b_row - 1)
 	  end
 	  ti_hpos(b_col)
 	  @t_row = b_row
