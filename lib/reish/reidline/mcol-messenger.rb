@@ -10,7 +10,7 @@ module Reish
   class Reidline
     class MColMessenger<Messenger
 
-      def initialize(ary = [], view: view)
+      def initialize(ary = [], view: view, title: title)
 	super
 
 	@cols = nil

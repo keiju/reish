@@ -10,7 +10,7 @@ module Reish
   class Reidline
     class LamMessenger<Messenger
 
-      def initialize(ary = [], view: view)
+      def initialize(ary = [], view: view, title: title)
 	super
 
 	@cols = nil
@@ -21,6 +21,7 @@ module Reish
 
       def cols
 	return @cols if @cols
+ttyput @buffer
 	@col_width = @buffer.collect{|c| c.size}.max + 1
 	
 	@cols = win_width.div(@col_width)

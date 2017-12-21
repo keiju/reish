@@ -8,6 +8,7 @@ require "pp"
 require "reish/path-finder"
 require "reish/cmpl/compspec"
 require "reish/cmpl/comp-command"
+require "reish/cmpl/comp-cmd-proc"
 
 module Reish
 
@@ -166,7 +167,7 @@ module Reish
 	    puts "CANDIDATE: ANY COMMAND OF: #{command.inspect}" if Reish::debug_cmpl?
 	    candidate_commands(command)
 
-#	    CompCommandArg.new(nil, @lex.pretoken, [], nil, @shell.exenv.binding).candidates
+#	    CompCommandArg.new(nil, @lex.pretoken, [], nil, @shell).candidates
 	   
 	  when :LPARLEN_ARG
 	    command = find_argumentable_element_in_path(@lex.pretoken, path, input_unit)
@@ -362,30 +363,30 @@ module Reish
 
     def candidate_commands(command = nil)
       case command
-      when nil
-	candidates = eval("methods | private_methods | local_variables | self.class.constants | Object.constants", @shell.exenv.binding).collect{|m| m.to_s} | @shell.all_commands
-	candidates
-	
+      when nil, Node::SimpleCommand
+	if command
+	  call = CompCommandCall.new(@shell.exenv.main,
+				     command.name, [], @shell)
+	else
+	  call = nil
+	end
+	Reish::CompCmdProc(call) do |ccp|
+	  l = eval("local_variables", @shell.exenv.binding).collect{|m| m.to_s}.sort
+	  ccp.add l, tag: "Completing local variables:" unless l.empty?
+	  c = eval("self.class.constants | Object.constants", @shell.exenv.binding).collect{|m| m.to_s}.sort
+	  ccp.add c, tag: "Completing constants:" unless c.empty?
+	  m = eval("methods | private_methods", @shell.exenv.binding).collect{|m| m.to_s}.sort
+	  ccp.add m, tag: "Completing builtin methods:"
+	  ccp.add @shell.all_commands, tag: "Completing external commands:"
+	end
       when Node::PipelineCommand
 	if command.commands.size == 1
 	  candidate_commands(command.commands[0])
 	else
-	  call = CompPipelineCall.new(@shell.exenv.main,
+	  call = CompPipelineCall.new(@shell.exenv.main, 
 				      command,
-				      @shell.exenv.binding)
+				      @shell)
 	  call.candidates
-	end
-
-      when Node::SimpleCommand
-	candidates = eval("methods | private_methods | local_variables | self.class.constants(true) | Object.constants", @shell.exenv.binding).collect{|m| m.to_s} | @shell.all_commands
-#puts "XXXXXXXXXX"
-#puts candidates
-	filter = command&.name&.value
-#puts filter	
-	if filter
-	  candidates.grep(/^#{filter}/)
-	else
-	  candidates
 	end
       end
     end
@@ -408,10 +409,7 @@ module Reish
 	if command.commands.size == 1
 	  candidate_argument_of(command.commands[0], last_arg)
 	else
-	  arg = CompPipelineArg.new(@shell.exenv.main,
-				    command,
-				    last_arg,
-				    @shell.exenv.binding)
+	  arg = CompPipelineArg.new(@shell.exenv.main, command, last_arg, @shell)
 	  arg.candidates
 	end
 	
@@ -420,7 +418,7 @@ module Reish
 				 command.name,
 				 command.args,
 				 last_arg,
-				 @shell.exenv.binding)
+				 @shell)
 	arg.candidates
 	
 	

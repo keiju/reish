@@ -12,9 +12,9 @@ module Reish
       include Enumerable
       include TI
 
-      def initialize(ary = [], view: nil)
+      def initialize(ary = [], view: nil, title: nil)
 	@view = view
-	@title = nil
+	@title = title
 	@buffer = ary
       end
 
@@ -175,12 +175,11 @@ ttyput "CLR"
 	message_cursor_save do
 	  ti_delete_line if @title
 	  @title = nil
-	  each{ti_delete_line}
+	  each_line{ti_delete_line}
 	  @buffer = [""]
 	end
 	@buffer = []
       end
-
 
       def message_cursor_save(&block)
 	begin
@@ -223,7 +222,7 @@ ttyput "CLR"
 
 
       def inspect
-	"#<Pager: @view=#{@view} @buffer=#{@buffer.inspect}>"
+	"#<Messenger: @view=#{@view} @buffer=#{@buffer.inspect}>"
       end
 
     end

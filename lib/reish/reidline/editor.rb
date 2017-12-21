@@ -434,7 +434,6 @@ module Reish
       end
 
       def dynamic_complete(*args)
-ttyput "dynamic_complete"
 	message_clear
 
 	unless @cmpl_proc
@@ -442,27 +441,26 @@ ttyput "dynamic_complete"
 	  return
 	end
 
-	candidates, token = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col)) 
-#ttyput candidates, token
+	candidates, token = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col))
+
 	case candidates
 	when nil
 	  return
 	when Array
 	  return if candidates.empty?
+	  if candidates.size == 1
+	    word = candidates.first+" "
+	  else
+	    unless word = max_match_candidate(candidates, token.size)
+	      return message candidates.sort, buffer_class: LamMessenger
+	    end
+	  end
+	when String
+	  word = candidates
 	else
 	  return candidates.message_to(self)
 	end
 	  
-	t_size = token.size
-
-	if candidates.size > 1
-	  unless word = max_match_candidate(candidates, t_size)
-	    return message candidates.sort, buffer_class: LamMessenger
-	  end
-	else
-	  word = candidates.first+" "
-	end
-	
 	token.size.times{backspace}
 	@buffer.insert(@c_row, @c_col, word)
 	@c_col += word.size

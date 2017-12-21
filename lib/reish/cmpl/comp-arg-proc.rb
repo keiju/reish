@@ -564,7 +564,7 @@ ttyput "AOA:4"
 	end
 	editor.message pager: pager
       when String
-	pager = Reidline::LamPager.new(@candidates)
+	pager = Reidline::LamMessenger.new(@candidates)
 	editor.message pager: pager
       end
     end

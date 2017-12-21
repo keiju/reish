@@ -8,12 +8,14 @@ require "reish/cmpl/comp-module-spec"
 module Reish
 
   class CompPipelineCall
-    def initialize(receiver, pipeline, bind)
+    def initialize(receiver, pipeline, shell)
       @receiver = receiver
       @pipeline = pipeline
-      @bind = bind
+      @shell = shell
+      @bind = @shell.exenv.binding
     end
 
+    attr_reader :shell
     attr_reader :bind
     attr_reader :receiver
     attr_reader :pipeline
@@ -36,7 +38,7 @@ module Reish
 	      call = CompCommandCall.new(receiver,
 				       com.name,
 				       com.args,
-				       bind)
+				       @shell)
 	      receiver = call.return_value
 	    end
 	  when SpecialToken, ReservedWordToken, PathToken
@@ -46,23 +48,27 @@ module Reish
 	  end
 	  
 	when last_comm
-	  case receiver
-	  when ModuleSpec, DescendantSpec, CompositeSpec
-	    candidates = receiver.instance_methods
+	  if com&.name
+	    call = CompCommandCall.new(@receiver, com.name, com.args, @shell)
 	  else
-	    candidates = receiver.methods
+	    call = nil
 	  end
-	  case com.name
-	  when IDToken, ID2Token
-	    return candidates.grep(/^#{com.name.value}/)
-	  when nil
-	    return candidates
-	  end
+	  return Reish::CompCmdProc(call){|cpp|
+	    case receiver
+	    when ModuleSpec, DescendantSpec, CompositeSpec
+	      cpp.add receiver.instance_methods.collect{|n| n.id2name}.sort, 
+		tag: "Completing builtin methods:"
+	    else
+	      cpp.add receiver.methods.collect{|n| n.id2name}.sort, 
+		tag: "Completing builtin methods:"
+	    end
+	    cpp.add @shell.all_commands, tag: "Completing external commands:"
+	  }
 	else
 	  arg = CompCommandCall.new(receiver,
 				    com.name,
 				    com.args,
-				    bind)
+				    @shell)
 	  receiver = arg.return_value
 	end
       end
@@ -70,12 +76,13 @@ module Reish
   end
 
   class CompPipelineArg
-    def initialize(receiver, pipeline, last_arg, bind)
+    def initialize(receiver, pipeline, last_arg, shell)
       @receiver = receiver
       @pipeline = pipeline
       @args = args
       @last_arg = last_arg
-      @bind = bind
+      @shell = shell
+      @bind = @shell.exenv.binding
     end
 
     attr_reader :bind
@@ -102,7 +109,7 @@ module Reish
 	      call = CompCommandCall.new(receiver,
 					 com.name,
 					 com.args,
-					 bind)
+					 @shell)
 	      receiver = call.return_value
 	    end
 	  when SpecialToken, ReservedWordToken, PathToken
@@ -116,13 +123,13 @@ module Reish
 				   com.name,
 				   com.args,
 				   last_arg,
-				   bind)
+				   @shell)
 	  return arg.candidates
 	else
 	  call = CompCommandCall.new(receiver,
 				   com.name,
 				   com.args,
-				   bind)
+				   @shell)
 	  receiver = call.return_value
 	end
       end
@@ -150,16 +157,17 @@ module Reish
     
   
   class CompCommandCall<CompCommandBase
-    def initialize(receiver, name, args, bind)
+    def initialize(receiver, name, args, shell)
       @receiver = receiver
       @name = name
       @args = args
-      @bind = bind
+      @shell = shell
+      @bind = @shell.exenv.binding
     end
 
     attr_reader :bind
     attr_reader :receiver
-    attr_reader :compspec
+    attr_reader :name
     attr_reader :args
 
     def return_value
@@ -175,12 +183,13 @@ module Reish
   end
 
   class CompCommandArg<CompCommandBase
-    def initialize(receiver, name, args, last_arg, bind)
+    def initialize(receiver, name, args, last_arg, shell)
       @receiver = receiver
       @name = name
       @args = args
       @last_arg = last_arg
-      @bind = bind
+      @shell = shell
+      @bind = @shell.exenv.binding
     end
 
     attr_reader :bind
