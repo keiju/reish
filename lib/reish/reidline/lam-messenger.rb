@@ -21,7 +21,6 @@ module Reish
 
       def cols
 	return @cols if @cols
-ttyput @buffer
 	@col_width = @buffer.collect{|c| c.size}.max + 1
 	
 	@cols = win_width.div(@col_width)
