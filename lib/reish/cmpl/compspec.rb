@@ -313,6 +313,7 @@ module Reish
 	desc: "produce a grand total"
       ap.def_opt "--type=", "-t+", 
 	desc: "limit listing to file systems of specified type", 
+	message: "file system type",
 	act: :file_systems
       ap.def_opt "--version", 
 	desc: "output version information and exit",
