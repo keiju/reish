@@ -1042,8 +1042,9 @@ module Reish
       def each_compose(&block)
 	return if @elements.empty?
 	prev = []
+	last_e = @elements.last
 	@elements.each do |e|
-	  if !e.space_seen?
+	  if !(e.space_seen? || e.equal?(last_e))
 	    prev.push e
 	  else
 	    if prev.size > 1

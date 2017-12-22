@@ -4,13 +4,13 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
-require "reish/reidline/message-pager"
+require "reish/reidline/messenger"
 
 module Reish
   class Reidline
-    class MColPager<MessagePager
+    class MColMessenger<Messenger
 
-      def initialize(view, ary = [])
+      def initialize(ary = [], view: view, title: title)
 	super
 
 	@cols = nil
@@ -27,6 +27,8 @@ module Reish
 	return @col_widths[idx] unless @col_widths.empty?
 	
 	@buffer.each do |l|
+	  next unless l.kind_of?(Array)
+
 	  l.each_with_index do |e, i|
 	    s = (e&.bytesize || 0) + 1
 	    @col_widths[i] = s > (@col_widths[i] || 0) ? s : @col_widths[i]
@@ -37,6 +39,7 @@ module Reish
 
       def line(idx)
 	return nil if idx >= size
+	return @buffer[idx] unless @buffer[idx].kind_of?(Array)
 	
 	str = ""
 	@buffer[idx].each_with_index do |e, i|
@@ -47,7 +50,7 @@ module Reish
       end
 
       def inspect
-	"#<MColPager: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
+	"#<MColMessenger: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
       end
 
     end
