@@ -620,30 +620,41 @@ module Reish
 	end
       end
 
-      def message(str, append: false, buffer_class: nil)
+      def message(str = nil, append: false, buffer_class: MessagePager, pager: nil)
+
+ttyput "MESSAGE"
+
 	if !append && @m_buffer
+ttyput "MESSAGE:CLR"
+
 	  message_clear
 	end
 
 	if append
-	  m_buffer = @m_buffer.dup
+	  @m_buffer = @m_buffer.dup
+	elsif pager
+	  @m_buffer = pager
+	  @m_buffer.attach_view self
 	elsif buffer_class
-	  m_buffer = buffer_class.new(self)
-	else
-	  m_buffer = []
+	  @m_buffer = buffer_class.new(view: self)
 	end
+#ttyput @m_buffer
 
 	case str
 	when String
 	  lines = str.lstrip.split(/\n/)
 	when Array
 	  lines = str
+	when nil
+	  lines = nil
 	end
 
-	lines.each do |line|
-	  ll = slice_width(line)
-	  ll.each do |l|
-	    m_buffer.push l
+	if lines
+	  lines.each do |line|
+	    ll = slice_width(line)
+	    ll.each do |l|
+	      @m_buffer.push l
+	    end
 	  end
 	end
 
@@ -652,12 +663,12 @@ module Reish
 	mh = message_h - 1
 	if text_height > @TERM_H + @OFF_H ||
 	    text_height > @TERM_H.div(2) + @OFF_H
-	  if @WIN_H && @TERM_H - @WIN_H >= m_buffer.size
-	    message_cat(m_buffer)
+	  if @WIN_H && @TERM_H - @WIN_H >= @m_buffer.height
+	    @m_buffer.cat
 	  else
-	    if @TERM_H.div(2) > m_buffer.size
-	      if th > @TERM_H - m_buffer.size
-		@WIN_H = @TERM_H - m_buffer.size
+	    if @TERM_H.div(2) > @m_buffer.height
+	      if th > @TERM_H - @m_buffer.height
+		@WIN_H = @TERM_H - @m_buffer.height
 		@OFF_H = (th - @WIN_H).div(2)
 	      else
 		@OFF_H = 0
@@ -666,7 +677,7 @@ module Reish
 	      ti_clear
 	      redisplay(from: @OFF_H, adjust: false)
 		
-	      message_cat(m_buffer)
+	      @m_buffer.cat
 	    else
 	      @WIN_H = (@TERM_H / 2.0).ceil
 	      @OFF_H = @t_row - (@WIN_H/2.0).ceil
@@ -680,110 +691,24 @@ module Reish
 
 	      ti_clear
 	      redisplay(from: 0, adjust: false)
-	      message_more(m_buffer)
+	      @m_buffer.more
 	    end
 	  end
-	elsif text_height + m_buffer.size < @TERM_H
-	  message_cat(m_buffer)
+	elsif text_height + @m_buffer.height < @TERM_H
+	  @m_buffer.cat
 	else
-	  message_more(m_buffer)
-	end
-      end
-
-      def message_cat(m_buffer)
-	unless m_buffer.kind_of?(Array)
-	  @m_buffer = m_buffer
-	  return @m_buffer.cat
-	end
-
-	message_cursor_save do
-	  @m_buffer = m_buffer
-	  @m_buffer.each do |l|
-	    if l == @m_buffer.last
-	      print l
-	    else
-	      puts l
-	    end
-	  end
-	end
-      end
-      
-      def message_more(m_buffer)
-	unless m_buffer.kind_of?(Array)
-	  @m_buffer = m_buffer
-	  return @m_buffer.more
-	end
-
-	if @WIN_H
-	  message_h = @TERM_H - @WIN_H
-	else
-	  message_h = @TERM_H - text_height
-	end
-	mh = message_h - 1
-
-	message_cursor_save do
-	  offset = 0
-	  loop do
-	    mh.times do |i| 
-	      if m_buffer.size == offset+i
-		@m_buffer = m_buffer[offset..-1]
-		(mh - i).times do
-		  ti_clear_eol
-		  print_eol "\n"
-		  @m_buffer.push ""
-		end
-		ti_clear_eol
-		@m_buffer.push ""
-		return
-	      end
-	      puts_eol m_buffer[offset+i]
-	    end
-	    offset += mh
-
-	    print_width_winsz "CR: return, TAB: next-page, BS: back-page, or other character to pass itsself: "
-
-	    ch = nil
-	    STDIN.noecho do
-	      STDIN.raw do
-		ch = STDIN.getc
-	      end
-	    end
-
-	    case ch
-	    when "\C-m"
-	      @m_buffer = m_buffer[offset-mh, mh]
-	      @m_buffer.push ""
-	      ti_delete_line
-	      break
-	    when "\t"
-	      ti_up(mh)
-	      ti_line_beg
-	      next
-	    when "\u007F"
-	      offset -= mh*2
-	      offset = 0 if offset < 0
-
-	      ti_up(mh)
-	      ti_line_beg
-	      next
-	    else
-	      @m_buffer = m_buffer[offset-mh, mh]
-	      @m_buffer.push ""
-	      STDIN.ungetc(ch)
-	      ti_delete_line
-	      break
-	    end
-	  end
+	  @m_buffer.more
 	end
       end
 
       def message_clear
 	return unless @m_buffer
-
-	message_cursor_save do
-	  @m_buffer.each{ti_delete_line}
-	  @m_buffer = [""]
-	end
+	@m_buffer.clear
+	
+# 	message_cursor_save do
+# 	  @m_buffer.each{ti_delete_line}
+# 	  @m_buffer = [""]
+# 	end
 	@m_buffer = nil
       end
 
@@ -799,7 +724,7 @@ module Reish
 	  end
 	  cursor_move(t_row, t_col)
 #	if append
-#	  ti_down(@m_buffer.size)
+#	  ti_down(@m_buffer.height)
 #	end
 	  print "\n"
 #	  ti_save_position do
@@ -808,9 +733,9 @@ module Reish
 	
 	ensure
 	  if @WIN_H
-	    ti_up(@WIN_H + @OFF_H + @m_buffer.size - b_row - 1)
+	    ti_up(@WIN_H + @OFF_H + @m_buffer.height - b_row - 1)
 	  else
-	    ti_up(text_height + @m_buffer.size - b_row - 1)
+	    ti_up(text_height + @m_buffer.height - b_row - 1)
 	  end
 	  ti_hpos(b_col)
 	  @t_row = b_row

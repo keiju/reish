@@ -4,13 +4,13 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
-require "reish/reidline/message-pager"
+require "reish/reidline/messenger"
 
 module Reish
   class Reidline
-    class LamPager<MessagePager
+    class LamMessenger<Messenger
 
-      def initialize(view, ary = [])
+      def initialize(ary = [], view: view, title: title)
 	super
 
 	@cols = nil
@@ -21,6 +21,7 @@ module Reish
 
       def cols
 	return @cols if @cols
+ttyput @buffer
 	@col_width = @buffer.collect{|c| c.size}.max + 1
 	
 	@cols = win_width.div(@col_width)
@@ -29,8 +30,6 @@ module Reish
 
       def size
 	d, m = @buffer.size.divmod(cols)
-#ttyput "SIZE"
-#ttyput d, m, cols, @buffer.size
 	d += 1 if m > 0
 	d
       end
@@ -41,7 +40,7 @@ module Reish
 	  len.times do |i|
 	    ary.push self[idx+i]
 	  end
-	  return LamPager.new(@view, ary)
+	  return LamMessenger.new(ary, view: @view)
 	end
 
 	case idx
@@ -52,13 +51,13 @@ module Reish
 	  o, m = idx.divmod(win_height)
 	  off = o*(win_height*cols)+m
 
-	  height = win_height
-	  if (o+1)*height > size 
-	    height = size - o*win_height
+	  wh = win_height
+	  if (o+1)*wh > height
+	    wh = height - o*win_height
 	  end
 	  
 	  @cols.times do |i|
-	    s = @buffer[off + i*height]
+	    s = @buffer[off + i*wh]
 	    break unless s
 	    col.concat s
 	    col.concat " "*(@col_width-s.size)
@@ -91,7 +90,7 @@ module Reish
       end
 
       def inspect
-	"#<LamPager: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
+	"#<LamMessaner: @view=#{@view} @cols=#{@cols} @col_width=#{@col_width} @buffer=#{@buffer.inspect}>"
       end
 
     end

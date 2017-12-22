@@ -381,7 +381,7 @@ module Reish
 	begin
 	  Dir::foreach(d) do |p|
 	    a = d+"/"+p
-	    st = File.stat(a)
+	    st = File.stat(a) rescue next
 	    next unless st.file? && st.executable?
 	    commands.push p 
 	  end
