@@ -68,7 +68,7 @@ module Reish
       attr_reader :opt
 
       def long?
-	/^--/ =~ @opt || /^-[\w]+/ =~ @opt
+	/^--/ =~ @opt || /^-[\w][\w]+/ =~ @opt
       end
 
       def short?
@@ -220,8 +220,8 @@ module Reish
       end
     end
 
-    def files
-      ca_files(@call)
+    def files(arg = nil)
+      ca_files(@call, arg)
     end
 
     def candidates
@@ -518,6 +518,19 @@ module Reish
 	pager = Reidline::LamMessenger.new(@candidates)
 	editor.message pager: pager
       end
+    end
+
+    def for_readline
+      cands = []
+      @candidates.each do |e|
+	case e
+	when OptSpec
+	  cands.push e.opt if e.long?
+	when String
+	  cands.push e if /^--/ =~ e || /^-[\w][\w]+/ =~ e
+	end
+      end
+      cands.sort.uniq
     end
 
   end
