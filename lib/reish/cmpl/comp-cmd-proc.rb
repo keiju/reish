@@ -107,6 +107,11 @@ module Reish
       end
       editor.message pager: pager
     end
+
+    def for_readline
+      @tag2candidates.each_value.inject([]){|cands, cmds| cands.concat cmds}.sort.uniq
+    end
+
   end
 
   def self.CompCmdProc(call=nil, &block)
