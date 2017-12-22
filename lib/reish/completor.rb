@@ -30,7 +30,17 @@ module Reish
 	  expr = @shell.lex.readed + Readline.line_buffer
 	  puts "input all: #{expr}" if @debug
 
-	  candidate(expr)
+	  cands = candidate(expr)
+	  case cands
+	  when nil
+	    nil
+	  when Array
+	    cands
+	  when String
+	    [cands, cands]
+	  else
+	    cands.for_readline
+	  end
 	}
 
 	Readline.completion_proc = @completion_proc
