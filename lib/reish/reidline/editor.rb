@@ -9,9 +9,8 @@ require "reish/reidline/term-view"
 require "reish/reidline/key-handler"
 require "reish/reidline/history-session"
 
-require "reish/reidline/message-pager"
-require "reish/reidline/lam-pager"
-require "reish/reidline/mcol-pager"
+require "reish/reidline/messenger"
+require "reish/reidline/lam-messenger"
 
 module Reish
 
@@ -83,6 +82,7 @@ module Reish
 	@handler.def_default method(:insert)
       end
 
+      attr_reader :view
       attr_reader :buffer
       attr_reader :c_row
       attr_reader :c_col
@@ -154,8 +154,8 @@ module Reish
 	contents
       end
 
-      def message(str, append: false, buffer_class: nil)
-	@view.message(str, append: append, buffer_class: buffer_class)
+      def message(str=nil, append: false, buffer_class: Messenger, pager: nil)
+	@view.message(str, append: append, buffer_class: buffer_class, pager: pager)
       end
 
       def message_clear
@@ -441,36 +441,50 @@ module Reish
 	  return
 	end
 
-	candidates, token = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col)) 
-	return if candidates.nil? || candidates.empty?
-	t_size = token.size
+	candidates, token = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col))
 
-	if candidates.size > 1
-	  c_set = candidates.sort
-	  match = c_set.last.chars
-	  c_set.each do |elm|
-	    n_match = []
-	    match.each_with_index do |m, i|
-	      break unless m == elm[i]
-	      n_match.push m
-	    end
-	    match = n_match
-	    if match.size == t_size
-	      break
+	case candidates
+	when nil
+	  return
+	when Array
+	  return if candidates.empty?
+	  if candidates.size == 1
+	    word = candidates.first+" "
+	  else
+	    unless word = max_match_candidate(candidates, token.size)
+	      return message candidates.sort, buffer_class: LamMessenger
 	    end
 	  end
-	  if match.size == t_size
-	    return message c_set, buffer_class: LamPager
-	  end
-	  word = match.join
+	when String
+	  word = candidates
 	else
-	  word = candidates.first+" "
+	  return candidates.message_to(self)
 	end
-	
+	  
 	token.size.times{backspace}
 	@buffer.insert(@c_row, @c_col, word)
 	@c_col += word.size
 	cursor_reposition
+      end
+
+      def max_match_candidate(candidates, t_size)
+	c_set = candidates.sort
+	match = c_set.last.chars
+	c_set.each do |elm|
+	  n_match = []
+	  match.each_with_index do |m, i|
+	    break unless m == elm[i]
+	    n_match.push m
+	  end
+	  match = n_match
+	  if match.size == t_size
+	    break
+	  end
+	end
+	if match.size == t_size
+	  return nil
+	end
+	match.join
       end
 
       def set_history(history)

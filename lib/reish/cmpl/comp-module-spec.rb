@@ -185,7 +185,7 @@ module Reish
     end
 
     def instance_methods
-      SCHEMA[@mod].possivle_instance_methods
+      SCHEMA[@mod].possible_instance_methods
     end
   end
 
