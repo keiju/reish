@@ -82,7 +82,7 @@ module Reish
       set
     end
 
-    def possivle_instance_methods
+    def possible_instance_methods
       methods = Set.new @mod.instance_methods
 
       all_subclasses.each do |cls|

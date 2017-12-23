@@ -9,6 +9,9 @@ require "reish/reidline/term-view"
 require "reish/reidline/key-handler"
 require "reish/reidline/history-session"
 
+require "reish/reidline/messenger"
+require "reish/reidline/lam-messenger"
+
 module Reish
 
   class Reidline
@@ -35,12 +38,16 @@ module Reish
       def init_keys
 	@handler = KeyHandler.new
 	@handler.def_handlers [
+	  ["\e\u007F", method(:delete_backword_word)],
 	  ["\e[A", method(:cursor_up)],
 	  ["\e[B", method(:cursor_down)],
 	  ["\e[C", method(:cursor_right)],
 	  ["\e[D", method(:cursor_left)],
 	  ["\e<", method(:cursor_bob)],
 	  ["\e>", method(:cursor_eob)],
+	  ["\eb", method(:cursor_backword_word)],
+	  ["\ed", method(:delete_forword_word)],
+	  ["\ef", method(:cursor_forword_word)],
 	  ["\ep", method(:history_prev)],
 	  ["\en", method(:history_next)],
 
@@ -58,8 +65,14 @@ module Reish
 	  ["\C-p", method(:cursor_up)],
 	  ["\C-m", method(:key_cr)],
 
+	  ["\C-h\C-m", method(:man)],
+
+#	  ["\M-\u007F", method(:delete_backword_word)],
 	  ["\M-<", method(:cursor_bob)],
 	  ["\M->", method(:cursor_eob)],
+	  ["\M-b", method(:cursor_backword_word)],
+	  ["\M-d", method(:delete_forword_word)],
+	  ["\M-f", method(:cursor_forword_word)],
 	  ["\M-p", method(:history_prev)],
 	  ["\M-n", method(:history_next)],
 
@@ -69,6 +82,7 @@ module Reish
 	@handler.def_default method(:insert)
       end
 
+      attr_reader :view
       attr_reader :buffer
       attr_reader :c_row
       attr_reader :c_col
@@ -140,12 +154,55 @@ module Reish
 	contents
       end
 
-      def message(str, append: false)
-	@view.message(str, append: append)
+      def message(str=nil, append: false, buffer_class: Messenger, pager: nil)
+	@view.message(str, append: append, buffer_class: buffer_class, pager: pager)
       end
 
       def message_clear
 	@view.message_clear
+      end
+
+      def beginning_of_line?
+	@c_col == 0
+      end
+      alias bol? beginning_of_line?
+
+      def end_of_line?
+	@buffer.eol?(@c_row, @c_col)
+      end
+      alias eol? end_of_line?
+
+      def beginning_of_buffer?
+	@c_row == 0 && @c_col == 0
+      end
+      alias bob? beginning_of_buffer?
+
+      def end_of_buffer?
+	@buffer.end_of_buffer?(@c_row, @c_col)
+      end
+      alias eob? end_of_buffer?
+
+      def current_char
+	@buffer[@c_row][@c_col]
+      end
+      alias point_char current_char
+
+      def re_search_forward(pat)
+	ret = @buffer.re_search_forward(pat, @c_row, @c_col)
+	if ret
+	  @c_row, @c_col = *ret
+	else
+	  nil
+	end
+      end
+
+      def re_search_backward(pat)
+	ret = @buffer.re_search_backward(pat, @c_row, @c_col)
+	if ret
+	  @c_row, @c_col = *ret
+	else
+	  nil
+	end
       end
 
       def normalize_cursor(update: true)
@@ -158,7 +215,6 @@ module Reish
       def cursor_reposition
 	@view.cursor_reposition
       end
-
 
       def cursor_up(*args, update: true)
 	@c_row -= 1
@@ -191,6 +247,7 @@ module Reish
 	end
 	cursor_reposition if update
       end
+      alias cursor_forward cursor_right
 
       def cursor_left(*args, update: true)
 	@c_col -= 1
@@ -207,6 +264,7 @@ module Reish
 	end
 	cursor_reposition if update
       end
+      alias cursor_backword cursor_left
 
       def cursor_beginning_of_line(*args, update: true)
 	@c_col = 0
@@ -235,6 +293,35 @@ module Reish
 	cursor_reposition if update
       end
       alias cursor_eob cursor_end_of_buffer
+
+      def cursor_backword_word(*args, update: true)
+	begin
+	  cursor_left(update: false)
+	  break if bob?
+	end until /\w/ =~ current_char
+	begin
+	  cursor_left(update: false)
+	  if bol?
+	    cursor_reposition if update
+	    return
+	  end
+	end until /\W/ =~ current_char
+	cursor_right(update: update)
+      end
+      alias cursor_left_word cursor_backword_word
+
+      def cursor_forword_word(*args, update: true)
+	unless re_search_forward(/\w/)
+	  cursor_end_of_buffer(update: update)
+	  return
+	end
+	unless re_search_forward(/\W|$/)
+	  cursor_end_of_buffer(update: update)
+	  return
+	end
+	cursor_reposition if update
+      end
+      alias cursor_right_word cursor_forword_word
 
       def insert(io, chr)
 	normalize_cursor
@@ -269,6 +356,40 @@ module Reish
 	  @buffer.join_line(@c_row + 1)
 	else
 	  @buffer.delete(@c_row, @c_col)
+	end
+      end
+
+      def delete_backword_word(*args)
+	normalize_cursor
+	f_row = @c_row
+	f_col = @c_col
+
+	cursor_backword_word
+	if  f_row == @c_row && f_col == @c_col
+	  return
+	end
+	t_row = @c_row
+	t_col = @c_col
+	@c_row = f_row
+	@c_col = f_col
+	
+	until t_row == @c_row && t_col == @c_col
+	  backspace
+	end
+      end
+
+      def delete_forword_word(*args)
+	normalize_cursor
+	f_row = @c_row
+	f_col = @c_col
+
+	cursor_forword_word
+	if  f_row == @c_row && f_col == @c_col
+	  return
+	end
+	
+	until f_row == @c_row && f_col == @c_col
+	  backspace
 	end
       end
 
@@ -320,28 +441,50 @@ module Reish
 	  return
 	end
 
-	candidates = @cmpl_proc.call(@buffer.contents) 
-	return if candidates.nil? || candidates.empty?
+	candidates, token = @cmpl_proc.call(@buffer.contents_to(@c_row, @c_col))
 
-	if candidates.size > 1
-	  message candidates.join("\n")
-	else
-	  word = candidates.first+" "
-	  idx = -1
-	  while idx = @buffer[@c_row].rindex(word[0], idx)
-	    sublen = @buffer[@c_row].size - idx
-	    if @buffer[@c_row][idx..-1] == word[0, sublen]
-		#	      sublen.times{@buffer.delete(@c_row, idx)}
-	      sublen.times{backspace}
-	      @buffer.insert(@c_row, idx, word)
-	      @c_col += word.size
-	      cursor_reposition
-	      break
-	    else
-	      idx -= 1
+	case candidates
+	when nil
+	  return
+	when Array
+	  return if candidates.empty?
+	  if candidates.size == 1
+	    word = candidates.first+" "
+	  else
+	    unless word = max_match_candidate(candidates, token.size)
+	      return message candidates.sort, buffer_class: LamMessenger
 	    end
 	  end
+	when String
+	  word = candidates
+	else
+	  return candidates.message_to(self)
 	end
+	  
+	token.size.times{backspace}
+	@buffer.insert(@c_row, @c_col, word)
+	@c_col += word.size
+	cursor_reposition
+      end
+
+      def max_match_candidate(candidates, t_size)
+	c_set = candidates.sort
+	match = c_set.last.chars
+	c_set.each do |elm|
+	  n_match = []
+	  match.each_with_index do |m, i|
+	    break unless m == elm[i]
+	    n_match.push m
+	  end
+	  match = n_match
+	  if match.size == t_size
+	    break
+	  end
+	end
+	if match.size == t_size
+	  return nil
+	end
+	match.join
       end
 
       def set_history(history)
@@ -358,6 +501,17 @@ module Reish
 
       def history_next(*args)
 	@history_session.next
+      end
+
+      def man(*args)
+	word = @buffer.lookup_word(@c_row, @c_col)
+	if word
+	  IO::popen(["man", word, :err=>[:child, :out]]) do |io|
+	    message(io.readlines.collect{|l| l.chomp})
+	  end
+	else
+	  message("man not found: #{word}")
+	end
       end
 
 #       def init_more_keys

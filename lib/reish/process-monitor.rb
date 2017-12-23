@@ -32,11 +32,29 @@ module Reish
 	exe.pstat = :RUN
 	@pid2exe_cv.broadcast
       end
+      begin
+	pid, stat = Process.waitpid2(pid, WAIT_FLAG)
+	if pid
+	  postproc_pid(pid, stat)
+	end
+      rescue Errno::ECHILD
+      end
     end
 
     def del_exe(exe)
       @pid2exe_mx.synchronize do
-	@pid2exe.delete(exe)
+	pid = exe.pid
+	if pid
+	  @pid2exe.delete(exe.pid)
+	else
+	  puts "ProcessMonitor: process(#{exe.info}) no entried" if Reish::debug_jobctl?
+	end
+      end
+    end
+
+    def wait_pids
+      @pid2exe_mx.synchronize do
+	@pid2exe.keys
       end
     end
 
@@ -65,9 +83,8 @@ module Reish
 
     def popen_exe(exe, *opts, &block)
       IO.popen(*opts) do |io|
-	entry_exe(io.pid, exe)
-
 	begin
+	  entry_exe(io.pid, exe)
 	  block.call io
 	ensure
 	  exe.wait
@@ -78,9 +95,8 @@ module Reish
 
     def spawn_exe(exe, *opts, &block)
       pid = Process.spawn(*opts)
-      entry_exe(pid, exe)
-
       begin
+	entry_exe(pid, exe)
 	block.call
       ensure
 	exe.wait
@@ -100,6 +116,7 @@ module Reish
 #       Thread.start do
 # 	sleep 10
 #       end
+
       @monitor = Thread.start{
  	Thread.abort_on_exception = true
  	loop do
@@ -114,58 +131,59 @@ module Reish
     WAIT_FLAG = Process::WNOHANG|Process::WUNTRACED|Reish::WCONTINUED
     def child_handle
       puts "ProcessMonitor: event arrived" if Reish::debug_jobctl?
-      
-      begin
-	loop do
-	  pid, stat = Process.waitpid2(-1, WAIT_FLAG)
-	  unless pid
-	    puts "ProcessMonitor: waitpid2 can't get pid" if Reish::debug_jobctl?
-	    #		sleep 1
-	    #		pid, stat = Process.waitpid2(-1, wait_flag)
-	    break unless pid
-	  end
-	  
-	  case 
-	  when stat.signaled?
-	    puts "ProcessMonitor: child #{stat.pid} was killed by signal #{stat.termsig}" if Reish::debug_jobctl?
-	    if stat.coredump?
-	      puts "ProcessMonitor: child #{stat.pid} dumped core." if Reish::debug_jobctl?
-	    end
 
-	    set_exe_exit_stat(pid, :TERM, stat)
-	    
-	  when stat.stopped?
-	    puts "ProcessMonitor: child #{stat.pid} was stopped by signal #{stat.stopsig}" if Reish::debug_jobctl?
-	    case stat.stopsig
-	    when 20
-	      set_exe_stat(pid, :TSTP)
-	      
-	      MAIN_SHELL.reish_tstp(MAIN_SHELL) if @term_ctl
-	      
-	    when 21
-	      set_exe_stat(pid, :TTIN)
-
-	    when 22
-	      set_exe_stat(pid, :TTOU)
-	    else
-	      
-	    end
-
-	  when stat.exited?
-	    puts "ProcessMonitor: child #{stat.pid} exited normally. status=#{stat.exitstatus}" if Reish::debug_jobctl?
-
-	    set_exe_exit_stat(pid, :EXIT, stat)
-
-	  when Reish::wifscontinued?(stat)
-	    puts "ProcessMonitor: child #{stat.pid} continued." if Reish::debug_jobctl?
-	    set_exe_stat(pid, :RUN)
+      wait_pids.each do |pid|
+	begin
+	  pid, stat = Process.waitpid2(pid, WAIT_FLAG)
+	  if pid
+	    postproc_pid(pid, stat)
 	  else
-	    p "ProcessMonitor: Unknown status %#x" % stat.to_i if Reish::debug_jobctl?
+	    puts "ProcessMonitor: waitpid2: process status not changed(pid=#{pid})" if Reish::debug_jobctl?
 	  end
+	rescue Errno::ECHILD
+	  # ignore
+#	  puts "ProcessMonitor: #{$!}" if Reish::debug_jobctl?
 	end
-      rescue Errno::ECHILD
-	# ignore
-	puts "ProcessMonitor: #{$!}" if Reish::debug_jobctl?
+      end
+    end
+
+    def postproc_pid(pid, stat)
+      case 
+      when stat.signaled?
+	puts "ProcessMonitor: child #{stat.pid} was killed by signal #{stat.termsig}" if Reish::debug_jobctl?
+	if stat.coredump?
+	  puts "ProcessMonitor: child #{stat.pid} dumped core." if Reish::debug_jobctl?
+	end
+
+	set_exe_exit_stat(pid, :TERM, stat)
+	    
+      when stat.stopped?
+	puts "ProcessMonitor: child #{stat.pid} was stopped by signal #{stat.stopsig}" if Reish::debug_jobctl?
+	case stat.stopsig
+	when 20
+	  set_exe_stat(pid, :TSTP)
+	  
+	  MAIN_SHELL.reish_tstp(MAIN_SHELL) if @term_ctl
+	      
+	when 21
+	  set_exe_stat(pid, :TTIN)
+
+	when 22
+	  set_exe_stat(pid, :TTOU)
+	else
+	      
+	end
+
+      when stat.exited?
+	puts "ProcessMonitor: child #{stat.pid} exited normally. status=#{stat.exitstatus}" if Reish::debug_jobctl?
+
+	set_exe_exit_stat(pid, :EXIT, stat)
+
+      when Reish::wifscontinued?(stat)
+	puts "ProcessMonitor: child #{stat.pid} continued." if Reish::debug_jobctl?
+	set_exe_stat(pid, :RUN)
+      else
+	p "ProcessMonitor: Unknown status %#x" % stat.to_i if Reish::debug_jobctl?
       end
     end
 

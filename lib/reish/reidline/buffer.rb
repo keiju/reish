@@ -47,8 +47,30 @@ module Reish
 	@buffer.join("\n")
       end
 
+      def contents_to(row, col)
+	if row > 0
+	  contents = @buffer[0..row-1].join("\n")
+	  contents.concat "\n"
+	else
+	  contents = ""
+	end
+	contents.concat @buffer[row][0..col]
+	contents
+      end
+
+      def lookup_word(row, col)
+	if /[[:word:]]/ =~@buffer[row][col]
+	  s = @buffer[row].rindex(/[^[:word:]]/, col) || -1
+	  e = @buffer[row].index(/[^[:word:]]/, col) || @buffer[row].size
+	  @buffer[row][s+1..e-1]
+	elsif col == 0
+	  nil
+	else
+	  lookup_word(row, col-1)
+	end
+      end
+
       def empty?
-#ttyput @row, @buffer[@row]
 	@buffer.size == 1 && @buffer.first.empty?
       end
 
@@ -59,6 +81,39 @@ module Reish
       def end_of_buffer?(row, col)
 	@buffer.size - 1 == row && @buffer.last.size == col
       end
+
+      def index(pat, row=0, col=0)
+	idx = @buffer[row].index(pat, col)
+	return [row, idx] if idx
+	row += 1
+	while row < @buffer.size
+	  idx = @buffer[row].index(pat)
+	  return [row, idx] if idx
+	  row += 1
+	end
+	return nil
+      end
+      alias re_search_forward index
+
+      def rindex(pat, row = nil, col = nil)
+	unless row
+	  row = @buffer.size - 1
+	end
+	unless col
+	  col = @buffer[row].size - 1
+	end
+
+	idx = @buffer[row].rindex(pat, col)
+	return [row, col] if idx
+	row -= 1
+	while row < 0
+	  idx = @buffer[row].rindex(pat)
+	  return [row, idx] if idx
+	  row -= 1
+	end
+	return nil
+      end
+      alias re_search_backward rindex
 
       def insert(row, col, str)
 	@buffer[row][col,0] = str
@@ -76,16 +131,13 @@ module Reish
       end
 
       def insert_cr(row, col)
-#ttyput "IC:0"
 	if eol?(row, col)
-#ttyput "IC:1"
 	  @buffer.insert(row + 1, "")
 	  changed
 	  notify_observers(:insert_line, row)
 	  changed
 	  notify_observers(:prompt, row+1)
 	else
-#ttyput "IC:2"
 	  sub = @buffer[row].slice!(col..-1)
 	  @buffer.insert(row + 1, sub)
 	  changed
@@ -104,7 +156,6 @@ module Reish
 	notify_observers(:join_line, row-1, col, len)
 #	notify_observers(:delete_line, row)
 #	changed
-#ttyput "INSERT", row-1, col
 #	notify_observers(:insert, row-1, col, len)
       end
 
