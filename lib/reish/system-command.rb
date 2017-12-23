@@ -475,12 +475,12 @@ class Object
       each{|e| puts e.to_s}
     when Enumerable
       if STDOUT.tty?
-	each{|e| puts e.to_s}
+	each{|e| print e.to_s}
       else
-	each{|e| puts e.to_s}
+	each{|e| print e.to_s}
       end
     else
-      puts self.to_s
+      print self.to_s
     end
     self
   end
