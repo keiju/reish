@@ -472,7 +472,7 @@ module Reish
     end
 
     def act_option_arg(spec, opt, sep = spec.arg_separator, option_arg: nil, option_arg_closed: false)
-      # ここで, message出力
+      @title = spec.family.message
       case spec.action
       when nil
 	[]
@@ -508,7 +508,7 @@ module Reish
       case @candidates.first
       when OptSpec
 	pager = Reidline::MColMessenger.new
-	pager.set_title @title if @title
+	pager.set_title "Completing #{@title}:" if @title
 	@candidates.collect{|opt_spec| opt_spec.family}.uniq.each do |family|
 	  opts = family.opts.collect{|spec| spec.opt}
 	  pager.push [opts[0], opts[1], family.description]
@@ -516,6 +516,7 @@ module Reish
 	editor.message pager: pager
       when String
 	pager = Reidline::LamMessenger.new(@candidates)
+	pager.set_title "Completing #{@title}:" if @title
 	editor.message pager: pager
       end
     end
