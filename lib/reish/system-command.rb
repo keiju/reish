@@ -11,16 +11,16 @@
 require "reish/command-execution"
 
 module Reish
-  def Reish.SystemCommand(exenv, receiver, path, *args)
+  def Reish.SystemCommand(exenv, receiver, path, *args, &block)
     case receiver
     when Reish::Main
-      c = SystemCommand.new(exenv, receiver, path, *args)
+      c = SystemCommand.new(exenv, receiver, path, *args, &block)
     when SystemCommand
-      c = CompSystemCommand.new(exenv, receiver, path, *args)
+      c = CompSystemCommand.new(exenv, receiver, path, *args, &block)
     when Lazize
-      c = CompSystemCommand.new(exenv, receiver.source, path, *args)
+      c = CompSystemCommand.new(exenv, receiver.source, path, *args, &block)
     else
-      c = SystemCommand.new(exenv, receiver, path, *args)
+      c = SystemCommand.new(exenv, receiver, path, *args, &block)
     end
 
     if Reish::debug_system_command?
@@ -72,11 +72,12 @@ module Reish
     include Enumerable
     include OSSpace
 
-    def initialize(exenv, receiver, path, *args)
+    def initialize(exenv, receiver, path, *args, &block)
       @exenv = exenv
       @receiver = receiver
       @command_path = path
       @args = args
+      @block = block
 
       @reds = []
 
@@ -153,6 +154,8 @@ module Reish
     end
 
     def term
+      return self.each &@block if @block
+
       exec = exection_class.new(self)
       if receive?
 	exec.popen("w") do |io|
@@ -187,19 +190,27 @@ module Reish
     end
 
     def xnull
-      unless @reds.find{|r| [">", "&>", ">>", "&>>"].include?(r.id)}
+      unless @block || @reds.find{|r| [">", "&>", ">>", "&>>"].include?(r.id)}
 	@reds.push Reish::Redirect(-1, ">", "/dev/null")
       end
-      execute
-      @exit_status.success?
+      ret = execute
+      if @block
+	ret
+      else
+	@exit_status.success?
+      end
     end
     alias reish_xnull xnull
     alias reish_stat xnull
 
     def execute
       exec = exection_class.new(self)
-      exec.spawn
-      @exit_status
+      if @block
+	each &@block
+      else
+	exec.spawn
+	@exit_status
+      end
     end
 
     def receive?

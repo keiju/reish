@@ -11,12 +11,12 @@
 module Reish
   module OSSpace
 
-    def method_missing(name, *args)
+    def method_missing(name, *args, &block)
 
       return super unless Reish::active_thread?
 
       sh = Reish::current_shell
-      command = sh.search_command(self, name, *args)
+      command = sh.search_command(self, name, *args, &block)
       if command
 	return command
       else

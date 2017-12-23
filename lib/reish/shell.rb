@@ -301,7 +301,7 @@ module Reish
       COMMAND_CACHE_BASE[m] = :COMMAND_NOTHING
     end
 
-    def search_command(receiver, name, *args)
+    def search_command(receiver, name, *args, &block)
 
       inactivate_command_search do
 	path = @command_cache[name]
@@ -310,7 +310,7 @@ module Reish
 	when :COMMAND_NOTHING
 	  return nil
 	else
-	  return Reish::SystemCommand(@exenv, receiver, path, *args)
+	  return Reish::SystemCommand(@exenv, receiver, path, *args, &block)
 	end
 
 	n = name.to_s
@@ -322,7 +322,7 @@ module Reish
 	    path = File.absolute_path(n, @exenv.pwd)
 	    if File.executable?(path)
 	      @command_cache[name] = path
-	      return Reish::SystemCommand(@exenv, receiver, path, *args)
+	      return Reish::SystemCommand(@exenv, receiver, path, *args, &block)
 	    else
 	      @command_cache[name] = :COMMAND_NOTHING
 	      return nil
@@ -339,7 +339,7 @@ module Reish
 	end
 	if path
 	  @command_cache[name] = p
-	  Reish::SystemCommand(@exenv, receiver, path, *args)
+	  Reish::SystemCommand(@exenv, receiver, path, *args, &block)
 	else
 	  @command_cache[name] = :COMMAND_NOTHING
 	  nil
