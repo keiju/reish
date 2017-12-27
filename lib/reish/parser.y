@@ -218,7 +218,7 @@ class Reish::Parser
 	| trivial_command
 	| literal
 
-  simple_command: simple_command_header simple_command_element_list1 opt_do_block
+  simple_command: simple_command_header simple_command_element_list1 opt_do_block 
 	    {
 #	       result = Node::SimpleCommand(val[0], val[1], val[2])
 	       result = val[0]

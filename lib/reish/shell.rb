@@ -395,8 +395,7 @@ module Reish
     end
 
     def send_with_redirection(receiver, method, args, reds, &block)
-
-      if inactivate_command_search{receiver.respond_to?(method, true)}
+      if block || inactivate_command_search{receiver.respond_to?(method, true)}
 	input = nil
 	output = nil
 	reds.each do |r|
@@ -432,7 +431,7 @@ module Reish
 	  receiver.send(method, *args, &block)
 	end
       else
-	unless com = search_command(receiver, method, *args)
+	unless com = search_command(receiver, method, *args, &block)
 	  raise NoMethodError, "undefined medhod `#{method}'"
 	end
 	com.reds = reds

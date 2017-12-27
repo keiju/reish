@@ -13,14 +13,38 @@ require "reish/command-execution"
 module Reish
   def Reish.SystemCommand(exenv, receiver, path, *args, &block)
     case receiver
-    when Reish::Main
-      c = SystemCommand.new(exenv, receiver, path, *args, &block)
+    when Reish::Main, BlockSystemCommand
+      if block
+	c = BlockSystemCommand.new(exenv, receiver, path, *args, &block)
+      else
+	c = SystemCommand.new(exenv, receiver, path, *args)
+      end
     when SystemCommand
-      c = CompSystemCommand.new(exenv, receiver, path, *args, &block)
+      if block
+	c = BlockCompSystemCommand.new(exenv, receiver, path, *args, &block)
+      else
+	c = CompSystemCommand.new(exenv, receiver, path, *args)
+      end
     when Lazize
-      c = CompSystemCommand.new(exenv, receiver.source, path, *args, &block)
+      if receiver.source.have_block?
+	if block
+	  c = BlockSystemCommand.new(exenv, receiver, path, *args, &block)
+	else
+	  c = SystemCommand.new(exenv, receiver, path, *args)
+	end
+      else
+	if block
+	  c = BlockCompSystemCommand.new(exenv, receiver.source, path, *args, &block)
+	else
+	  c = CompSystemCommand.new(exenv, receiver.source, path, *args)
+	end
+      end
     else
-      c = SystemCommand.new(exenv, receiver, path, *args, &block)
+      if block
+	c = BlockSystemCommand.new(exenv, receiver, path, *args, &block)
+      else
+	c = SystemCommand.new(exenv, receiver, path, *args)
+      end
     end
 
     if Reish::debug_system_command?
@@ -67,6 +91,7 @@ module Reish
       "Lazy(#{@source.info})"
     end
   end
+
     
   class SystemCommand
     include Enumerable
@@ -99,6 +124,9 @@ module Reish
       CommandExecution
     end
 
+    def have_block?
+      false
+    end
 
     def command_opts(ary = @args)
       opts = []
@@ -127,22 +155,32 @@ module Reish
       else
 	mode = "r"
       end
-
       exec = exection_class.new(self)
       exec.popen(mode) do |io|
 	if receive?
 	  case receiver
-	  when Enumerable
-	    Thread.start do
-	      begin
-		@receiver.each {|e| io.print e.to_s}
-	      rescue
-		p $!
-		raise
-	      ensure
-		io.close_write
-	      end
+	  when SystemCommand, Lazize
+	    begin
+	      @receiver.each {|e| io.print e.to_s}
+	    rescue
+	      p $!
+	      raise
+	    ensure
+	      io.close_write
 	    end
+	  when Enumerable
+#	    sh = Reish::current_shell
+#	    Thread.start do
+#	      Reish::current_shell = sh
+	    begin
+	      @receiver.each {|e| io.print e.to_s}
+	    rescue
+	      p $!
+	      raise
+	    ensure
+	      io.close_write
+	    end
+#	    end
 	  else
 	    io.write @receiver.to_s
 	    io.close_write
@@ -154,7 +192,7 @@ module Reish
     end
 
     def term
-      return self.each &@block if @block
+#      return self.each &@block if @block
 
       exec = exection_class.new(self)
       if receive?
@@ -301,6 +339,51 @@ module Reish
     def info
       "#{to_script}[#{pid}](#{@pstat.id2name})"
     end
+  end
+
+  module SystemCommandBlockable
+    def initialize(exenv, receiver, path, *args, &block)
+      super(exenv, receiver, path, *args)
+      @block = block
+    end
+
+    #alias super_each each
+
+    def have_block?
+      true
+    end
+
+    def each(&block)
+      super_each{|e| block.call @block.call(e)}
+    end
+
+    def term
+      super_each &@block
+    end
+    alias reish_term term
+
+    def xnull
+      execute
+    end
+    alias reish_xnull xnull
+    alias reish_stat xnull
+
+    def execute
+      exec = exection_class.new(self)
+      super_each &@block
+    end
+  end
+
+  class BlockSystemCommand<SystemCommand
+    alias super_each each
+
+    include SystemCommandBlockable
+  end
+
+  class BlockCompSystemCommand<CompSystemCommand
+    alias super_each each
+
+    include SystemCommandBlockable
   end
 
   class ConcatCommand

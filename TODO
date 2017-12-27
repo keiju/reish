@@ -36,6 +36,7 @@
    -> 他の問題が発生するのでとりあえず削除
 ** command --do の shift/reduce confirict がとれない.
    # reidlineでparseエラーにならない用にしようとするとこうなってしまう.
+** comoosite string: "foo"$e できない
 
 * code generation
 ** # command | if ... をもっとちゃんと対応したい(instance_evalを使わなく
@@ -50,6 +51,13 @@
 ** 関数をパイプライン接続したとき最終実行結果のみが次にわたる(Rubyの関数と互換をとるため). 標準出力結果すべてを次に渡すのも欲しいか?
 ** def --[direct|term...] func
   # これは, めんどくさそう... define_function [opt] func... か?
+** puts e | ...; ls{|e| print e} | ... の処理
+  リダイレクトされているときは, 標準出力($stdout)の扱いを変更する
+  - puts等が実行されているスレッドだけ, $stdoutの振る舞いを変更
+    リターン値にする?
+  - each内でputs等が実行されているスレッドだけ, $stdoutの振る舞いを変更
+    eachないで, $stdoutへの出力を配列にためそれを戻値にする?
+  - user function内でputsを使っているとき? 関数の戻値と標準出力の関係...
 
 * jobctl
 **  TTOUTの処理は必要ない?

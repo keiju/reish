@@ -834,6 +834,14 @@ module Reish
 	end
       end
 
+      def pipeout=(val)
+	@pipeout = val
+	
+	if @block
+	  @block.body.pipeout = val
+	end
+      end
+
       def have_redirection?
 	if @have_redirection.nil?
 	  @have_redirection = @args && @args.any?{|e| e.kind_of?(Redirection)}
