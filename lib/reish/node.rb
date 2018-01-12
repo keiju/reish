@@ -739,12 +739,12 @@ module Reish
 	@pipeout = val
 	
 	case val
-	when :RESULT, :RESULTL
+	when :BAR, :COLON2, :BAR_AND, :DOT
+	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
+	  @nodes.last.pipeout = :RESULT
+	when :NONE, :RESULT, :RESULTL
 	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
 	  @nodes.last.pipeout = val
-	when :BAR, :COLON2, :BAR_AND, :DOT, :NONE
-	  @nodes[0..-2].each{|n| n.pipeout = :XNULL}
-	  @nodes.last.pipeout = :NONE
 	when :XNULL, nil
 	  @nodes.each{|n| n.pipeout = val}
 	end

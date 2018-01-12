@@ -18,6 +18,7 @@
 ** ary[...] の ... 部分のリスト化
 ** #   trivial_command: trivial_command0 lex_arg の lex_arg正しい?
 ** Array, Hashで,を使えるようにする?
+** ${...} bashでいうところのパラメータ展開
 ** %リテラル
 ** XSTRINGの仕様変更. 文字列として渡してeval形式にする
 ** DSTRING(#)
