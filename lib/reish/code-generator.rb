@@ -363,7 +363,7 @@ module Reish
 	command.commands.zip(list) do |com, s|
 	  script.concat s
 
-  	  unless [Node::SimpleCommand].find{|klass| com.kind_of?(klass)}
+  	  unless [Node::SimpleCommand, Node::LiteralCommand].find{|klass| com.kind_of?(klass)}
   	    case com.pipeout
   	    when :BAR, :DOT
   	      script.concat "."
