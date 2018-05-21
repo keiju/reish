@@ -202,11 +202,11 @@ p "IU"
 	@seq.push tk
 	case tok
 	when "begin", "case", "class", "def", "for", "module"
-	  @nest.push tok
+	  @nest.push tk
 	when "if", "unless", "until", "while"
-	  @nest.push tok
+	  @nest.push tk
 	when "do"
-	  @nest.push tok
+	  @nest.push tk
 	when "end"
 	  @nest.pop
 	end
