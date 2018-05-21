@@ -6,10 +6,10 @@
 #
 require "reish/reidline"
 
-module Reish
+module Reirb
   begin
     require "readline"
-    class ReadlineInputMethod < InputMethod
+    class ReadlineInputMethod < Reish::InputMethod
       include Readline
       # Creates a new input method object using Readline
       def initialize(exenv)
@@ -21,8 +21,8 @@ module Reish
 
 	@completable = true
 
-        @stdin = IO.open(STDIN.to_i, :external_encoding => Reish.conf[:LOCALE].encoding, :internal_encoding => "-")
-        @stdout = IO.open(STDOUT.to_i, 'w', :external_encoding => Reish.conf[:LOCALE].encoding, :internal_encoding => "-")
+        @stdin = IO.open(STDIN.to_i, :external_encoding => Reirb.conf[:LOCALE].encoding, :internal_encoding => "-")
+        @stdout = IO.open(STDOUT.to_i, 'w', :external_encoding => Reirb.conf[:LOCALE].encoding, :internal_encoding => "-")
 
 	@completor = nil
         Readline.completion_proc = nil
