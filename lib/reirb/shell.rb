@@ -82,7 +82,7 @@ module Reirb
 
     def start
       @lex.set_prompt do |ltype, indent, continue, line_no|
-	@io.line_no = line_no if @io.kind_of?(Reish::ReidlineInputMethod)
+	@io.line_no = line_no if @io.kind_of?(Reirb::ReidlineInputMethod)
 	@io.prompt = @exenv.prompt.call(@exenv, line_no, indent, ltype, continue)
       end
 

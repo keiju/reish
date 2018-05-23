@@ -24,6 +24,10 @@ module Reirb
 
     attr_reader :prev_line_no
 
+    def set_line_no(line_no)
+      @line_no = @prev_line_no = line_no
+    end
+
     def prev_char_no
       @scanner.column
     end
@@ -88,11 +92,11 @@ module Reirb
       end
     end
 
-    def initialize_input
+    def initialize_input(closing_check: false)
       qio = QIO.new(self) do
 	if @scanner.error?
 	  Fiber.yield @line
-	elsif !@scanner.continue? && @scanner.nest.empty?
+	elsif !@scanner.continue? && @scanner.nest.empty? && !@scanner.seq.empty?
 	  Fiber.yield @line
 	end
 	@scanner.before_gets
@@ -101,6 +105,8 @@ module Reirb
 	if l
 	  @line_no += 1
 	  @line.concat l
+	elsif closing_check 
+	  Reirb::Fail ParserClosingEOFSupp
 	end
 	@scanner.after_gets
 	l
@@ -118,7 +124,6 @@ module Reirb
     end
 
     def input_unit
-p "IU"
       @line = ""
       @prev_line_no = @line_no
       @scanner_fiber.resume
@@ -158,6 +163,7 @@ p "IU"
 
       attr_reader :error
       attr_reader :nest
+      attr_reader :seq
 
       def before_gets
 	@ignore_nl = false

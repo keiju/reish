@@ -72,7 +72,7 @@ module Reirb
     def inspect
       if Reirb::INSPECT_LEBEL < 2
 	"#<#{inspect_tag}:#{@value.inspect}: l=#{@line_no}, c=#{@char_no}>"
-      elsif Reish::INSPECT_LEBEL < 3
+      elsif Reirb::INSPECT_LEBEL < 3
 	"#<#{inspect_tag}:#{@value.inspect}: l=#{@line_no}, c=#{@char_no} space_seen=#{@space_seen}>"
       else
 	super
@@ -175,7 +175,7 @@ module Reirb
     end
 
     def inspect
-      if Reish::INSPECT_LEBEL < 3
+      if Reirb::INSPECT_LEBEL < 3
 	"#<Token:#{@tid}: l=#{@line_no}, c=#{@char_no}>"
       else
 	super
@@ -194,7 +194,7 @@ module Reirb
     end
 
     def inspect
-      if Reish::INSPECT_LEBEL < 3
+      if Reirb::INSPECT_LEBEL < 3
 	"#<Token:#{@name}: l=#{@line_no}, c=#{@char_no}>"
       else
 	super
@@ -214,7 +214,7 @@ module Reirb
 
   class SpaceToken<Token
     def inspect
-      if Reish::INSPECT_LEBEL < 3
+      if Reirb::INSPECT_LEBEL < 3
 	"#<SpaceToken:l=#{@line_no}, c=#{@char_no}>"
       else
 	super
@@ -226,7 +226,7 @@ module Reirb
 
   class EOFToken<Token
     def inspect
-      if Reish::INSPECT_LEBEL < 3
+      if Reirb::INSPECT_LEBEL < 3
 	"#<EOFToken:l=#{@line_no}, c=#{@char_no}>"
       else
 	super
@@ -236,7 +236,7 @@ module Reirb
 
   class ErrorToken<Token
     def inspect
-      if Reish::INSPECT_LEBEL < 3
+      if Reirb::INSPECT_LEBEL < 3
 	"#<ErrorToken:l=#{@line_no}, c=#{@char_no}>"
       else
 	super

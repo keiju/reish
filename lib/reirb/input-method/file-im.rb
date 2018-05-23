@@ -1,5 +1,5 @@
 #
-#   reish/input-method/file-im.rb - input methods used irb
+#   reirb/input-method/file-im.rb - input methods used irb
 #                         oroginal version from irb.
 #   	Copyright (C) 2014-2017 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
@@ -7,9 +7,9 @@
 require 'reish/src_encoding'
 require 'reish/magic-file'
 
-module Reish
+module Reirb
   # Use a File for IO with irb, see InputMethod
-  class FileInputMethod < InputMethod
+  class FileInputMethod < Reish::InputMethod
     # Creates a new input method object
     def initialize(exenv, file)
       super
