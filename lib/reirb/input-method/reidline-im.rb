@@ -142,9 +142,13 @@ module Reirb
 
 	@lex.input_unit
 	ret = true
+	idx = lines.size - 1
+	@nesting[idx] = []
+	set_indent idx
 
-	@in_queue.clear
       rescue ParserClosingEOFSupp
+      ensure
+	@in_queue.clear
       end
       ret
     end
