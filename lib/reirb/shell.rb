@@ -11,7 +11,7 @@
 require "reirb/exenv"
 
 require "reirb/lex"
-require "reish/job-controller"
+require "reirb/job-controller"
 require "reirb/process-monitor"
 
 require "reirb/input-method"
@@ -326,7 +326,7 @@ module Reirb
       unless pid
 	pid = @tcpgrp
       end
-      Reirb::tcsetpgrp(@io.real_io, pid)
+      Reish::tcsetpgrp(@io.real_io, pid)
     end
   end
 end

@@ -48,6 +48,9 @@ module Reirb
       sh = MainShell.new
     end
     const_set(:MAIN_SHELL, sh)
+    Reish.module_eval do
+      const_set :MAIN_SHELL, ::Reirb::MAIN_SHELL
+    end
 
     sh.start
   end
