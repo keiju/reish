@@ -147,6 +147,31 @@ module Reirb
 	set_indent idx
 
       rescue ParserClosingEOFSupp
+	
+      rescue ParseError=>exc
+	@reidline.message("[#{exc.line_no}, #{exc.column}] #{exc.message}")
+
+	for l in exc.line_no + 1 .. @line_no + lines.size do
+	  idx = l - @line_no
+	  @nesting[idx] = @lex.nest.dup
+	  set_indent(idx)
+	  @reidline.set_prompt(idx, 
+			       @promptor.call(l, @nesting[idx], "*", nil), 
+			       @nesting[idx].size)
+	end
+
+      rescue =>exc
+	begin
+	  @reidline.message(exc.message)
+	  @reidline.message(exc.backtrace.join("\n"), append: true)
+	rescue
+	  puts "Reidline abort on exeption!!"
+	  puts "Original Exception"
+	  p exc
+	  puts "Reidline Exception"
+	  p $!
+	end
+
       ensure
 	@in_queue.clear
       end

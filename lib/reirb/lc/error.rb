@@ -35,5 +35,16 @@ module Reirb
   def_exception :ParserClosingEOFSupp, "Parser closing support exception."
 
   class InternalError<StandardError; end
+
+  class ParseError
+    def initialize(*args)
+      super
+      @line_no = nil
+      @column = nil
+    end
+
+    attr_accessor :line_no
+    attr_accessor :column
+  end
 end
 

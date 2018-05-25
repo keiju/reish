@@ -245,8 +245,11 @@ module Reirb
 
       def on_parse_error(*args)
 	@error = true
-	print "PARSE_ERROR: "
-	print [lineno, column], args.inspect, "\n"
+	exc = ParseError.new(args)
+	exc.line_no = lineno
+	exc.column = column
+	
+	raise exc
       end
 
       def on_nl(tok)
