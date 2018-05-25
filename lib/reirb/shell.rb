@@ -120,7 +120,7 @@ module Reirb
 	@current_input_unit = nil
 	begin
 	  @current_input_unit = input_unit
-	rescue ParseError => exc
+#	rescue ParseError => exc
 #	  puts exc.message
 #	  @lex.reset_input
 	rescue Interrupt => exc
