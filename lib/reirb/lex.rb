@@ -208,6 +208,7 @@ module Reirb
 	super(src, filename, lineno)
 	@error = nil
 	@nest = []
+	@cond_stack = []
 	
 	@seq = []
       end
@@ -239,12 +240,21 @@ module Reirb
       def on_default(tok)
 	tk = SimpleToken.new(@lex, tok)
 	@seq.push tk
+	tk
       end
 
       def on_parse_error(*args)
 	@error = true
 	print "PARSE_ERROR: "
 	print [lineno, column], args.inspect, "\n"
+      end
+
+      def on_nl(tok)
+	on_default(tok)
+	until @cond_stack.empty? ||
+	    [:LPALEN, :LBRACKET, :LBRACE,].include?(@cond_stack.last.token_id)
+          @cond_stack.pop
+        end
       end
 
       def on_ignored_nl(tok)
@@ -254,94 +264,93 @@ module Reirb
 	@seq.push tk
       end
 
-      def on_kw(tok)
+      def on_semicolon(tok)
+	on_default(tok)
+	until @cond_stack.empty? ||
+	    [:LPALEN, :LBRACKET, :LBRACE,].include?(@cond_stack.last.token_id)
+          @cond_stack.pop
+        end
+      end
 
+      def on_kw(tok)
 	w = PreservedWord[tok]
 	tk = ReservedWordToken.new(@lex, w)
 	case w
 	when :BEGIN, :CASE, :CLASS, :DEF, :FOR, :MODULE
 	  @nest.push tk
+	  @cond_stack.push tk
 	when :IF, :UNLESS, :UNTIL, :WHILE
 	  if last_state.anybits?(EXPR_BEG | EXPR_LABELED)
 	    @nest.push tk
+	    @cond_stack.push tk
 	  else
 	    w = PreservedWord["mod"+tok]
 	    tk = ReservedWordToken.new(@lex, w)
 	  end
 	when :DO
-	  @nest.push tk
+	  if ![:FOR, :WHILE, :UNTIL].include?(@cond_stack.last&.token_id)
+	    @nest.push tk
+	    @cond_stack.push tk
+	  end
 	when :END
-	  case tk = @nest.pop
-	  when ReservedWordToken
-	    if tk.token_id.include? [:WHILE, :UNTIL, :FOR]
-	      @nest.push tk
-	    end
+	  if [:FOR, :WHILE, :UNTIL].include? (tk = @nest.pop)&.token_id
+	    @nest.push tk
+	  else
+	    @cond_stack.pop
 	  end
 	end
 	@seq.push tk
       end
 
       def on_while(*args)
-	loop do
-	  case tk = @nest.pop
-	  when ReservedWordToken
-	    break if tk.token_id == :WHILE
-	  end
-	end
+	while @nest.pop&.token_id == :WHILE; end
+	while @cond_stack.pop&.token_id == :WHILE; end
       end
 
       def on_until(*args)
-	loop do
-	  case tk = @nest.pop
-	  when ReservedWordToken
-	    break if tk.token_id == :UNTIL
-	  end
-	end
+	while @nest.pop&.token_id == :UNTIL; end
+	while @cond_stack.pop&.token_id == :UNTIL; end
       end
 
       def on_for(*args)
-	loop do
-	  case tk = @nest.pop
-	  when ReservedWordToken
-	    break if tk.token_id == :FOR
-	  end
-	end
+	while @nest.pop&.token_id == :FOR; end
+	while @cond_stack.pop&.token_id == :FOR; end
       end
 
       def on_lparen(tok)
-	tk = SimpleToken.new(@lex, :LPARLEN)
-	@seq.push tk
+	tk = on_default(:LPARLEN)
 	@nest.push tk
+	@cond_stack.push tk
       end
 
       def on_rparen(tok)
-	tk = SimpleToken.new(@lex, :RPARLEN)
-	@seq.push tk
+	on_default(:RPARLEN)
 	@nest.pop
+	@cond_stack.pop
       end
 
       def on_lbracket(tok)
-	tk = SimpleToken.new(@lex, :LBRACKET)
-	@seq.push tk
+	tk = on_default(:LBRACKET)
 	@nest.push tk
+	@cond_stack.push tk
       end
 
       def on_rbracket(tok)
-	tk = SimpleToken.new(@lex, :RBRACKET)
-	@seq.push tk
+	on_default(:RBRACKET)
 	@nest.pop
+	@cond_stack.pop
       end
 
       def on_lbrace(tok)
-	tk = SimpleToken.new(@lex, :LBRACE)
-	@seq.push tk
+	tk = on_default(:LBRACE)
 	@nest.push tok
+	@cond_stack.push tk
       end
 
       def on_rbrace(tok)
-	tk = SimpleToken.new(@lex, :RBRACE)
-	@seq.push tk
+	on_default(:RBRACE)
 	@nest.pop
+	@cond_stack.pop
       end
 
       def on_tstring_beg(tok)
@@ -391,12 +400,14 @@ module Reirb
       end
 
       def on_embexpr_beg(tok)
-	tk = EmbexprBegBegToken.new(@lex, tok)
+	tk = EmbexprBegToken.new(@lex, tok)
 	@seq.push tk
 	@nest.push tk
       end
 
       def on_embexpr_end(tok)
+	tk = EmbexprEndToken.new(@lex, tok)
+	@seq.push tk
 	@nest.pop
       end
 

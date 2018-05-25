@@ -113,7 +113,7 @@ module Reirb
   end
 
   class LiteralBegToken<ValueToken; end
-  class LitreralEndToken<ValueToken; end
+  class LiteralEndToken<ValueToken; end
 
   class StringBegToken<LiteralBegToken; end
   class RegexpBegToken<LiteralBegToken; end
@@ -122,9 +122,10 @@ module Reirb
   class QWordsBegToken<LiteralBegToken; end
 
   class StringEndToken<LiteralBegToken; end
-  class ReexpEndToken<LiteralBegToken; end
+  class RegexpEndToken<LiteralEndToken; end
 
   class EmbexprBegToken<ValueToken; end
+  class EmbexprEndToken<ValueToken; end
 
   class StringToken<ValueToken
     def accept(visitor)
