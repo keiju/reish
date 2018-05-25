@@ -26,6 +26,7 @@ module Reirb
       @line_no = lex.prev_line_no
       @char_no = lex.prev_char_no
       @space_seen = lex.space_seen
+      @state = lex.scanner.state
 
       @ltype = nil
     end
@@ -36,6 +37,7 @@ module Reirb
     attr_reader :line_no
     attr_reader :char_no
     attr_reader :space_seen
+    attr_reader :state
 
     attr_accessor :ltype
 
@@ -71,9 +73,9 @@ module Reirb
 
     def inspect
       if Reirb::INSPECT_LEBEL < 2
-	"#<#{inspect_tag}:#{@value.inspect}: l=#{@line_no}, c=#{@char_no}>"
+	"#<#{inspect_tag}:#{@value.inspect}: l=#{@line_no}, c=#{@char_no}, s=#{@state}>"
       elsif Reirb::INSPECT_LEBEL < 3
-	"#<#{inspect_tag}:#{@value.inspect}: l=#{@line_no}, c=#{@char_no} space_seen=#{@space_seen}>"
+	"#<#{inspect_tag}:#{@value.inspect}: l=#{@line_no}, c=#{@char_no} space_seen=#{@space_seen}, s=#{@state}>"
       else
 	super
       end
@@ -176,7 +178,7 @@ module Reirb
 
     def inspect
       if Reirb::INSPECT_LEBEL < 3
-	"#<Token:#{@tid}: l=#{@line_no}, c=#{@char_no}>"
+	"#<Token:#{@tid}: l=#{@line_no}, c=#{@char_no}, s=#{@state}>"
       else
 	super
       end
@@ -195,7 +197,7 @@ module Reirb
 
     def inspect
       if Reirb::INSPECT_LEBEL < 3
-	"#<Token:#{@name}: l=#{@line_no}, c=#{@char_no}>"
+	"#<Token:#{@name}: l=#{@line_no}, c=#{@char_no}, s=#{@state}>"
       else
 	super
       end
@@ -215,7 +217,7 @@ module Reirb
   class SpaceToken<Token
     def inspect
       if Reirb::INSPECT_LEBEL < 3
-	"#<SpaceToken:l=#{@line_no}, c=#{@char_no}>"
+	"#<SpaceToken:l=#{@line_no}, c=#{@char_no}, s=#{@state}>"
       else
 	super
       end
@@ -227,7 +229,7 @@ module Reirb
   class EOFToken<Token
     def inspect
       if Reirb::INSPECT_LEBEL < 3
-	"#<EOFToken:l=#{@line_no}, c=#{@char_no}>"
+	"#<EOFToken:l=#{@line_no}, c=#{@char_no}, s=#{@state}>"
       else
 	super
       end
@@ -237,7 +239,7 @@ module Reirb
   class ErrorToken<Token
     def inspect
       if Reirb::INSPECT_LEBEL < 3
-	"#<ErrorToken:l=#{@line_no}, c=#{@char_no}>"
+	"#<ErrorToken:l=#{@line_no}, c=#{@char_no}, s=#{@state}>"
       else
 	super
       end

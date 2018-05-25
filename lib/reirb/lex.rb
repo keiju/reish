@@ -23,6 +23,7 @@ module Reirb
     end
 
     attr_reader :prev_line_no
+    attr_reader :scanner
 
     def set_line_no(line_no)
       @line_no = @prev_line_no = line_no
@@ -152,6 +153,56 @@ module Reirb
 
     class RubyScanner<Ripper
 
+      PreservedWord = {
+	"class"	  => :CLASS, 
+	"module"  => :MODULE, 
+	"def"	  => :DEF, 
+	"undef"	  => :UNDEF, 
+	"begin"	  => :BEGIN, 
+	"rescue"  => :RESCUE, 
+	"mod_rescue" => :MOD_RESCUE, 
+	"ensure"  => :ENSURE, 
+	"end"	  => :END, 
+	"if"	  => :IF, 
+	"mod_if"	  => :MOD_IF, 
+	"unless"  => :UNLESS, 
+	"mod_unless" => :MOD_UNLESS, 
+	"then"	  => :THEN, 
+	"elsif"	  => :ELSIF, 
+	"else"	  => :ELSE, 
+	"case"	  => :CASE, 
+	"when"	  => :WHEN, 
+	"while"	  => :WHILE, 
+	"mod_while"  => :MOD_WHILE, 
+	"until"	  => :UNTIL, 
+	"mod_until"  => :MOD_UNTIL, 
+	"for"	  => :FOR, 
+	"break"	  => :BREAK, 
+	"next"	  => :NEXT, 
+	"redo"	  => :REDO, 
+	"retry"	  => :RETRY, 
+	"raise"	  => :RAISE, 
+	"in"	  => :IN, 
+	"do"	  => :DO, 
+	"return"  => :RETURN, 
+	"yield"	  => :YIELD, 
+	"super"	  => :SUPER, 
+	"self"	  => :SELF, 
+	"nil"	  => :NIL, 
+	"true"	  => :TRUE, 
+	"false"	  => :FALSE, 
+	"and"	  => :AND, 
+	"or"	  => :OR, 
+	"not"	  => :NOT, 
+	"alias"	  => :ALIAS, 
+	"defined?"=> :DEFINED, 
+
+	"BEGIN"	  => :L_BEGIN, 
+	"END"	  => :L_END, 
+	"__LINE__"=> :T_LINE__, 
+	"__FILE__"=> :T_FILE__, 
+      }
+
       def initialize(lex, src, filename = "(reirb)", lineno = 1)
 	@lex = lex
 	super(src, filename, lineno)
@@ -182,7 +233,7 @@ module Reirb
       end
 
       def last_state
-	@seq[-1].state
+	@seq[-1] && @seq[-1].state || EXPR_BEG
       end
 
       def on_default(tok)
@@ -204,17 +255,56 @@ module Reirb
       end
 
       def on_kw(tok)
-	tk = ReservedWordToken.new(@lex, tok)
+
+	w = PreservedWord[tok]
+	tk = ReservedWordToken.new(@lex, w)
+	case w
+	when :BEGIN, :CASE, :CLASS, :DEF, :FOR, :MODULE
+	  @nest.push tk
+	when :IF, :UNLESS, :UNTIL, :WHILE
+	  if last_state.anybits?(EXPR_BEG | EXPR_LABELED)
+	    @nest.push tk
+	  else
+	    w = PreservedWord["mod"+tok]
+	    tk = ReservedWordToken.new(@lex, w)
+	  end
+	when :DO
+	  @nest.push tk
+	when :END
+	  case tk = @nest.pop
+	  when ReservedWordToken
+	    if tk.token_id.include? [:WHILE, :UNTIL, :FOR]
+	      @nest.push tk
+	    end
+	  end
+	end
 	@seq.push tk
-	case tok
-	when "begin", "case", "class", "def", "for", "module"
-	  @nest.push tk
-	when "if", "unless", "until", "while"
-	  @nest.push tk
-	when "do"
-	  @nest.push tk
-	when "end"
-	  @nest.pop
+      end
+
+      def on_while(*args)
+	loop do
+	  case tk = @nest.pop
+	  when ReservedWordToken
+	    break if tk.token_id == :WHILE
+	  end
+	end
+      end
+
+      def on_until(*args)
+	loop do
+	  case tk = @nest.pop
+	  when ReservedWordToken
+	    break if tk.token_id == :UNTIL
+	  end
+	end
+      end
+
+      def on_for(*args)
+	loop do
+	  case tk = @nest.pop
+	  when ReservedWordToken
+	    break if tk.token_id == :FOR
+	  end
 	end
       end
 
