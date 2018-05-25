@@ -40,7 +40,7 @@ module Reirb
       #	@completor = nil
       #        Readline.completion_proc = nil
 
-      @lex = Lex.new
+      @lex = Lex.new closing_check: true
       @in_queue = Queue.new
       @im = Reish::QueueInputMethod.new(nil, @in_queue)
 
@@ -133,7 +133,7 @@ module Reirb
       begin
 	@nesting = []
 	@lex.set_line_no(@line_no)
-	@lex.initialize_input closing_check: true
+	@lex.initialize_input
 
 	lines.each do |line| 
 	  @in_queue.push line+"\n"

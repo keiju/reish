@@ -13,7 +13,9 @@ require "reirb/token"
 
 module Reirb
   class Lex
-    def initialize
+    def initialize(closing_check: false)
+      @closing_check = closing_check
+
       @prev_line_no = @line_no = 1
 
       @io = nil
@@ -93,7 +95,7 @@ module Reirb
       end
     end
 
-    def initialize_input(closing_check: false)
+    def initialize_input
       qio = QIO.new(self) do
 	if @scanner.error?
 	  Fiber.yield @line
@@ -106,7 +108,7 @@ module Reirb
 	if l
 	  @line_no += 1
 	  @line.concat l
-	elsif closing_check 
+	elsif @closing_check 
 	  Reirb::Fail ParserClosingEOFSupp
 	end
 	@scanner.after_gets
@@ -117,7 +119,11 @@ module Reirb
 	  @scanner = RubyScanner.new(self, qio, "(reirb)", @line_no)
 	  prompt
 	  @line = ""
-	  @scanner.parse
+	  begin
+	    @scanner.parse
+	  rescue ParseError=>exc
+	    raise if @closing_check
+	  end
 	  Fiber.yield @line
 	end while @scanner.error
 	nil
