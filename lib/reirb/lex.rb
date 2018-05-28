@@ -122,7 +122,12 @@ module Reirb
 	  begin
 	    @scanner.parse
 	  rescue ParseError=>exc
-	    raise if @closing_check
+#	    raise if @closing_check
+	    Fiber.yield exc
+	    redo
+	  rescue Interrupt=>exc
+	    Fiber.yield exc
+	    redo
 	  end
 	  Fiber.yield @line
 	end while @scanner.error
@@ -133,7 +138,18 @@ module Reirb
     def input_unit
       @line = ""
       @prev_line_no = @line_no
-      @scanner_fiber.resume
+      r = @scanner_fiber.resume
+      case r 
+      when nil
+	nil
+      when ParseError
+	raise r if @closing_check
+	@line
+      when Exception
+	raise r
+      else
+	@line
+      end
     end
 
     class QIO
