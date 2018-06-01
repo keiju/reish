@@ -15,6 +15,7 @@ require "reirb/shell"
 
 module Reirb
   INSPECT_LEBEL = 1
+  ::Reish::INSPECT_LEBEL = 1
 
   class Abort < Exception;end
 
