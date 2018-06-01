@@ -142,7 +142,7 @@ module Reirb
 
 	@lex.input_unit
 	ret = true
-	idx = lines.size - 1
+	idx = @nesting.size
 	@nesting[idx] = []
 	set_indent idx
 

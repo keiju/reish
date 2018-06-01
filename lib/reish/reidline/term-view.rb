@@ -197,7 +197,7 @@ module Reish
 	  @t_col = last_line.bytesize + last_prompt.bytesize
 	else
 	  @t_row = text_height - 1
-	  @t_col = @cache.last.last.bytesize + last_offset
+	  @t_col = @cache.last.last.bytesize + offset(@cache.size - 1, @cache.last.size - 1)
 	end
 	cursor_reposition
       end
