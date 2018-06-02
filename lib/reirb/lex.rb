@@ -312,6 +312,14 @@ module Reirb
 	    w = PreservedWord["mod"+tok]
 	    tk = ReservedWordToken.new(@lex, w)
 	  end
+	when :ELSE, :WHEN
+	  @nest.pop
+	  @nest.push tk
+	when :ELSIF
+	  @nest.pop
+	  @nest.push tk
+	  @cond_stack.pop
+	  @cond_stack.push tk
 	when :DO
 	  if ![:FOR, :WHILE, :UNTIL].include?(@cond_stack.last&.token_id)
 	    @nest.push tk
