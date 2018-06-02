@@ -312,7 +312,7 @@ module Reirb
 	    w = PreservedWord["mod"+tok]
 	    tk = ReservedWordToken.new(@lex, w)
 	  end
-	when :ELSE, :WHEN
+	when :ELSE, :WHEN, :RESCUE, :ENSURE
 	  @nest.pop
 	  @nest.push tk
 	when :ELSIF
