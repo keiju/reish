@@ -11,16 +11,40 @@
 require "reish/command-execution"
 
 module Reish
-  def Reish.SystemCommand(exenv, receiver, path, *args)
+  def Reish.SystemCommand(exenv, receiver, path, *args, &block)
     case receiver
-    when Reish::Main
-      c = SystemCommand.new(exenv, receiver, path, *args)
+    when Reish::Main, BlockSystemCommand
+      if block
+	c = BlockSystemCommand.new(exenv, receiver, path, *args, &block)
+      else
+	c = SystemCommand.new(exenv, receiver, path, *args)
+      end
     when SystemCommand
-      c = CompSystemCommand.new(exenv, receiver, path, *args)
+      if block
+	c = BlockCompSystemCommand.new(exenv, receiver, path, *args, &block)
+      else
+	c = CompSystemCommand.new(exenv, receiver, path, *args)
+      end
     when Lazize
-      c = CompSystemCommand.new(exenv, receiver.source, path, *args)
+      if receiver.source.have_block?
+	if block
+	  c = BlockSystemCommand.new(exenv, receiver, path, *args, &block)
+	else
+	  c = SystemCommand.new(exenv, receiver, path, *args)
+	end
+      else
+	if block
+	  c = BlockCompSystemCommand.new(exenv, receiver.source, path, *args, &block)
+	else
+	  c = CompSystemCommand.new(exenv, receiver.source, path, *args)
+	end
+      end
     else
-      c = SystemCommand.new(exenv, receiver, path, *args)
+      if block
+	c = BlockSystemCommand.new(exenv, receiver, path, *args, &block)
+      else
+	c = SystemCommand.new(exenv, receiver, path, *args)
+      end
     end
 
     if Reish::debug_system_command?
@@ -67,16 +91,18 @@ module Reish
       "Lazy(#{@source.info})"
     end
   end
+
     
   class SystemCommand
     include Enumerable
     include OSSpace
 
-    def initialize(exenv, receiver, path, *args)
+    def initialize(exenv, receiver, path, *args, &block)
       @exenv = exenv
       @receiver = receiver
       @command_path = path
       @args = args
+      @block = block
 
       @reds = []
 
@@ -98,6 +124,9 @@ module Reish
       CommandExecution
     end
 
+    def have_block?
+      false
+    end
 
     def command_opts(ary = @args)
       opts = []
@@ -126,22 +155,32 @@ module Reish
       else
 	mode = "r"
       end
-
       exec = exection_class.new(self)
       exec.popen(mode) do |io|
 	if receive?
 	  case receiver
-	  when Enumerable
-	    Thread.start do
-	      begin
-		@receiver.each {|e| io.print e.to_s}
-	      rescue
-		p $!
-		raise
-	      ensure
-		io.close_write
-	      end
+	  when SystemCommand, Lazize
+	    begin
+	      @receiver.each {|e| io.print e.to_s}
+	    rescue
+	      p $!
+	      raise
+	    ensure
+	      io.close_write
 	    end
+	  when Enumerable
+#	    sh = Reish::current_shell
+#	    Thread.start do
+#	      Reish::current_shell = sh
+	    begin
+	      @receiver.each {|e| io.print e.to_s}
+	    rescue
+	      p $!
+	      raise
+	    ensure
+	      io.close_write
+	    end
+#	    end
 	  else
 	    io.write @receiver.to_s
 	    io.close_write
@@ -153,6 +192,8 @@ module Reish
     end
 
     def term
+#      return self.each &@block if @block
+
       exec = exection_class.new(self)
       if receive?
 	exec.popen("w") do |io|
@@ -187,19 +228,27 @@ module Reish
     end
 
     def xnull
-      unless @reds.find{|r| [">", "&>", ">>", "&>>"].include?(r.id)}
+      unless @block || @reds.find{|r| [">", "&>", ">>", "&>>"].include?(r.id)}
 	@reds.push Reish::Redirect(-1, ">", "/dev/null")
       end
-      execute
-      @exit_status.success?
+      ret = execute
+      if @block
+	ret
+      else
+	@exit_status.success?
+      end
     end
     alias reish_xnull xnull
     alias reish_stat xnull
 
     def execute
       exec = exection_class.new(self)
-      exec.spawn
-      @exit_status
+      if @block
+	each &@block
+      else
+	exec.spawn
+	@exit_status
+      end
     end
 
     def receive?
@@ -290,6 +339,51 @@ module Reish
     def info
       "#{to_script}[#{pid}](#{@pstat.id2name})"
     end
+  end
+
+  module SystemCommandBlockable
+    def initialize(exenv, receiver, path, *args, &block)
+      super(exenv, receiver, path, *args)
+      @block = block
+    end
+
+    #alias super_each each
+
+    def have_block?
+      true
+    end
+
+    def each(&block)
+      super_each{|e| block.call @block.call(e)}
+    end
+
+    def term
+      super_each &@block
+    end
+    alias reish_term term
+
+    def xnull
+      execute
+    end
+    alias reish_xnull xnull
+    alias reish_stat xnull
+
+    def execute
+      exec = exection_class.new(self)
+      super_each &@block
+    end
+  end
+
+  class BlockSystemCommand<SystemCommand
+    alias super_each each
+
+    include SystemCommandBlockable
+  end
+
+  class BlockCompSystemCommand<CompSystemCommand
+    alias super_each each
+
+    include SystemCommandBlockable
   end
 
   class ConcatCommand
@@ -464,12 +558,12 @@ class Object
       each{|e| puts e.to_s}
     when Enumerable
       if STDOUT.tty?
-	each{|e| puts e.to_s}
+	each{|e| print e.to_s}
       else
-	each{|e| puts e.to_s}
+	each{|e| print e.to_s}
       end
     else
-      puts self.to_s
+      print self.to_s
     end
     self
   end

@@ -447,8 +447,8 @@ module Reish
 	      sub_row += 1
 	    end
 	    sub = split.first
-	    unless insert_lin_row
-	      cursor_down; corsor_bol
+	    unless insert_line_row
+	      cursor_down; cursor_bol
 	      print sub
 	    end
 	    sub_row += 1

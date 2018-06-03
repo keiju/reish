@@ -281,11 +281,17 @@ module Reish
     end
 
     def set_ctlterm
-      MAIN_SHELL.set_ctlterm(@current_exe.pid)
+      begin
+	MAIN_SHELL.set_ctlterm(@current_exe.pid)
+      rescue Errno::ESRCH
+      end
     end
 
     def reset_ctlterm
-      MAIN_SHELL.set_ctlterm(nil)
+      begin
+	MAIN_SHELL.set_ctlterm(nil)
+      rescue Errno::ESRCH
+      end
     end
 
     def term_ctl?
