@@ -1,11 +1,11 @@
 command arg1* {-hij} {--opt arg}*
-	==>> command arg1,* {h: true} {i: ture} {j:true} {opt: arg}*
+	==>> command arg1,* {h: true} {i: true} {j:true} {opt: arg}*
 
 obj.command arg1* {-hij} {--opt arg}*
-	==>> obj.command arg1,* {h: true} {i: ture} {j:true} {opt: arg}*
+	==>> obj.command arg1,* {h: true} {i: true} {j:true} {opt: arg}*
 
 var = command arg1* {-hij} {--opt arg}*
-	==>> var = command arg1,* {h: true} {i: ture} {j:true} {opt: arg}*
+	==>> var = command arg1,* {h: true} {i: true} {j:true} {opt: arg}*
 
 command
   ==> system("command")
