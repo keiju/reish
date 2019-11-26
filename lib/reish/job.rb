@@ -46,7 +46,7 @@ module Reish
       @wait_stat = nil
       @thread = Thread.start {
 	Thread.abort_on_exception = true
-	Reish::current_job = self
+	Reirb::current_job = self
 
 	v = block.call
 

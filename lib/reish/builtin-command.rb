@@ -277,7 +277,8 @@ module Reish
       end
     end
 
-    def_command :jobs, Jobs
+# for reirb
+#    def_command :jobs, Jobs
     def_command :sample_ls, SampleLS
     def_command :sample_grep, SampleGrep
   end
