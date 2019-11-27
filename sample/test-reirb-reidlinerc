@@ -1,0 +1,16 @@
+#Reish.conf[:COMPLETION] = true
+
+#Reirb.conf[:ECHO] = true
+#Reirb.conf[:PROMPT] = $Reish::PromptSet[:IRB]
+#Reirb.conf[:DISPLAY_COMP] = true
+#Reirb.conf[:VERBOSE] = true
+
+Reirb.comp[:INPUT_METHOD][:TTY] = Reirb::ReidlineInputMethod
+
+#Reish.debug_jobctl_on
+#Reish.debug_input_on
+#Reish.debug_function_on
+#Reish.debug_cmpl_on
+#Reish.debug_cmpl_yy_on
+
+#Reish::INSPECT_LEBEL = 2

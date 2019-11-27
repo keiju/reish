@@ -34,7 +34,8 @@ module Reish
 
     def_delegator :@exenv, :rehash
 
-#    def_delegator :@exenv, :jobs
+# add for reirb
+    def_delegator :@exenv, :jobs
     def_delegator :@exenv, :fg
     def_delegator :@exenv, :bg
 

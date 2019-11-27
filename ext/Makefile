@@ -12,12 +12,12 @@ NULLCMD = :
 #### Start of system configuration section. ####
 
 srcdir = .
-topdir = /usr/local/apps/rubyware/ruby-2.6.1-20190130/include/ruby-2.6.0
+topdir = /usr/local/apps/rubyware/ruby-2.6.3-20190416/include/ruby-2.6.0
 hdrdir = $(topdir)
-arch_hdrdir = /usr/local/apps/rubyware/ruby-2.6.1-20190130/include/ruby-2.6.0/x86_64-linux
+arch_hdrdir = /usr/local/apps/rubyware/ruby-2.6.3-20190416/include/ruby-2.6.0/x86_64-linux
 PATH_SEPARATOR = :
 VPATH = $(srcdir):$(arch_hdrdir)/ruby:$(hdrdir)/ruby
-prefix = $(DESTDIR)/usr/local/apps/rubyware/ruby-2.6.1-20190130
+prefix = $(DESTDIR)/usr/local/apps/rubyware/ruby-2.6.3-20190416
 rubysitearchprefix = $(rubylibprefix)/$(sitearch)
 rubyarchprefix = $(rubylibprefix)/$(arch)
 rubylibprefix = $(libdir)/$(RUBY_BASE_NAME)

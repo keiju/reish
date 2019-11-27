@@ -1,3 +1,4 @@
+# coding: utf-8
 #
 #   job.rb - 
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
