@@ -1,3 +1,4 @@
+# coding: utf-8
 #
 #   job.rb - 
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
@@ -46,7 +47,7 @@ module Reish
       @wait_stat = nil
       @thread = Thread.start {
 	Thread.abort_on_exception = true
-	Reirb::current_job = self
+	Reish::current_job = self
 
 	v = block.call
 
@@ -281,11 +282,17 @@ module Reish
     end
 
     def set_ctlterm
-      MAIN_SHELL.set_ctlterm(@current_exe.pid)
+      begin
+	MAIN_SHELL.set_ctlterm(@current_exe.pid)
+      rescue Errno::ESRCH
+      end
     end
 
     def reset_ctlterm
-      MAIN_SHELL.set_ctlterm(nil)
+      begin
+	MAIN_SHELL.set_ctlterm(nil)
+      rescue Errno::ESRCH
+      end
     end
 
     def term_ctl?

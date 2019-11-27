@@ -68,7 +68,7 @@ module Reish
       attr_reader :opt
 
       def long?
-	/^--/ =~ @opt || /^-[\w]+/ =~ @opt
+	/^--/ =~ @opt || /^-[\w][\w]+/ =~ @opt
       end
 
       def short?
@@ -220,12 +220,11 @@ module Reish
       end
     end
 
-    def files
-      ca_files(@call)
+    def files(arg = nil)
+      ca_files(@call, arg)
     end
 
     def candidates
-ttyput "C"
       arg_opt_p = nil
       @call.args.each do |arg|
 	if arg == @call.last_arg
@@ -244,33 +243,26 @@ ttyput "C"
 	when WordToken
 	  case arg.value
 	  when /^(-.*)=(.*)$/
-ttyput "C:1"
 	    if ex = opt_spec(arg.value)&.exclude
 	      @excludes_opt << ex
 	    end
-
 	  when /^--/
-ttyput "C:2"
 	    if spec = opt_spec(arg.value)
 	      arg_opt_p = arg if spec.with_arg?
 	      if ex = spec.exclude
 		@excludes_opt << ex
 	      end
 	    end
-
 	  when /^-(.*)$/
-ttyput "C:3"
 	    if spec = opt_spec(arg.value)
 	      arg_opt_p = arg if spec.with_arg?
 	      if ex = spec.exclude
 		@excludes_opt << ex
 	      end
 	    else
-ttyput "C:3B"
 	      sopts = $1.chars
 	      while k = sopts.shift
 		if spec2 = opt_spec("-"+k)
-ttyput spec2
 		  if ex = spec2.exclude
 		    @excludes_opt << ex
 		  end
@@ -284,7 +276,6 @@ ttyput spec2
 	      end
 	    end
 	  else
-ttyput "C:4"
 	    # 引数の最後ではないのに通常引数が来た場合
 	    return @arg_action.call
 	  end
@@ -296,17 +287,10 @@ ttyput "C:4"
 	next
       end
 
-ttyput "C:5", arg_opt_p
-
       if arg_opt_p
-ttyput "C:6"
-ttyput @call.args	
-	ret = candidates_last_arg_with_space(@call.args.elements.last)
-ttyput ret
-	return ret 
+	return candidates_last_arg_with_space(@call.args.elements.last)
       end
 
-ttyput "C:7"
       return @arg_action.call
     end
 
@@ -336,7 +320,6 @@ ttyput "C:7"
 	  end
 
 	when /^-/
-ttyput "X"
 	  spec = opt_spec(arg.value)
 	  if spec
 	    # オプション確定
@@ -347,12 +330,9 @@ ttyput "X"
 	      # オプション引数確定
 	      return act_option_arg(spec, arg.value, option_arg: last_arg&.value)
 	    else
-ttyput "X:3"
 	      return candidates_short_opt(arg.value)
 	    end
 	  else
-
-ttyput "X:4"
 	    cand = candidates_long_opt(arg.value)
 	    return cand if !cand.empty?
 	    
@@ -360,36 +340,28 @@ ttyput "X:4"
 	    sopts = arg.value.chars
 	    key.concat sopts.shift
 	    while k = sopts.shift
-ttyput k
 	      key.concat k
 	      spec2 = opt_spec("-"+k)
 	      if spec2
 		if spec2.with_arg?
 		  if sopts.empty?
-ttyput "X:4A"
 		    return act_option_arg(spec2, key, "", option_arg: last_arg&.value)
 		  else
-ttyput "X:4B"
 		    return act_option_arg(spec2, key, "", option_arg: sopts.join, option_arg_closed: true)
 		  end
 		else
-ttyput "X:4C"
 		  if ex = spec2.exclude
 		    @excludes_opt << ex
 		  end
 		end
 	      else
-ttyput "X:4D"
 		return []
 	      end
-ttyput "X:4E"
 	    end
-ttyput "X:4F"
 	    return candidates_short_opt(arg.value)
 	  end
 	else
 	  # 通常引数(途中まで入力)の場合
-ttyput "Y"
 	  return @arg_action.call(arg.value)
 	end
       when StringToken, CompositeWord
@@ -400,50 +372,37 @@ ttyput "Y"
     end
 
     def candidates_last_arg_with_space(arg)
-ttyput "Z"
       case arg
       when WordToken
 	case arg.value
 	when /^(-.*)=(.*)$/
-ttyput "Z:1"
 	  # pass throw
 	when /^--/
-ttyput "Z:2"
-ttyput arg.value, opt_spec(arg.value)
 	  if(spec = opt_spec(arg.value))&.with_arg?
-ttyput "Z:2A"
 	    return act_option_arg(spec, arg.value)
 	  end
 	  
 	when /^-/
-ttyput "Z:3"
 	  if (spec = opt_spec(arg.value))&.with_arg?
 	    # オプション引数確定
 	    return act_option_arg(spec, arg.value)
 	  else
-
-ttyput "Z:4"
 	    key = ""
 	    sopts = arg.value.chars
 	    key.concat sopts.shift
 	    while k = sopts.shift
-ttyput k
 	      key.concat k
 	      spec2 = opt_spec("-"+k)
 	      if spec2
 		if spec2.with_arg?
 		  if sopts.empty?
-ttyput "Z:4A"
 		    return act_option_arg(spec2, key)
 		  end
 		end
 	      end
-ttyput "Z:4E"
 	    end
-ttyput "Z:4F"
 	  end
 	else
-ttyput "Z:4G"
 	end
       when StringToken, CompositeWord
 	raise "not implemented"
@@ -496,8 +455,6 @@ ttyput "Z:4G"
 
     def candidates_short_opt(arg)
       @candidates = []
-ttyput "CSO"
-ttyput @excludes_opt
       each_short_opt do |opt_spec|
 	next if @excludes_opt.include?(opt_spec.opt)
 
@@ -515,23 +472,17 @@ ttyput @excludes_opt
     end
 
     def act_option_arg(spec, opt, sep = spec.arg_separator, option_arg: nil, option_arg_closed: false)
-      # ここで, message出力
-ttyput "AOA"
-ttyput spec, opt, option_arg, spec.action
+      @title = spec.family.message
       case spec.action
       when nil
-ttyput "AOA:1"
 	[]
       when Array
-ttyput "AOA:2"
 	@candidates = spec.action
 	@candidates = ca_filter(@candidates, nil, option_arg)
       when Symbol
-ttyput "AOA:3"
 	@candidates = self.send spec.action
 	@candidates = ca_filter(@candidates, nil, option_arg)
       when Proc
-ttyput "AOA:4"
 	spec.action.call(self, opt, option_arg)
       end
 
@@ -557,7 +508,7 @@ ttyput "AOA:4"
       case @candidates.first
       when OptSpec
 	pager = Reidline::MColMessenger.new
-	pager.set_title @title if @title
+	pager.set_title "Completing #{@title}:" if @title
 	@candidates.collect{|opt_spec| opt_spec.family}.uniq.each do |family|
 	  opts = family.opts.collect{|spec| spec.opt}
 	  pager.push [opts[0], opts[1], family.description]
@@ -565,8 +516,22 @@ ttyput "AOA:4"
 	editor.message pager: pager
       when String
 	pager = Reidline::LamMessenger.new(@candidates)
+	pager.set_title "Completing #{@title}:" if @title
 	editor.message pager: pager
       end
+    end
+
+    def for_readline
+      cands = []
+      @candidates.each do |e|
+	case e
+	when OptSpec
+	  cands.push e.opt if e.long?
+	when String
+	  cands.push e if /^--/ =~ e || /^-[\w][\w]+/ =~ e
+	end
+      end
+      cands.sort.uniq
     end
 
   end

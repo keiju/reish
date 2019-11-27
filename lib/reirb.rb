@@ -70,13 +70,13 @@ module Reirb
     Thread.current[:__REISH_CURRENT_SHELL__] = sh
   end
 
-  def self::current_job(no_exception = nil)
+  def Reish::current_job(no_exception = nil)
     job = Thread.current[:__REISH_CURRENT_JOB__]
     Reish.Fail NotExistCurrentJob unless no_exception || job
     job
   end
   
-  def self::current_job=(job)
+  def Reish::current_job=(job)
     Thread.current[:__REISH_CURRENT_JOB__] = job
   end
 

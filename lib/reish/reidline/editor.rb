@@ -506,7 +506,7 @@ module Reish
       def man(*args)
 	word = @buffer.lookup_word(@c_row, @c_col)
 	if word
-	  IO::popen("man #{word}") do |io|
+	  IO::popen(["man", word, :err=>[:child, :out]]) do |io|
 	    message(io.readlines.collect{|l| l.chomp})
 	  end
 	else

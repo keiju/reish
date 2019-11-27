@@ -83,7 +83,6 @@ module Reish
       end
 
       def cat
-ttyput "CAT"
 	message_cursor_save do
 	  puts @title if @title
 
@@ -98,7 +97,6 @@ ttyput "CAT"
       end
 
       def more
-ttyput "MORE"
 	if @view.WIN_H
 	  message_h = [height + 1, @view.TERM_H - @view.WIN_H].min
 	else
@@ -171,7 +169,6 @@ ttyput "MORE"
       end
 
       def clear
-ttyput "CLR"
 	message_cursor_save do
 	  ti_delete_line if @title
 	  @title = nil

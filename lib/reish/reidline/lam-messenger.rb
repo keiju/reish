@@ -21,7 +21,6 @@ module Reish
 
       def cols
 	return @cols if @cols
-ttyput @buffer
 	@col_width = @buffer.collect{|c| c.size}.max + 1
 	
 	@cols = win_width.div(@col_width)
@@ -47,13 +46,15 @@ ttyput @buffer
 	when Integer
 	  return nil if idx >= size
 
-	  col = ""
-	  o, m = idx.divmod(win_height)
-	  off = o*(win_height*cols)+m
-
 	  wh = win_height
-	  if (o+1)*wh > height
-	    wh = height - o*win_height
+	  wh -= 1 if @title
+
+	  col = ""
+	  o, m = idx.divmod(wh)
+	  off = o*(wh*cols)+m
+
+	  if (o+1)*wh > size
+	    wh = size - o*wh
 	  end
 	  
 	  @cols.times do |i|

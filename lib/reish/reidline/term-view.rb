@@ -447,8 +447,8 @@ module Reish
 	      sub_row += 1
 	    end
 	    sub = split.first
-	    unless insert_lin_row
-	      cursor_down; corsor_bol
+	    unless insert_line_row
+	      cursor_down; cursor_bol
 	      print sub
 	    end
 	    sub_row += 1
@@ -621,12 +621,7 @@ module Reish
       end
 
       def message(str = nil, append: false, buffer_class: MessagePager, pager: nil)
-
-ttyput "MESSAGE"
-
 	if !append && @m_buffer
-ttyput "MESSAGE:CLR"
-
 	  message_clear
 	end
 
@@ -638,7 +633,6 @@ ttyput "MESSAGE:CLR"
 	elsif buffer_class
 	  @m_buffer = buffer_class.new(view: self)
 	end
-#ttyput @m_buffer
 
 	case str
 	when String
