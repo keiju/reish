@@ -1,3 +1,4 @@
+# coding: utf-8
 #
 #   job.rb - 
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
@@ -46,7 +47,7 @@ module Reish
       @wait_stat = nil
       @thread = Thread.start {
 	Thread.abort_on_exception = true
-	Reirb::current_job = self
+	Reish::current_job = self
 
 	v = block.call
 
