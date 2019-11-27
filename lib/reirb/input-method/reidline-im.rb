@@ -49,7 +49,7 @@ module Reirb
 	@nesting[idx] = indent.dup
 	set_indent(idx)
 	if @promptor
-	  @reidline.set_prompt(idx, @promptor.call(line_no, indent, ltype, continue), indent.size)
+	  @reidline.set_prompt(idx, @promptor.call(line_no, indent, ltype, continue), ltype ? 0 : indent.size)
 	end
       end
 
