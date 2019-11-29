@@ -54,6 +54,8 @@ module Reish
   end
 
   module Lazize
+    include OSSpace
+    
     def self.lazize(c)
       l = c.lazy
       l.extend self

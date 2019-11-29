@@ -137,7 +137,7 @@ module Reish
   end
 end
 
-class Object
-  include Reish::OSSpace
-end
+#class Object
+#  include Reish::OSSpace
+#end
 
