@@ -4,9 +4,9 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
-require "reish/reidline/ti"
+require "reidline/ti"
 
-module Reish
+module Rei
   class Reidline
     class Messenger
       include Enumerable

@@ -1,3 +1,4 @@
+# coding: utf-8
 #
 #   key-handler.rb - 
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
@@ -6,7 +7,7 @@
 
 require "io/console"
 
-module Reish
+module Rei
   class Reidline
     class KeyHandler
 

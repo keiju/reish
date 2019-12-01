@@ -4,9 +4,9 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
-require "reish/reidline/editor"
+require "reidline/editor"
 
-module Reish
+module Rei
   class Reidline
     def initialize
 #      @editor = Editor.new
@@ -104,5 +104,5 @@ module Reish
   end
 end
 
-
+Reidline = Rei::Reidline
     

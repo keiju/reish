@@ -4,7 +4,7 @@
 #   	Copyright (C) 2014-2017 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
-require "reish/reidline"
+require "reidline"
 
 module Reish
   begin

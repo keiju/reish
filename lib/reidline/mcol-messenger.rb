@@ -4,9 +4,9 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
-require "reish/reidline/messenger"
+require "reidline/messenger"
 
-module Reish
+module Rei
   class Reidline
     class MColMessenger<Messenger
 

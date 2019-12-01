@@ -9,7 +9,7 @@ require "forwardable"
 require 'reish/src_encoding'
 require 'reish/magic-file'
 
-require "reish/reidline"
+require "reidline"
 
 
 module Reish

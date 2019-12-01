@@ -4,8 +4,8 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
-require "reish/reidline/lam-messenger"
-require "reish/reidline/composite-messenger"
+require "reidline/lam-messenger"
+require "reidline/composite-messenger"
 
 module Reish
   class CompCmdProc

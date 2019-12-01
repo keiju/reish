@@ -9,7 +9,7 @@ require "forwardable"
 require 'reish/src_encoding'
 require 'reish/magic-file'
 
-require "reish/reidline"
+require "reidline"
 
 module Reirb
   class ReidlineInputMethod < Reish::InputMethod
@@ -19,7 +19,7 @@ module Reirb
     def initialize(exenv)
       super
 
-      @reidline = Reish::Reidline.new
+      @reidline = Reidline.new
       @reidline.multi_line_mode = true
       @reidline.auto_indent = @exenv.auto_indent
 

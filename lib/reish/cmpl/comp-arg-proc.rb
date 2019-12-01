@@ -1,3 +1,4 @@
+# coding: utf-8
 #
 #   comp-exec.rb - 
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
@@ -7,7 +8,7 @@
 require "set"
 
 require "reish/cmpl/comp-action"
-require "reish/reidline/mcol-messenger"
+require "reidline/mcol-messenger"
 
 module Reish
   class CompArgProc

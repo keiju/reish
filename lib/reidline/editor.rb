@@ -4,15 +4,15 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
-require "reish/reidline/buffer"
-require "reish/reidline/term-view"
-require "reish/reidline/key-handler"
-require "reish/reidline/history-session"
+require "reidline/buffer"
+require "reidline/term-view"
+require "reidline/key-handler"
+require "reidline/history-session"
 
-require "reish/reidline/messenger"
-require "reish/reidline/lam-messenger"
+require "reidline/messenger"
+require "reidline/lam-messenger"
 
-module Reish
+module Rei
 
   class Reidline
     class Editor

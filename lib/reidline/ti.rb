@@ -1,3 +1,4 @@
+# coding: utf-8
 #
 #   editor/ti.rb - 
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
@@ -7,7 +8,7 @@
 require "io/console"
 require "terminfo"
 
-module Reish
+module Rei
   class Reidline
     module TI
 

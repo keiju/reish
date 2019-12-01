@@ -1,3 +1,4 @@
+# coding: utf-8
 #
 #   editor/term-viewr.rb - 
 #   	Copyright (C) 1996-2010 Keiju ISHITSUKA
@@ -9,9 +10,9 @@ require "observer"
 
 require "terminfo"
 
-require "reish/reidline/ti"
+require "reidline/ti"
 
-module Reish
+module Rei
   class Reidline
     class TermView
       include TI
