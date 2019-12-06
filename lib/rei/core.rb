@@ -8,8 +8,15 @@
 #   
 #
 
-module Rei
+module REI
   class Core
+
+    def initialize(ap_path)
+      @conf = CoreConf.new(ap_path)
+    end
+
+    attr_reader :conf
+
     def active_thread?
       Thread.current[:__REI_CURRENT_SHELL__]
     end
@@ -33,7 +40,6 @@ module Rei
     def current_job=(job)
       Thread.current[:__REI_CURRENT_JOB__] = job
     end
-
     
   end
 

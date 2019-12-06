@@ -7,15 +7,16 @@
 #
 #   
 #
+require "rei/conf.rb"
 require "rei/core.rb"
 require "rei/basic-shell.rb"
 
-module Rei
+module REI
 
   Reicore = Core.new
-  
+
   DefaultEncodings = Struct.new(:external, :internal)
-  class << Rei
+  class << REI
     private
     def set_encoding(extern, intern = nil)
       verbose, $VERBOSE = $VERBOSE, nil

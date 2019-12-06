@@ -1,4 +1,4 @@
-#
+n#
 #   basic-shell.rb - 
 #   	Copyright (C) 1996-2019 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
@@ -8,12 +8,12 @@
 #   
 #
 
-module Rei
+module REI
   class BasicShell
 
     def BasicShell::inherited(sub)
       sub.instance_eval do
-        @CONF = {}
+        @CONF = Conf.new
         @COMP = {}
         @COMP[:INPUT_METHOD] = {}
       end
@@ -23,23 +23,39 @@ module Rei
       $0 = File::basename(ap_path, ".rb") if ap_path
       setup(ap_path)
 
-      if @CONF[:OPT_C]
-        im = self::StringInputMethod.new(nil, @CONF[:OPT_C])
-        sh = self::MainShell.new(im)
-      elsif @CONF[:OPT_TEST_CMPL]
-        compl = @COMP[:COMPLETOR].new(new)
-        compl.candidate(@CONF[:OPT_TEST_CMPL])
-        exit
-      elsif !ARGV.empty?
-        f = ARGV.shift
-        sh = self::MainShell.new(f)
-      else
-        sh = self::MainShell.new
-      end
+      sh = create_main_shell
       const_set(:MAIN_SHELL, sh)
-
       sh.start
     end
+
+    #Shell.create_main_shell
+
+    def BasicShell::setup(ap_path)
+      init_core(ap_path)
+
+      init_error
+      init_config(ap_path)
+      parse_opts
+      run_config if @CONF[:RC]
+    end
+
+    def BasicShell::init_core(ap_path)
+      @CORE = Core.new(ap_path)
+      const_set(:CORE, @CORE)
+    end
+
+    def BasicShell.conf
+      @CONF
+    end
+
+    def BasicShell.core_conf
+      @CORE.conf
+    end
+
+    def BasicShell.comp
+      @COMP
+    end
+
   end
 end
 

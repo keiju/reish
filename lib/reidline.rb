@@ -6,7 +6,7 @@
 
 require "reidline/editor"
 
-module Rei
+module REI
   class Reidline
     def initialize
 #      @editor = Editor.new
@@ -104,5 +104,5 @@ module Rei
   end
 end
 
-Reidline = Rei::Reidline
+Reidline = REI::Reidline
     
