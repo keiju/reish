@@ -22,7 +22,7 @@ module REI
       LOAD_MODULES: [],
       PROMPT: nil,
       SINGLE_SHELL: false,
-      BINDING_MODE: 3,
+#      BINDING_MODE: 3, #rei* ではBINDING_MODE 3のみサポート
 
       DISPLY_MODE: true,
       IGNORE_SIGINT: true,
