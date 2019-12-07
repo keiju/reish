@@ -13,18 +13,12 @@ module REI
   class Main
 
     extend Forwardable
-    include Enumerable
-    
+
     def initialize(exenv)
       @exenv = exenv
     end
 
     attr_reader :exenv
-
-    def each &block
-      job = REI::current_job
-      job.stdin_each &block
-    end
 
     def_delegator :@exenv, :rehash
 
@@ -56,7 +50,7 @@ module REI
 	    "#{iv}=#{v}"
 	  end
 	}.join(", ")
-	"#<Reish::Main: #{ins}>"
+	"#<REI::Main: #{ins}>"
       else
 	super
       end
