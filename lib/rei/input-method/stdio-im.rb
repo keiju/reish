@@ -6,7 +6,6 @@
 #
 require "forwardable"
 
-require 'rei/src_encoding'
 require 'rei/magic-file'
 
 module REI

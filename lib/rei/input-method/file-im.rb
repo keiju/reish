@@ -4,7 +4,6 @@
 #   	Copyright (C) 2014-2017 Keiju ISHITSUKA
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
-require 'rei/src_encoding'
 require 'rei/magic-file'
 
 module REI
