@@ -15,6 +15,60 @@ require "rei/input-method"
 require "rei/inspector"
 
 module REI
+
+  PromptSet = {
+    FULL: proc{|exenv, line_no, indent, ltype, continue|
+      base = "#{exenv.ap_name}##{exenv.env["USER"]}@#{exenv.hostname}(#{exenv.main.class}):#{exenv.ppwd}:#{line_no}:#{indent}"
+      if ltype
+	base+ltype+" "
+      elsif continue
+	base+"? "
+      else
+	base+"> "
+      end
+    },
+    FULL2: proc{|exenv, line_no, indent, ltype, continue|
+      base = "#{exenv.ap_name}##{exenv.env["USER"]}@#{exenv.hostname}(#{exenv.main.class})\n#{exenv.ppwd}:#{line_no}:#{indent}"
+      if ltype
+	base+ltype+" "
+      elsif continue
+	base+"? "
+      else
+	base+"> "
+      end
+    },
+    STANDARD: proc{|exenv, line_no, indent, ltype, continue|
+      base = "#{exenv.ap_name}(#{exenv.main.class}):#{exenv.ppwd}:#{line_no}:#{indent.size}"
+      if ltype
+	base+ltype+" "
+      elsif continue
+	base+"? "
+      else
+	base+"> "
+      end
+    },
+    BASH: proc{|exenv, line_no, indent, ltype, continue|
+      base = "#{exenv.env["USER"]}@#{exenv.hostname}:#{exenv.ppwd}"
+      if ltype
+	base+ltype+" "
+      elsif continue
+	base+"? "
+      else
+	base+"$ "
+      end
+    },
+    IRB: proc{|exenv, line_no, indent, ltype, continue|
+      base = "#{exenv.ap_name}(#{exenv.main.class}):#{line_no}:#{indent.size}"
+      if ltype
+	base+ltype+" "
+      elsif continue
+	base+"? "
+      else
+	base+"> "
+      end
+    },
+  }
+
   class BasicShell
 
     def BasicShell::inherited(sub)
