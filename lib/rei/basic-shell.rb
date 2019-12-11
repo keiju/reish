@@ -94,7 +94,7 @@ module REI
       init_core(ap_path)
 
       init_error
-      init_config(ap_path)
+      init_config
       parse_opts
       run_config if @CONF[:RC]
     end
@@ -103,6 +103,26 @@ module REI
       @CORE = Core.new(ap_path)
       const_set(:CORE, @CORE)
     end
+
+    def BasicShell::init_error
+      @CONF[:LOCALE] = REI::Locale.new
+      @CONF[:LOCALE].load("rei/error.rb")
+    end
+
+    def BasicShell::init_config
+      # do nothing
+    end
+
+    def BasicShell::parse_opts
+      # do nothing
+    end
+
+    def BasicShell.run_config
+      if File.exist?(@CONF[:RC_FILE])
+        self::Shell.new(@CONF[:RC_FILE]).start
+      end
+    end
+
 
     def BasicShell.conf
       @CONF
