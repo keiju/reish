@@ -7,7 +7,7 @@
 
 require "io/console"
 
-module Rei
+module REI
   class Reidline
     class KeyHandler
 

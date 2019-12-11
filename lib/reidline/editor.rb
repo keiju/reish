@@ -12,7 +12,7 @@ require "reidline/history-session"
 require "reidline/messenger"
 require "reidline/lam-messenger"
 
-module Rei
+module REI
 
   class Reidline
     class Editor

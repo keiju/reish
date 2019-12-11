@@ -6,7 +6,7 @@
 
 require "reidline/ti"
 
-module Rei
+module REI
   class Reidline
     class Messenger
       include Enumerable

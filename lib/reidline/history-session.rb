@@ -4,7 +4,7 @@
 #				(Penta Advanced Labrabries, Co.,Ltd)
 #
 
-module Rei
+module REI
   class Reidline
     class HistorySession
       def initialize(editor, history)

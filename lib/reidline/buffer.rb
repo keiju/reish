@@ -8,7 +8,7 @@
 require "observer"
 require 'forwardable'
 
-module Rei
+module REI
   class Reidline
     class Buffer
       extend Forwardable

@@ -6,7 +6,7 @@
 
 require "reidline/messenger"
 
-module Rei
+module REI
   class Reidline
     class CompositeMessenger<Messenger
       

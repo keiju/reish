@@ -8,7 +8,7 @@
 require "io/console"
 require "terminfo"
 
-module Rei
+module REI
   class Reidline
     module TI
 
