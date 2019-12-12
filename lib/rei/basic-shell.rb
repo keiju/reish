@@ -114,7 +114,19 @@ module REI
     end
 
     def BasicShell::parse_opts
-      # do nothing
+      opt = OptionParser.new do |opt|
+        set_opts(opt)
+      end
+      opt.parse!(ARGV)
+    end
+
+    def BasicShell::set_opts(opt)
+      opt.on("--norc"){|v| @CONF[:RC] = false}
+      opt.on("--rcfile filename"){|v| @CONF[:RC_FILE] = v}
+      opt.on("--prompt mode"){|mode| @CONF[:PROMPT]=PromptSet[mode.upcase.intern]}
+
+      opt.on("-v", "--verbose"){|v| @CONF[:VERBOSE] = v == true ? 1 : v.to_i}
+      opt
     end
 
     def BasicShell.run_config
